@@ -35,12 +35,12 @@ export default function Home() {
           <article className="product-card lead-card">
             <div className="card-top"><span className="status">In development</span><span className="card-num">01</span></div>
             <div className="product-art lead-art"><div className="lead-window"><div className="window-dots">● ● ●</div><div className="lead-row"><span /><i /></div><div className="lead-row"><span /><i /></div><div className="lead-row"><span /><i /></div><div className="lead-score">+42%<small>qualified leads</small></div></div></div>
-            <div className="product-copy"><span className="product-label">Sales intelligence</span><h3>LeadPilot</h3><p>Turn scattered prospects into a clear, actionable pipeline. LeadPilot helps teams find, qualify, and move the right opportunities forward.</p><a href="#contact">Join early access <Arrow /></a></div>
+            <div className="product-copy"><span className="product-label">Sales intelligence</span><h3>LeadPilot</h3><p>Turn scattered prospects into a clear, actionable pipeline. LeadPilot helps teams find, qualify, and move the right opportunities forward.</p><a href="/products/leadpilot">Discover LeadPilot <Arrow /></a></div>
           </article>
           <article className="product-card diary-card">
             <div className="card-top"><span className="status light">In development</span><span className="card-num">02</span></div>
             <div className="product-art diary-art"><div className="calendar"><div className="cal-top"><span>Doctor&apos;s Diary</span><b>+</b></div><div className="cal-days">M T W T F S S</div><div className="cal-grid">{Array.from({length: 21}, (_, i) => <i className={i === 10 ? "active" : ""} key={i}>{i + 1}</i>)}</div><div className="appointment"><span>10:30</span><strong>Patient follow-up</strong><b>✓</b></div></div></div>
-            <div className="product-copy"><span className="product-label">Practice companion</span><h3>Doctor&apos;s Diary</h3><p>A calmer way for doctors to organize their professional day—appointments, patient follow-ups, and essential notes in one clear space.</p><a href="#contact">Get product updates <Arrow /></a></div>
+            <div className="product-copy"><span className="product-label">Practice companion</span><h3>Doctor&apos;s Diary</h3><p>A calmer way for doctors to organize their professional day—appointments, patient follow-ups, and essential notes in one clear space.</p><a href="/products/doctors-diary">Discover Doctor&apos;s Diary <Arrow /></a></div>
           </article>
         </div>
       </section>
