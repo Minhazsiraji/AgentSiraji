@@ -1,0 +1,2 @@
+import Link from "next/link"; import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+export default function NotFound(){return <main><SiteHeader/><section className="not-found shell"><span>404</span><h1>This path<br/><em>hasn&apos;t been built.</em></h1><p>The page may have moved, or perhaps it was never part of the plan.</p><Link className="button button-primary" href="/">Return home →</Link></section><SiteFooter/></main>}

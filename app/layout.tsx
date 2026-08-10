@@ -13,7 +13,8 @@ export const metadata: Metadata = {
     siteName: "AgentSiraji",
     type: "website"
   },
-  robots: { index: true, follow: true }
+  robots: { index: true, follow: true },
+  manifest: "/manifest.webmanifest"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

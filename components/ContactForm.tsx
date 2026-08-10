@@ -20,7 +20,8 @@ export default function ContactForm() {
       setMessage("Thanks—your message is in. I’ll reply as soon as possible.");
     } catch (error) {
       setState("error");
-      setMessage(error instanceof Error ? error.message : "Something went wrong. Please email hello@agentsiraji.com.");
+      const fallback = error instanceof Error ? error.message : "Something went wrong.";
+      setMessage(`${fallback} You can use the email link below instead.`);
     }
   }
 
@@ -32,6 +33,7 @@ export default function ContactForm() {
       <label className="honeypot" aria-hidden="true">Company website<input name="website" tabIndex={-1} autoComplete="off" /></label>
       <button className="button button-primary form-submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Send inquiry →"}</button>
       {message && <p className={`form-message ${state}`} role="status">{message}</p>}
+      {state === "error" && <a className="form-fallback" href="mailto:hello@agentsiraji.com?subject=Project inquiry">Continue by email →</a>}
     </form>
   );
 }

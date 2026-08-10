@@ -6,8 +6,8 @@ export default function Home() {
     <main>
       <nav className="nav shell" aria-label="Main navigation">
         <a className="brand" href="#top" aria-label="AgentSiraji home"><span className="brand-mark">AS</span><span>AgentSiraji</span></a>
-        <div className="nav-links"><a href="#products">Products</a><a href="#services">Services</a><a href="#about">About</a></div>
-        <a className="button button-small button-dark" href="#contact">Let&apos;s talk <Arrow /></a>
+        <div className="nav-links"><a href="#products">Products</a><a href="/services">Services</a><a href="/about">About</a><a href="/faq">FAQ</a></div>
+        <a className="button button-small button-dark" href="/contact">Let&apos;s talk <Arrow /></a>
       </nav>
 
       <section className="hero shell" id="top">
@@ -15,7 +15,7 @@ export default function Home() {
           <div className="eyebrow"><span className="pulse" /> Building useful things, right now</div>
           <h1>Ideas into<br /><em>impact, fast.</em></h1>
           <p>AgentSiraji creates focused digital products and delivers high-speed services that help people work smarter, grow faster, and stay ahead.</p>
-          <div className="hero-actions"><a className="button button-primary" href="#products">Explore our products <Arrow /></a><a className="text-link" href="#contact">Start a project <span>↗</span></a></div>
+          <div className="hero-actions"><a className="button button-primary" href="#products">Explore our products <Arrow /></a><a className="text-link" href="/contact">Start a project <span>↗</span></a></div>
           <div className="proof"><div><strong>2</strong><span>Products in motion</span></div><div><strong>Fast</strong><span>Delivery by design</span></div><div><strong>1:1</strong><span>Founder-led service</span></div></div>
         </div>
         <div className="hero-visual" aria-label="AgentSiraji product ecosystem illustration">
@@ -62,7 +62,7 @@ export default function Home() {
 
       <section className="contact shell" id="contact"><div className="contact-inner"><span className="kicker">Have an idea or a problem?</span><h2>Let&apos;s make it<br /><em>move.</em></h2><p>Tell me what you&apos;re building—or what&apos;s slowing you down. You&apos;ll get a direct, thoughtful reply.</p><a className="button button-primary button-large" href="mailto:hello@agentsiraji.com?subject=Let's build something">hello@agentsiraji.com <Arrow /></a></div><div className="contact-shape"><span>AS</span></div></section>
 
-      <footer className="footer shell"><a className="brand" href="#top"><span className="brand-mark">AS</span><span>AgentSiraji</span></a><p>Digital products &amp; rapid execution.</p><div><a href="#products">Products</a><a href="#services">Services</a><a href="mailto:hello@agentsiraji.com">Contact</a></div><small>© {new Date().getFullYear()} AgentSiraji. Built to move.</small></footer>
+      <footer className="footer shell"><a className="brand" href="#top"><span className="brand-mark">AS</span><span>AgentSiraji</span></a><p>Digital products &amp; rapid execution.</p><div><a href="#products">Products</a><a href="/services">Services</a><a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a></div><small>© {new Date().getFullYear()} AgentSiraji. Built to move.</small></footer>
     </main>
   );
 }
