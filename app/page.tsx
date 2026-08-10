@@ -1,14 +1,12 @@
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+
 const Arrow = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
 const Spark = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z" /></svg>;
 
 export default function Home() {
   return (
     <main>
-      <nav className="nav shell" aria-label="Main navigation">
-        <a className="brand" href="#top" aria-label="AgentSiraji home"><span className="brand-mark">AS</span><span>AgentSiraji</span></a>
-        <div className="nav-links"><a href="#products">Products</a><a href="/services">Services</a><a href="/about">About</a><a href="/faq">FAQ</a></div>
-        <a className="button button-small button-dark" href="/contact">Let&apos;s talk <Arrow /></a>
-      </nav>
+      <SiteHeader />
 
       <section className="hero shell" id="top">
         <div className="hero-copy">
@@ -62,7 +60,7 @@ export default function Home() {
 
       <section className="contact shell" id="contact"><div className="contact-inner"><span className="kicker">Have an idea or a problem?</span><h2>Let&apos;s make it<br /><em>move.</em></h2><p>Tell me what you&apos;re building—or what&apos;s slowing you down. You&apos;ll get a direct, thoughtful reply.</p><a className="button button-primary button-large" href="mailto:hello@agentsiraji.com?subject=Let's build something">hello@agentsiraji.com <Arrow /></a></div><div className="contact-shape"><span>AS</span></div></section>
 
-      <footer className="footer shell"><a className="brand" href="#top"><span className="brand-mark">AS</span><span>AgentSiraji</span></a><p>Digital products &amp; rapid execution.</p><div><a href="#products">Products</a><a href="/services">Services</a><a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a></div><small>© {new Date().getFullYear()} AgentSiraji. Built to move.</small></footer>
+      <SiteFooter />
     </main>
   );
 }
