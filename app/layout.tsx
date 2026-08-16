@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://agentsiraji.com"),
+  metadataBase: new URL(siteUrl),
   title: { default: "AgentSiraji — Digital products that move business forward", template: "%s | AgentSiraji" },
   description: "Smart digital products and rapid execution for ambitious businesses. Discover LeadPilot, Doctor's Diary, and custom digital services.",
   keywords: ["AgentSiraji", "LeadPilot", "Doctor's Diary", "digital products", "automation", "Bangladesh"],
   openGraph: {
     title: "AgentSiraji — Ideas into impact, fast.",
     description: "Purpose-built digital products and services for modern businesses.",
-    url: "https://agentsiraji.com",
+    url: siteUrl,
     siteName: "AgentSiraji",
     type: "website"
   },
@@ -19,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );
