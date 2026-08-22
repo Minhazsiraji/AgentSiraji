@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { CommerceCheckoutForm } from "@/components/CommerceCheckoutForm";
 import { checkoutRoutes } from "@/lib/billing";
 import { commercePlans } from "@/lib/catalog";
 
@@ -29,6 +30,25 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
           <p>This checkout is intentionally in launch-preparation mode. No live payment credentials are embedded here, and no test/manual submission can silently activate a real service.</p>
         </div>
         <div className="product-monogram">{selected.name.slice(0, 2).toUpperCase()}<span>{selected.name}</span></div>
+      </section>
+
+      <section className="products shell section">
+        <div className="section-heading">
+          <div><span className="kicker">Interactive test</span><h2>Exercise the rules.<br /><em>Without moving money.</em></h2></div>
+          <p>The simulator uses the same market/provider validation and activation rules that the live checkout will enforce after sandbox credentials are connected.</p>
+        </div>
+        <div className="product-grid">
+          <CommerceCheckoutForm plans={commercePlans} routes={checkoutRoutes} initialPlan={selected.id} />
+          <article className="product-card diary-card">
+            <div className="card-top"><span className="status light">Trust boundary</span><span className="card-num">02</span></div>
+            <div className="product-copy">
+              <span className="product-label">Activation protection</span>
+              <h3>Payment proof is never access.</h3>
+              <p>SSLCOMMERZ and Paddle require verified server-side payment events. Bangladesh bank transfer and manual B2B invoice require authorized AgentSiraji approval after receipt verification.</p>
+              <p><strong>Result:</strong> redirects, screenshots, and unverified callbacks cannot activate Commerce.</p>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section className="products shell section">
@@ -74,8 +94,8 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
       <section className="contact shell">
         <div className="contact-inner">
           <span className="kicker">Launch preparation</span>
-          <h2>Payment UI first.<br /><em>Live money only after verification.</em></h2>
-          <p>The next billing tranche will connect real sandbox sessions, webhook verification, payment records, invoices, subscriptions, and manual approval audit logs.</p>
+          <h2>Payment flow ready.<br /><em>Credentials unlock sandbox.</em></h2>
+          <p>The commercial database model, market/payment rules, and webhook trust boundaries are prepared. Live sandbox sessions and persistent payment records will connect when the provider credentials are supplied.</p>
           <Link className="button button-primary button-large" href="/contact">Talk to sales →</Link>
         </div>
         <div className="contact-shape"><span>CO</span></div>
