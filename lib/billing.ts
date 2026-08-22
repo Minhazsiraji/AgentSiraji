@@ -9,7 +9,14 @@ export type PaymentStatus =
   | "cancelled"
   | "refunded";
 
-export type SubscriptionStatus = "pending" | "active" | "past_due" | "cancelled" | "expired";
+export type SubscriptionStatus =
+  | "pending"
+  | "active"
+  | "past_due"
+  | "cancel_at_period_end"
+  | "cancelled"
+  | "suspended"
+  | "expired";
 
 export type CheckoutRoute = {
   provider: PaymentProvider;
