@@ -57,7 +57,7 @@ export async function createSSLCommerzSandboxSession(
     currency: "BDT",
     tran_id: input.tranId,
 
-    success_url: `${input.baseUrl}/api/payments/sslcommerz/success`,
+    success_url: `${input.baseUrl}/api/payments/sslcommerz/success?tran_id=                 	${encodeURIComponent(input.tranId)}`,
     fail_url: `${input.baseUrl}/checkout/commerce?payment=failed`,
     cancel_url: `${input.baseUrl}/checkout/commerce?payment=cancelled`,
     ipn_url: `${input.baseUrl}/api/webhooks/sslcommerz`,
@@ -139,4 +139,65 @@ export async function validateSSLCommerzTransaction(valId: string) {
   }
 
   return (await response.json()) as SSLCommerzValidationResponse;
+}
+
+type SSLCommerzTransactionQueryElement = {
+  val_id?: string;
+  status?: string;
+  tran_id?: string;
+  amount?: string;
+  currency_type?: string;
+  currency_amount?: string;
+  value_a?: string;
+  value_b?: string;
+  risk_level?: string;
+  risk_title?: string;
+};
+
+type SSLCommerzTransactionQueryResponse = {
+  APIConnect?: string;
+  no_of_trans_found?: number;
+  element?: SSLCommerzTransactionQueryElement[];
+};
+
+export async function querySSLCommerzTransaction(tranId: string) {
+  const { storeId, storePassword } = credentials();
+
+  const url = new URL(
+    "https://sandbox.sslcommerz.com/validator/api/merchantTransIDvalidationAPI.php",
+  );
+
+  url.searchParams.set("tran_id", tranId);
+  url.searchParams.set("store_id", storeId);
+  url.searchParams.set("store_passwd", storePassword);
+  url.searchParams.set("format", "json");
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `SSLCOMMERZ transaction query failed with ${response.status}.`,
+    );
+  }
+
+  const data =
+    (await response.json()) as SSLCommerzTransactionQueryResponse;
+
+  if (
+    data.APIConnect !== "DONE" ||
+    !Array.isArray(data.element) ||
+    data.element.length === 0
+  ) {
+    return null;
+  }
+
+  return data.element.find(
+    (item) =>
+      item.tran_id === tranId &&
+      (item.status === "VALID" ||
+        item.status === "VALIDATED"),
+  ) ?? null;
 }
