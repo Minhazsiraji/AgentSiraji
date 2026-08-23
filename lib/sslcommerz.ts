@@ -57,7 +57,7 @@ export async function createSSLCommerzSandboxSession(
     currency: "BDT",
     tran_id: input.tranId,
 
-    success_url: `${input.baseUrl}/checkout/commerce?payment=success`,
+    success_url: `${input.baseUrl}/api/payments/sslcommerz/success`,
     fail_url: `${input.baseUrl}/checkout/commerce?payment=failed`,
     cancel_url: `${input.baseUrl}/checkout/commerce?payment=cancelled`,
     ipn_url: `${input.baseUrl}/api/webhooks/sslcommerz`,
