@@ -203,3 +203,197 @@ export async function createPendingCheckout(input: {
     amount: totalAmount,
   };
 }
+
+export type PendingGatewayPayment = {
+  paymentId: string;
+  organizationId: string;
+  subscriptionId: string;
+  currency: string;
+  amount: number;
+  status: string;
+  providerTransactionId: string | null;
+};
+
+export async function assignProviderTransaction(input: {
+  paymentId: string;
+  providerTransactionId: string;
+}) {
+  const sql = db();
+
+  const rows = await sql`
+    UPDATE payments
+    SET
+      provider_transaction_id = ${input.providerTransactionId},
+      updated_at = now()
+    WHERE id = ${input.paymentId}
+      AND status = 'PENDING_PAYMENT'
+      AND provider_transaction_id IS NULL
+    RETURNING id
+  `;
+
+  if (!rows[0]) {
+    throw new Error(
+      "Pending payment could not be assigned to the provider transaction.",
+    );
+  }
+}
+
+export async function getPendingGatewayPayment(input: {
+  provider: PaymentProvider;
+  providerTransactionId: string;
+}): Promise<PendingGatewayPayment | null> {
+  const sql = db();
+  const provider = toDatabaseProvider(input.provider);
+
+  const rows = await sql`
+    SELECT
+      id AS payment_id,
+      organization_id,
+      subscription_id,
+      currency,
+      amount,
+      status,
+      provider_transaction_id
+    FROM payments
+    WHERE provider = ${provider}
+      AND provider_transaction_id = ${input.providerTransactionId}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+
+  if (!row || !row.subscription_id) {
+    return null;
+  }
+
+  return {
+    paymentId: String(row.payment_id),
+    organizationId: String(row.organization_id),
+    subscriptionId: String(row.subscription_id),
+    currency: String(row.currency),
+    amount: Number(row.amount),
+    status: String(row.status),
+    providerTransactionId: row.provider_transaction_id
+      ? String(row.provider_transaction_id)
+      : null,
+  };
+}
+
+export async function recordPaymentEvent(input: {
+  provider: PaymentProvider;
+  providerEventId: string;
+  eventType: string;
+  payloadDigest: string;
+}) {
+  const sql = db();
+  const provider = toDatabaseProvider(input.provider);
+
+  const rows = await sql`
+    INSERT INTO payment_events (
+      provider,
+      provider_event_id,
+      event_type,
+      payload_digest
+    )
+    VALUES (
+      ${provider},
+      ${input.providerEventId},
+      ${input.eventType},
+      ${input.payloadDigest}
+    )
+    ON CONFLICT (provider, provider_event_id)
+    DO NOTHING
+    RETURNING id
+  `;
+
+  return {
+    inserted: Boolean(rows[0]),
+    eventId: rows[0] ? String(rows[0].id) : null,
+  };
+}
+
+export async function markPaymentEventProcessed(eventId: string) {
+  const sql = db();
+
+  await sql`
+    UPDATE payment_events
+    SET processed_at = now()
+    WHERE id = ${eventId}
+  `;
+}
+
+export async function activateVerifiedGatewayPayment(input: {
+  paymentId: string;
+  organizationId: string;
+  subscriptionId: string;
+  providerTransactionId: string;
+}) {
+  const sql = db();
+
+  const paymentRows = await sql`
+    UPDATE payments
+    SET
+      status = 'PAID',
+      paid_at = COALESCE(paid_at, now()),
+      updated_at = now()
+    WHERE id = ${input.paymentId}
+      AND organization_id = ${input.organizationId}
+      AND subscription_id = ${input.subscriptionId}
+      AND provider_transaction_id = ${input.providerTransactionId}
+      AND status IN ('PENDING_PAYMENT', 'PAID')
+    RETURNING id
+  `;
+
+  if (!paymentRows[0]) {
+    throw new Error("Verified payment could not be activated.");
+  }
+
+  await sql`
+    UPDATE subscriptions
+    SET
+      status = 'ACTIVE',
+      updated_at = now()
+    WHERE id = ${input.subscriptionId}
+      AND organization_id = ${input.organizationId}
+      AND status IN ('PENDING', 'ACTIVE')
+  `;
+
+  const productRows = await sql`
+    SELECT p.product_id
+    FROM subscriptions s
+    JOIN plans p
+      ON p.id = s.plan_id
+    WHERE s.id = ${input.subscriptionId}
+    LIMIT 1
+  `;
+
+  if (!productRows[0]) {
+    throw new Error("Subscription product could not be resolved.");
+  }
+
+  const productId = String(productRows[0].product_id);
+
+  await sql`
+    INSERT INTO entitlements (
+      organization_id,
+      product_id,
+      subscription_id,
+      status,
+      starts_at
+    )
+    VALUES (
+      ${input.organizationId},
+      ${productId},
+      ${input.subscriptionId},
+      'ACTIVE',
+      now()
+    )
+    ON CONFLICT (organization_id, product_id)
+    DO UPDATE SET
+      subscription_id = EXCLUDED.subscription_id,
+      status = 'ACTIVE',
+      starts_at = COALESCE(entitlements.starts_at, now()),
+      ends_at = NULL,
+      updated_at = now()
+  `;
+}

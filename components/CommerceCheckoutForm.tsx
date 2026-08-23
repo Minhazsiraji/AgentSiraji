@@ -11,6 +11,9 @@ type Props = {
 };
 
 type CheckoutResult = {
+  redirectUrl?: string;
+  paymentId?: string;
+  transactionId?: string;
   ok?: boolean;
   error?: string;
   mode?: string;
@@ -44,8 +47,14 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ plan, market, provider: effectiveProvider }),
       });
-      const payload = (await response.json()) as CheckoutResult;
-      setResult(payload);
+   const payload = (await response.json()) as CheckoutResult;
+
+if (response.ok && payload.redirectUrl) {
+  window.location.assign(payload.redirectUrl);
+  return;
+}
+
+setResult(payload);
     } catch {
       setResult({ error: "The test checkout could not be reached." });
     } finally {
