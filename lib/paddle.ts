@@ -12,8 +12,8 @@ type PaddleTransactionResponse = {
 
 const paddleCatalog = {
   starter: {
-    setupPriceId: "pri_01m0qvsbpt1g2q8pehnfyhbqcf",
-    recurringPriceId: "pri_01m0qvqexnjhybzq6x1pkad7v3",
+    setupPriceId: "pri_01m0qxrdhmkzprbazewch1cfxw",
+    recurringPriceId: "pri_01m0qxtnewh6f37yd72f15sw41",
   },
 } as const;
 
