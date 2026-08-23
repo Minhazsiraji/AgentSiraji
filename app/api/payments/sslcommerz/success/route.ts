@@ -12,18 +12,25 @@ function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-export async function POST(request: Request) {
+async function processSuccess(request: Request, rawBody: string) {
   const redirect = new URL("/checkout/commerce", request.url);
 
   try {
-    const rawBody = await request.text();
+    const url = new URL(request.url);
     const form = new URLSearchParams(rawBody);
 
-    const tranId = form.get("tran_id")?.trim() ?? "";
-    const valId = form.get("val_id")?.trim() ?? "";
+    const tranId =
+      form.get("tran_id")?.trim() ||
+      url.searchParams.get("tran_id")?.trim() ||
+      "";
+
+    const valId =
+      form.get("val_id")?.trim() ||
+      url.searchParams.get("val_id")?.trim() ||
+      "";
 
     if (!tranId || !valId) {
-      redirect.searchParams.set("payment", "verification-failed");
+      redirect.searchParams.set("payment", "verification-pending");
       return NextResponse.redirect(redirect, 303);
     }
 
@@ -71,10 +78,7 @@ export async function POST(request: Request) {
       return NextResponse.redirect(redirect, 303);
     }
 
-    if (
-      validation.value_a &&
-      validation.value_a !== payment.paymentId
-    ) {
+    if (validation.value_a && validation.value_a !== payment.paymentId) {
       redirect.searchParams.set("payment", "reference-mismatch");
       return NextResponse.redirect(redirect, 303);
     }
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
       provider: "sslcommerz",
       providerEventId: `${tranId}:${valId}`,
       eventType: "SUCCESS_CALLBACK_VALIDATED",
-      payloadDigest: sha256(rawBody),
+      payloadDigest: sha256(rawBody || `${tranId}:${valId}`),
     });
 
     if (event.inserted) {
@@ -106,4 +110,13 @@ export async function POST(request: Request) {
     redirect.searchParams.set("payment", "verification-failed");
     return NextResponse.redirect(redirect, 303);
   }
+}
+
+export async function POST(request: Request) {
+  const rawBody = await request.text();
+  return processSuccess(request, rawBody);
+}
+
+export async function GET(request: Request) {
+  return processSuccess(request, "");
 }
