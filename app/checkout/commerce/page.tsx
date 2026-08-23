@@ -1,3 +1,4 @@
+import { PaddleInitializer } from "@/components/PaddleInitializer";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
@@ -21,6 +22,7 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
 
   return (
     <main>
+     <PaddleInitializer />
       <SiteHeader />
       <section className="product-hero lead-product shell">
         <div>

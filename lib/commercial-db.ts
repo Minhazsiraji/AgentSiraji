@@ -83,6 +83,8 @@ export type PendingCheckout = {
   priceId: string;
   currency: string;
   amount: number;
+  setupAmount: number;
+  recurringAmount: number;
 };
 
 export async function createPendingCheckout(input: {
@@ -193,14 +195,16 @@ export async function createPendingCheckout(input: {
   const paymentId = String(paymentRows[0].id);
 
   return {
-    accountId,
-    organizationId,
-    subscriptionId,
-    paymentId,
-    planId: context.planId,
-    priceId: context.priceId,
-    currency: context.currency,
-    amount: totalAmount,
+  accountId,
+  organizationId,
+  subscriptionId,
+  paymentId,
+  planId: context.planId,
+  priceId: context.priceId,
+  currency: context.currency,
+  amount: totalAmount,
+  setupAmount: context.setupAmount,
+  recurringAmount: context.recurringAmount,
   };
 }
 

@@ -8,12 +8,15 @@ import {
   type PaymentProvider,
 } from "@/lib/billing";
 import { createSSLCommerzSandboxSession } from "@/lib/sslcommerz";
+import { createPaddleSandboxTransaction } from "@/lib/paddle";
 
 const planIds = new Set(["starter", "growth", "pro"]);
+
 const bdProviders = new Set<PaymentProvider>([
   "sslcommerz",
   "bank-transfer",
 ]);
+
 const intlProviders = new Set<PaymentProvider>([
   "paddle",
   "manual-invoice",
@@ -23,7 +26,10 @@ type PlanCode = "starter" | "growth" | "pro";
 
 function createTransactionId() {
   const time = Date.now().toString(36).toUpperCase();
-  const random = crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
+  const random = crypto.randomUUID()
+    .replaceAll("-", "")
+    .slice(0, 8)
+    .toUpperCase();
 
   return `AS${time}${random}`.slice(0, 30);
 }
@@ -101,34 +107,23 @@ export async function POST(request: Request) {
       );
     }
 
-    /*
-     * Sandbox identity only.
-     *
-     * Before public launch this must come from the real
-     * customer checkout form/account instead of fixed data.
-     */
     const sandboxCustomer = {
       email: "commerce-sandbox@agentsiraji.com",
       displayName: "AgentSiraji Sandbox Customer",
-      organizationName: `AgentSiraji Commerce Sandbox ${Date.now()}`,
+      organizationName:
+        `AgentSiraji Commerce Sandbox ${Date.now()}`,
       phone: "01700000000",
     };
 
     if (provider === "sslcommerz") {
-      if (market !== "bd") {
-        return NextResponse.json(
-          { error: "SSLCOMMERZ is only available for Bangladesh." },
-          { status: 400 },
-        );
-      }
-
       const pending = await createPendingCheckout({
         email: sandboxCustomer.email,
         displayName: sandboxCustomer.displayName,
-        organizationName: sandboxCustomer.organizationName,
+        organizationName:
+          sandboxCustomer.organizationName,
         plan: plan as PlanCode,
-        market,
-        provider,
+        market: "bd",
+        provider: "sslcommerz",
       });
 
       const transactionId = createTransactionId();
@@ -156,7 +151,7 @@ export async function POST(request: Request) {
         ok: true,
         mode: "sandbox",
         provider: "sslcommerz",
-        market,
+        market: "bd",
         plan,
         status: "redirect_to_gateway",
         paymentId: pending.paymentId,
@@ -167,10 +162,52 @@ export async function POST(request: Request) {
       });
     }
 
-    /*
-     * These remain controlled test routes until their
-     * dedicated persistence/provider implementations are wired.
-     */
+    if (provider === "paddle") {
+      const pending = await createPendingCheckout({
+        email: sandboxCustomer.email,
+        displayName: sandboxCustomer.displayName,
+        organizationName:
+          sandboxCustomer.organizationName,
+        plan: plan as PlanCode,
+        market: "international",
+        provider: "paddle",
+      });
+
+      const baseUrl = new URL(request.url).origin;
+
+      const paddleTransaction =
+        await createPaddleSandboxTransaction({
+          paymentId: pending.paymentId,
+          plan,
+          setupAmount: pending.setupAmount,
+          recurringAmount: pending.recurringAmount,
+          checkoutUrl:
+            `${baseUrl}/checkout/commerce`,
+        });
+
+      await assignProviderTransaction({
+        paymentId: pending.paymentId,
+        providerTransactionId:
+          paddleTransaction.transactionId,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        mode: "sandbox",
+        provider: "paddle",
+        market: "international",
+        plan,
+        status: "redirect_to_gateway",
+        paymentId: pending.paymentId,
+        transactionId:
+          paddleTransaction.transactionId,
+        redirectUrl:
+          paddleTransaction.checkoutUrl,
+        activationRule:
+          "Payment activates only after a verified Paddle transaction.completed webhook.",
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       mode: route.mode,
@@ -185,9 +222,7 @@ export async function POST(request: Request) {
       activationRule:
         provider === "bank-transfer"
           ? "Authorized AgentSiraji admin approval is required after bank receipt verification."
-          : provider === "paddle"
-            ? "Verified Paddle webhook processing is required before activation."
-            : "Authorized AgentSiraji verification is required before activation.",
+          : "Authorized AgentSiraji verification is required before activation.",
     });
   } catch (error) {
     console.error("Commerce checkout failed", error);
