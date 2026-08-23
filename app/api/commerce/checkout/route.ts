@@ -227,10 +227,14 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Commerce checkout failed", error);
 
+    const message =
+      error instanceof Error
+        ? error.message
+        : "The sandbox checkout could not be created.";
+
     return NextResponse.json(
       {
-        error:
-          "The sandbox checkout could not be created.",
+        error: message,
       },
       { status: 500 },
     );
