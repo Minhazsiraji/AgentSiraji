@@ -262,6 +262,11 @@
   max-width: 720px;
 }
 
+.footer > div {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
 /* Keep all commercial forms visually consistent and touch friendly. */
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
   min-height: 50px;
@@ -348,6 +353,10 @@
   .account-status-stack strong {
     text-align: left;
     justify-self: start;
+  }
+
+  .footer > div {
+    gap: 14px 18px;
   }
 
   :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
