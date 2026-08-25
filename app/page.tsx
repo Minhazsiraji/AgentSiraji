@@ -58,7 +58,7 @@ export default function Home() {
                 <span className="product-label">{product.category}</span>
                 <h3>{product.shortName}</h3>
                 <p>{product.summary}</p>
-                <Link href={`/products/${product.slug}`}>{product.status === "available" ? "Explore Commerce" : product.status === "labs" ? "View Labs project" : `Discover ${product.shortName}`} <Arrow /></Link>
+                <Link className="button button-primary" href={`/products/${product.slug}`}>{product.status === "available" ? "Explore Commerce" : product.status === "labs" ? "View Labs project" : `Discover ${product.shortName}`} <Arrow /></Link>
               </div>
             </article>
           ))}
