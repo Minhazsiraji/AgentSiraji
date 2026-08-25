@@ -5,6 +5,7 @@ import "./form-controls.css";
 import "./ui-polish.css";
 
 const siteUrl = getSiteUrl();
+const isProduction = process.env.VERCEL_ENV === "production";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -35,7 +36,9 @@ export const metadata: Metadata = {
     title: "AgentSiraji — Software that moves business forward",
     description: "Managed commerce and practical software built to help businesses sell, convert and grow.",
   },
-  robots: { index: true, follow: true },
+  robots: isProduction
+    ? { index: true, follow: true }
+    : { index: false, follow: false, nocache: true },
   manifest: "/manifest.webmanifest",
 };
 
