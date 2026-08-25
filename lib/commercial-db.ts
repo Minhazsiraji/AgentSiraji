@@ -371,6 +371,87 @@ export async function markPaymentEventProcessed(eventId: string) {
   `;
 }
 
+export async function markGatewayPaymentFailed(input: {
+  provider: PaymentProvider;
+  providerTransactionId: string;
+}) {
+  const sql = db();
+  const provider = toDatabaseProvider(input.provider);
+
+  await sql`
+    UPDATE payments
+    SET
+      status = 'FAILED',
+      updated_at = now()
+    WHERE provider = ${provider}
+      AND provider_transaction_id = ${input.providerTransactionId}
+      AND status = 'PENDING_PAYMENT'
+  `;
+}
+
+export async function linkProviderSubscription(input: {
+  subscriptionId: string;
+  providerSubscriptionId?: string | null;
+  providerCustomerId?: string | null;
+}) {
+  if (!input.providerSubscriptionId && !input.providerCustomerId) return;
+
+  const sql = db();
+
+  await sql`
+    UPDATE subscriptions
+    SET
+      provider_subscription_id = COALESCE(
+        ${input.providerSubscriptionId ?? null},
+        provider_subscription_id
+      ),
+      provider_customer_id = COALESCE(
+        ${input.providerCustomerId ?? null},
+        provider_customer_id
+      ),
+      updated_at = now()
+    WHERE id = ${input.subscriptionId}
+  `;
+}
+
+export async function updateProviderSubscriptionState(input: {
+  provider: PaymentProvider;
+  providerSubscriptionId: string;
+  subscriptionStatus: "ACTIVE" | "PAST_DUE" | "CANCELLED" | "SUSPENDED";
+  entitlementStatus: "ACTIVE" | "SUSPENDED" | "REVOKED";
+}) {
+  const sql = db();
+  const provider = toDatabaseProvider(input.provider);
+
+  const rows = await sql`
+    UPDATE subscriptions
+    SET
+      status = ${input.subscriptionStatus},
+      updated_at = now()
+    WHERE provider = ${provider}
+      AND provider_subscription_id = ${input.providerSubscriptionId}
+    RETURNING id, organization_id
+  `;
+
+  const row = rows[0];
+  if (!row) return false;
+
+  await sql`
+    UPDATE entitlements
+    SET
+      status = ${input.entitlementStatus},
+      ends_at = CASE
+        WHEN ${input.entitlementStatus} = 'REVOKED' THEN COALESCE(ends_at, now())
+        ELSE NULL
+      END,
+      updated_at = now()
+    WHERE subscription_id = ${String(row.id)}
+      AND organization_id = ${String(row.organization_id)}
+  `;
+
+  return true;
+}
+
 export async function activateVerifiedGatewayPayment(input: {
   paymentId: string;
   organizationId: string;
