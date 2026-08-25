@@ -52,44 +52,55 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
       <section className="products shell section">
         <div className="section-heading">
           <div>
-            <span className="kicker">Interactive test</span>
+            <span className="kicker">Selected package</span>
             <h2>
-              Exercise the rules.
+              {selected.name}
               <br />
-              <em>Without moving live money.</em>
+              <em>{selected.bestFor}</em>
             </h2>
           </div>
           <p>
-            The simulator uses the same market, provider, and activation trust
-            boundaries intended for launch, while payment providers remain in
-            sandbox mode.
+            Review the package scope before choosing a payment route. The selected
+            plan and included services remain visible before payment begins.
           </p>
         </div>
         <div className="product-grid">
+          <article className="product-card lead-card">
+            <div className="card-top">
+              <span className="status">Package scope</span>
+              <span className="card-num">01</span>
+            </div>
+            <div className="product-copy">
+              <span className="product-label">What is included</span>
+              <h3>{selected.name}</h3>
+              {selected.includes.map((item) => (
+                <p key={item}>✓ {item}</p>
+              ))}
+            </div>
+          </article>
           <CommerceCheckoutForm
             plans={commercePlans}
             routes={checkoutRoutes}
             initialPlan={selected.id}
           />
-          <article className="product-card diary-card">
-            <div className="card-top">
-              <span className="status light">Trust boundary</span>
-              <span className="card-num">02</span>
-            </div>
-            <div className="product-copy">
-              <span className="product-label">Activation protection</span>
-              <h3>Payment proof is never access.</h3>
-              <p>
-                SSLCOMMERZ and Paddle require verified server-side payment events.
-                Bangladesh bank transfer and manual B2B invoice require authorized
-                AgentSiraji approval after receipt verification.
-              </p>
-              <p>
-                <strong>Result:</strong> redirects, screenshots, and unverified
-                callbacks cannot activate Commerce.
-              </p>
-            </div>
-          </article>
+        </div>
+      </section>
+
+      <section className="products shell section">
+        <div className="section-heading">
+          <div>
+            <span className="kicker">Trust boundary</span>
+            <h2>
+              Payment proof is never access.
+              <br />
+              <em>Verification controls activation.</em>
+            </h2>
+          </div>
+          <p>
+            SSLCOMMERZ and Paddle require verified server-side payment events.
+            Bangladesh bank transfer and manual B2B invoice require authorized
+            AgentSiraji approval after receipt verification.
+          </p>
         </div>
       </section>
 
