@@ -8,13 +8,24 @@ import {
 } from "@/lib/commercial-db";
 import { validateSSLCommerzTransaction } from "@/lib/sslcommerz";
 
+const maxBodyBytes = 65_536;
+
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
 export async function POST(request: Request) {
   try {
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (!Number.isFinite(contentLength) || contentLength > maxBodyBytes) {
+      return NextResponse.json({ error: "SSLCOMMERZ webhook payload is too large." }, { status: 413 });
+    }
+
     const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > maxBodyBytes) {
+      return NextResponse.json({ error: "SSLCOMMERZ webhook payload is too large." }, { status: 413 });
+    }
+
     const form = new URLSearchParams(rawBody);
 
     const tranId = form.get("tran_id")?.trim() ?? "";
