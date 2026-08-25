@@ -7,6 +7,7 @@ import { createPaddleSandboxTransaction } from "@/lib/paddle";
 const planIds = new Set(["starter", "growth", "pro"]);
 const bdProviders = new Set<PaymentProvider>(["sslcommerz", "bank-transfer"]);
 const intlProviders = new Set<PaymentProvider>(["paddle", "manual-invoice"]);
+const maxBodyBytes = 8_192;
 type PlanCode = "starter" | "growth" | "pro";
 
 function createTransactionId() {
@@ -30,9 +31,28 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+      return json({ error: "Content-Type must be application/json." }, { status: 415 });
+    }
+
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (!Number.isFinite(contentLength) || contentLength > maxBodyBytes) {
+      return json({ error: "Request is too large." }, { status: 413 });
+    }
+
+    const origin = request.headers.get("origin");
+    if (origin && origin !== new URL(request.url).origin) {
+      return json({ error: "Request origin is not allowed." }, { status: 403 });
+    }
+
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > maxBodyBytes) {
+      return json({ error: "Request is too large." }, { status: 413 });
+    }
+
     let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return json({ error: "Invalid JSON payload." }, { status: 400 });
     }
