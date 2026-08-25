@@ -16,11 +16,21 @@ function createTransactionId() {
 }
 
 export async function POST(request: Request) {
+  if (process.env.VERCEL_ENV === "production" && process.env.COMMERCIAL_LIVE_CHECKOUT_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: "Live Commerce checkout is not enabled yet. Contact AgentSiraji for launch enquiries." },
+      { status: 503 },
+    );
+  }
+
   try {
     let body: unknown;
-    try { body = await request.json(); } catch {
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
     }
+
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Invalid checkout payload." }, { status: 400 });
     }
@@ -29,15 +39,20 @@ export async function POST(request: Request) {
     const plan = typeof data.plan === "string" ? data.plan : "";
     const market = data.market === "bd" || data.market === "international" ? data.market : null;
     const provider = typeof data.provider === "string" ? data.provider as PaymentProvider : null;
+
     if (!planIds.has(plan) || !market || !provider) {
       return NextResponse.json({ error: "Plan, market, and payment method are required." }, { status: 400 });
     }
+
     const providerAllowed = market === "bd" ? bdProviders.has(provider) : intlProviders.has(provider);
     if (!providerAllowed) {
       return NextResponse.json({ error: "That payment method is not available for this market." }, { status: 400 });
     }
+
     const route = checkoutRoutes.find((item) => item.provider === provider && item.market === market);
-    if (!route) return NextResponse.json({ error: "Checkout route is not configured." }, { status: 409 });
+    if (!route) {
+      return NextResponse.json({ error: "Checkout route is not configured." }, { status: 409 });
+    }
 
     const sandboxCustomer = {
       email: "commerce-sandbox@agentsiraji.com",
@@ -69,10 +84,19 @@ export async function POST(request: Request) {
         plan,
         baseUrl,
       });
-      return NextResponse.json({ ok: true, mode: "sandbox", provider, market, plan,
-        status: "redirect_to_gateway", paymentId: pending.paymentId, transactionId,
+
+      return NextResponse.json({
+        ok: true,
+        mode: "sandbox",
+        provider,
+        market,
+        plan,
+        status: "redirect_to_gateway",
+        paymentId: pending.paymentId,
+        transactionId,
         redirectUrl: session.gatewayUrl,
-        activationRule: "Payment activates only after verified SSLCOMMERZ server-side validation." });
+        activationRule: "Payment activates only after verified SSLCOMMERZ server-side validation.",
+      });
     }
 
     if (provider === "paddle") {
@@ -84,11 +108,24 @@ export async function POST(request: Request) {
         recurringAmount: pending.recurringAmount,
         checkoutUrl: `${baseUrl}/checkout/commerce?plan=${encodeURIComponent(plan)}`,
       });
-      await assignProviderTransaction({ paymentId: pending.paymentId, providerTransactionId: paddleTransaction.transactionId });
-      return NextResponse.json({ ok: true, mode: "sandbox", provider, market, plan,
-        status: "redirect_to_gateway", paymentId: pending.paymentId,
-        transactionId: paddleTransaction.transactionId, redirectUrl: paddleTransaction.checkoutUrl,
-        activationRule: "Payment activates only after a verified Paddle transaction.completed webhook." });
+
+      await assignProviderTransaction({
+        paymentId: pending.paymentId,
+        providerTransactionId: paddleTransaction.transactionId,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        mode: "sandbox",
+        provider,
+        market,
+        plan,
+        status: "redirect_to_gateway",
+        paymentId: pending.paymentId,
+        transactionId: paddleTransaction.transactionId,
+        redirectUrl: paddleTransaction.checkoutUrl,
+        activationRule: "Payment activates only after a verified Paddle transaction.completed webhook.",
+      });
     }
 
     return NextResponse.json({
@@ -107,7 +144,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Commerce checkout failed", error);
-    const message = error instanceof Error ? error.message : "The sandbox checkout could not be created.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const diagnostic = process.env.VERCEL_ENV === "preview" && error instanceof Error
+      ? error.message
+      : "The Commerce checkout could not be created.";
+    return NextResponse.json({ error: diagnostic }, { status: 500 });
   }
 }
