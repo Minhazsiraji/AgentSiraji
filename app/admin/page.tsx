@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
 
@@ -9,6 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
+  if (process.env.VERCEL_ENV === "production") {
+    notFound();
+  }
+
   return (
     <main>
       <SiteHeader />
