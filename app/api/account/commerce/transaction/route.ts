@@ -7,6 +7,10 @@ const providerMap = {
 } as const;
 
 export async function GET(request: Request) {
+  if (process.env.VERCEL_ENV === "production" && process.env.COMMERCIAL_ACCOUNT_PREVIEW_ENABLED !== "true") {
+    return NextResponse.json({ error: "Customer account sign-in is required for production access." }, { status: 403 });
+  }
+
   try {
     const url = new URL(request.url);
     const provider = url.searchParams.get("provider")?.trim() as keyof typeof providerMap | undefined;
