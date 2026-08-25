@@ -219,7 +219,7 @@ export async function submitManualPayment(input: {
   await sql`
     INSERT INTO audit_log (organization_id, action, entity_type, entity_id, details)
     VALUES (${String(payment.organization_id)}, 'MANUAL_PAYMENT_SUBMITTED', 'payment', ${input.paymentId},
-      jsonb_build_object('provider', ${provider}, 'submission_id', ${String(submissionRows[0].id)}))
+      jsonb_build_object('provider', ${provider}::text, 'submission_id', ${String(submissionRows[0].id)}::text))
   `;
   return { submissionId: String(submissionRows[0].id), paymentId: input.paymentId,
     organizationId: String(payment.organization_id), subscriptionId: String(payment.subscription_id),
@@ -278,7 +278,7 @@ export async function reviewManualPayment(input: {
   await sql`
     INSERT INTO audit_log (actor_account_id, organization_id, action, entity_type, entity_id, details)
     VALUES (${input.reviewedByAccountId ?? null}, ${String(row.organization_id)}, ${`MANUAL_PAYMENT_${input.decision}`},
-      'payment', ${input.paymentId}, jsonb_build_object('review_note', ${input.reviewNote?.trim() || null}))
+      'payment', ${input.paymentId}, jsonb_build_object('review_note', ${input.reviewNote?.trim() || null}::text))
   `;
   return { paymentId: input.paymentId, paymentStatus: nextPaymentStatus,
     subscriptionStatus: input.decision === 'APPROVED' ? 'ACTIVE' : 'PENDING',
