@@ -13,15 +13,15 @@ function sha256(value: string) {
 }
 
 async function processSuccess(request: Request) {
-  const redirect = new URL("/checkout/commerce", request.url);
+  const checkoutRedirect = new URL("/checkout/commerce", request.url);
 
   try {
     const url = new URL(request.url);
     const tranId = url.searchParams.get("tran_id")?.trim() ?? "";
 
     if (!tranId) {
-      redirect.searchParams.set("payment", "verification-pending");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "verification-pending");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const payment = await getPendingGatewayPayment({
@@ -30,22 +30,22 @@ async function processSuccess(request: Request) {
     });
 
     if (!payment) {
-      redirect.searchParams.set("payment", "unknown");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "unknown");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const transaction = await querySSLCommerzTransaction(tranId);
 
     if (!transaction) {
-      redirect.searchParams.set("payment", "verification-pending");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "verification-pending");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const status = transaction.status?.toUpperCase() ?? "";
 
     if (status !== "VALID" && status !== "VALIDATED") {
-      redirect.searchParams.set("payment", "verification-failed");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "verification-failed");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const validatedAmount = Number(
@@ -56,8 +56,8 @@ async function processSuccess(request: Request) {
       !Number.isFinite(validatedAmount) ||
       Math.round(validatedAmount * 100) !== payment.amount * 100
     ) {
-      redirect.searchParams.set("payment", "amount-mismatch");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "amount-mismatch");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const validatedCurrency = (
@@ -68,16 +68,16 @@ async function processSuccess(request: Request) {
       validatedCurrency &&
       validatedCurrency !== payment.currency.toUpperCase()
     ) {
-      redirect.searchParams.set("payment", "currency-mismatch");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "currency-mismatch");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     if (
       transaction.value_a &&
       transaction.value_a !== payment.paymentId
     ) {
-      redirect.searchParams.set("payment", "reference-mismatch");
-      return NextResponse.redirect(redirect, 303);
+      checkoutRedirect.searchParams.set("payment", "reference-mismatch");
+      return NextResponse.redirect(checkoutRedirect, 303);
     }
 
     const providerEventId =
@@ -107,16 +107,18 @@ async function processSuccess(request: Request) {
       }
     }
 
-    redirect.searchParams.set("payment", "verified");
-    return NextResponse.redirect(redirect, 303);
+    const accountRedirect = new URL("/account/commerce", request.url);
+    accountRedirect.searchParams.set("provider", "sslcommerz");
+    accountRedirect.searchParams.set("transactionId", tranId);
+    return NextResponse.redirect(accountRedirect, 303);
   } catch (error) {
     console.error(
       "SSLCOMMERZ transaction-query verification failed",
       error,
     );
 
-    redirect.searchParams.set("payment", "verification-failed");
-    return NextResponse.redirect(redirect, 303);
+    checkoutRedirect.searchParams.set("payment", "verification-failed");
+    return NextResponse.redirect(checkoutRedirect, 303);
   }
 }
 
