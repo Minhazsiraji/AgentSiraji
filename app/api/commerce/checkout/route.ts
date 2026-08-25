@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         plan,
         setupAmount: pending.setupAmount,
         recurringAmount: pending.recurringAmount,
-        checkoutUrl: `${baseUrl}/checkout/commerce`,
+        checkoutUrl: `${baseUrl}/checkout/commerce?plan=${encodeURIComponent(plan)}`,
       });
       await assignProviderTransaction({ paymentId: pending.paymentId, providerTransactionId: paddleTransaction.transactionId });
       return NextResponse.json({ ok: true, mode: "sandbox", provider, market, plan,
