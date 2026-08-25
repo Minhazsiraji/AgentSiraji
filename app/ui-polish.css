@@ -98,6 +98,170 @@
   line-height: 1.45;
 }
 
+/* Commerce account dashboard */
+.commerce-account-view {
+  display: grid;
+  gap: 22px;
+}
+
+.account-activation-banner,
+.account-reference-card {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 48px rgba(31, 56, 96, 0.08);
+}
+
+.account-activation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 30px 32px;
+}
+
+.account-activation-banner.is-active {
+  background: linear-gradient(135deg, rgba(189, 249, 221, 0.92), rgba(233, 240, 255, 0.9));
+}
+
+.account-activation-banner h2 {
+  margin: 8px 0 8px;
+  font-size: clamp(30px, 4vw, 48px);
+  letter-spacing: -.045em;
+}
+
+.account-activation-banner p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.account-status-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  padding: 11px 16px;
+  font: 700 11px "Manrope", sans-serif;
+  letter-spacing: .1em;
+}
+
+.account-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+
+.account-detail-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-detail-card .product-copy {
+  flex: 1;
+}
+
+.account-detail-list,
+.account-status-stack {
+  display: grid;
+  gap: 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.account-detail-list > div,
+.account-status-stack > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-detail-list span,
+.account-status-stack span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-detail-list strong,
+.account-status-stack strong {
+  text-align: right;
+  font: 700 14px "Manrope", sans-serif;
+}
+
+.account-status-stack strong {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  letter-spacing: .06em;
+}
+
+.account-status-stack .is-good {
+  background: rgba(71, 191, 114, .14);
+  color: #16733b;
+}
+
+.account-status-stack .is-waiting {
+  background: rgba(201, 255, 61, .28);
+  color: #526400;
+}
+
+.account-status-stack .is-neutral {
+  background: rgba(16, 24, 32, .08);
+  color: var(--ink);
+}
+
+.account-billing-note {
+  min-height: 0 !important;
+  margin: 20px 0 0 !important;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.7);
+  line-height: 1.5 !important;
+}
+
+.account-reference-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 26px 30px;
+}
+
+.account-reference-card strong {
+  display: block;
+  margin: 7px 0 6px;
+  overflow-wrap: anywhere;
+  font: 700 16px "Manrope", sans-serif;
+}
+
+.account-reference-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.account-secondary-button {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.78);
+  padding: 17px 24px;
+}
+
+.account-state-card {
+  max-width: 720px;
+}
+
 /* Keep all commercial forms visually consistent and touch friendly. */
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
   min-height: 50px;
@@ -121,7 +285,8 @@
 }
 
 @media (max-width: 760px) {
-  .commerce-plans .product-grid {
+  .commerce-plans .product-grid,
+  .account-summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -144,6 +309,17 @@
   .checkout-scope-copy {
     padding: 26px 24px 28px;
   }
+
+  .account-activation-banner,
+  .account-reference-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 600px) {
@@ -152,8 +328,26 @@
     gap: 8px;
   }
 
-  .commerce-plans .plan-copy .button {
+  .commerce-plans .plan-copy .button,
+  .account-actions .button {
     width: 100%;
+  }
+
+  .account-activation-banner,
+  .account-reference-card {
+    padding: 24px 22px;
+  }
+
+  .account-detail-list > div,
+  .account-status-stack > div {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .account-detail-list strong,
+  .account-status-stack strong {
+    text-align: left;
+    justify-self: start;
   }
 
   :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
