@@ -8,18 +8,35 @@ const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "AgentSiraji — Digital products that move business forward", template: "%s | AgentSiraji" },
-  description: "Smart digital products and rapid execution for ambitious businesses. Discover LeadPilot, Doctor's Diary, and custom digital services.",
-  keywords: ["AgentSiraji", "LeadPilot", "Doctor's Diary", "digital products", "automation", "Bangladesh"],
+  title: {
+    default: "AgentSiraji — Software that helps businesses sell, convert and grow",
+    template: "%s | AgentSiraji",
+  },
+  description: "AgentSiraji builds practical software for ambitious businesses, led by managed e-commerce through AgentSiraji Commerce, with LeadPilot and AdIntel expanding the sell-convert-grow product system.",
+  keywords: [
+    "AgentSiraji",
+    "AgentSiraji Commerce",
+    "managed ecommerce",
+    "e-commerce platform",
+    "LeadPilot",
+    "AdIntel",
+    "business software",
+    "Bangladesh",
+  ],
   openGraph: {
-    title: "AgentSiraji — Ideas into impact, fast.",
-    description: "Purpose-built digital products and services for modern businesses.",
+    title: "AgentSiraji — Software that moves business forward",
+    description: "Managed commerce and practical software built to help businesses sell, convert and grow.",
     url: siteUrl,
     siteName: "AgentSiraji",
-    type: "website"
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AgentSiraji — Software that moves business forward",
+    description: "Managed commerce and practical software built to help businesses sell, convert and grow.",
   },
   robots: { index: true, follow: true },
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
