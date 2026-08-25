@@ -72,7 +72,7 @@ export function PaddleInitializer() {
       if (active) {
         setState("delayed");
         setMessage(
-          "Payment was received. Verification is taking longer than expected; access will activate only after the verified Paddle event arrives.",
+          "Payment was received. Verification is taking longer than expected. Access will activate only after verified confirmation arrives.",
         );
       }
     }
@@ -89,7 +89,7 @@ export function PaddleInitializer() {
       if (!transactionId.startsWith("txn_")) {
         sessionStorage.removeItem(STORAGE_KEY);
         setState("error");
-        setMessage("The Paddle transaction reference is invalid.");
+        setMessage("This payment session is not valid. Please return to checkout and try again.");
         return;
       }
 
@@ -102,14 +102,15 @@ export function PaddleInitializer() {
       updateCheckoutUrl("pending");
 
       if (!token || !token.startsWith("test_")) {
+        console.error("Paddle sandbox client token is missing or invalid.");
         setState("error");
-        setMessage("Paddle sandbox checkout is not configured correctly.");
+        setMessage("Secure checkout is temporarily unavailable. Please try again later.");
         return;
       }
 
       try {
         setState("opening");
-        setMessage("Opening secure Paddle checkout…");
+        setMessage("Opening secure checkout…");
 
         const paddle = await initializePaddle({
           environment: "sandbox",
@@ -119,7 +120,7 @@ export function PaddleInitializer() {
         if (!active || !paddle) {
           if (active) {
             setState("error");
-            setMessage("Paddle checkout could not be initialized.");
+            setMessage("Secure checkout could not be opened. Please try again.");
           }
           return;
         }
@@ -138,11 +139,7 @@ export function PaddleInitializer() {
         console.error("Paddle checkout initialization failed", error);
         if (active) {
           setState("error");
-          setMessage(
-            error instanceof Error
-              ? `Paddle checkout could not open: ${error.message}`
-              : "Paddle checkout could not open.",
-          );
+          setMessage("Secure checkout could not be opened. Please try again or contact support.");
         }
       }
     }
