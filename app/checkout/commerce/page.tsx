@@ -49,7 +49,7 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <section className="products shell section">
+      <section className="products shell section checkout-package-section">
         <div className="section-heading">
           <div>
             <span className="kicker">Selected package</span>
@@ -64,18 +64,20 @@ export default async function CommerceCheckoutPage({ searchParams }: Props) {
             plan and included services remain visible before payment begins.
           </p>
         </div>
-        <div className="product-grid">
-          <article className="product-card lead-card">
+        <div className="product-grid checkout-package-grid">
+          <article className="product-card lead-card checkout-scope-card">
             <div className="card-top">
               <span className="status">Package scope</span>
               <span className="card-num">01</span>
             </div>
-            <div className="product-copy">
+            <div className="product-copy checkout-scope-copy">
               <span className="product-label">What is included</span>
               <h3>{selected.name}</h3>
-              {selected.includes.map((item) => (
-                <p key={item}>✓ {item}</p>
-              ))}
+              <div className="checkout-scope-list">
+                {selected.includes.map((item) => (
+                  <span key={item}>✓ {item}</span>
+                ))}
+              </div>
             </div>
           </article>
           <CommerceCheckoutForm
