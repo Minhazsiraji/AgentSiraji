@@ -20,11 +20,15 @@ export async function GET(request: Request) {
     const rows = await sql`
       SELECT
         p.provider_transaction_id,
+        p.provider,
         p.currency,
         p.amount,
         p.status AS payment_status,
         p.paid_at,
         s.status AS subscription_status,
+        s.current_period_start,
+        s.current_period_end,
+        s.cancel_at_period_end,
         e.status AS entitlement_status,
         pl.code AS plan_code,
         pl.name AS plan_name,
@@ -61,6 +65,9 @@ export async function GET(request: Request) {
       subscriptionStatus: row.subscription_status ? String(row.subscription_status) : null,
       entitlementStatus: row.entitlement_status ? String(row.entitlement_status) : null,
       paidAt: row.paid_at ? new Date(String(row.paid_at)).toISOString() : null,
+      currentPeriodStart: row.current_period_start ? new Date(String(row.current_period_start)).toISOString() : null,
+      currentPeriodEnd: row.current_period_end ? new Date(String(row.current_period_end)).toISOString() : null,
+      cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
     });
   } catch (error) {
     console.error("Commerce customer transaction lookup failed", error);
