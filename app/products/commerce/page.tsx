@@ -40,8 +40,8 @@ export default function CommercePage() {
 
       <section className="products shell section">
         <div className="section-heading">
-          <div><span className="kicker">Plans</span><h2>Start where you are.<br /><em>Move when you are ready.</em></h2></div>
-          <p>Bangladesh and international pricing are both supported. Final checkout will use the customer&apos;s selected market and verified payment route.</p>
+          <div><span className="kicker">Plans</span><h2>Start where you are.<br /><em>Know exactly what is included.</em></h2></div>
+          <p>Every package shows its included service scope before checkout so customers can compare Starter, Growth, and Pro with confidence.</p>
         </div>
         <div className="product-grid">
           {commercePlans.map((plan, index) => (
@@ -52,6 +52,10 @@ export default function CommercePage() {
                 <h3>{plan.name}</h3>
                 <p><strong>Bangladesh:</strong> {plan.setup.bd} setup + {plan.monthly.bd}</p>
                 <p><strong>International:</strong> {plan.setup.international} setup + {plan.monthly.international}</p>
+                <p><strong>Included:</strong></p>
+                {plan.includes.map((item) => (
+                  <p key={item}>✓ {item}</p>
+                ))}
                 <Link href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
               </div>
             </article>
