@@ -56,7 +56,7 @@ export default function CommercePage() {
                 {plan.includes.map((item) => (
                   <p key={item}>✓ {item}</p>
                 ))}
-                <Link href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
+                <Link className="button button-primary" style={{ fontSize: "15px" }} href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
               </div>
             </article>
           ))}
