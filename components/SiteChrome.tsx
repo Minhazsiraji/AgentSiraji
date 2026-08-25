@@ -24,6 +24,9 @@ export function SiteHeader() {
           <Link href="/about">Company</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/contact">Contact</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/refunds">Refunds</Link>
         </div>
       </details>
     </nav>
@@ -41,8 +44,10 @@ export function SiteFooter() {
         <Link href="/pricing">Pricing</Link>
         <Link href="/about">Company</Link>
         <Link href="/contact">Contact</Link>
+        <Link href="/faq">FAQ</Link>
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
+        <Link href="/refunds">Refunds</Link>
       </div>
       <small>© {new Date().getFullYear()} AgentSiraji. Built to move.</small>
     </footer>
