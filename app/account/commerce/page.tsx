@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { CommerceAccountStatus } from "@/components/CommerceAccountStatus";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
@@ -14,6 +15,13 @@ type Props = {
 };
 
 export default async function CommerceAccountPage({ searchParams }: Props) {
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    process.env.COMMERCIAL_ACCOUNT_PREVIEW_ENABLED !== "true"
+  ) {
+    notFound();
+  }
+
   const params = await searchParams;
   const provider = params.provider === "sslcommerz" ? "sslcommerz" : "paddle";
   const transactionId = params.transactionId?.trim() ?? "";
