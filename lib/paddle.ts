@@ -10,12 +10,25 @@ type PaddleTransactionResponse = {
   };
 };
 
-const paddleCatalog = {
+type CommercePlanCode = "starter" | "growth" | "pro";
+
+const paddleCatalog: Record<
+  CommercePlanCode,
+  { setupPriceId: string; recurringPriceId: string }
+> = {
   starter: {
     setupPriceId: "pri_01m0qxrdhmkzprbazewch1cfxw",
     recurringPriceId: "pri_01m0qxtnewh6f37yd72f15sw41",
   },
-} as const;
+  growth: {
+    setupPriceId: "pri_01m0qxyxha1dvk740wnefd23pg",
+    recurringPriceId: "pri_01m0qy14hedg4d1fdp48tv0ftk",
+  },
+  pro: {
+    setupPriceId: "pri_01m0qy73cebe3fhvk0sb40c7m0",
+    recurringPriceId: "pri_01m0qy7xdwvhp9azw0g22bayw8",
+  },
+};
 
 function getApiKey() {
   const apiKey = process.env.PADDLE_API_KEY;
@@ -48,13 +61,11 @@ export async function createPaddleSandboxTransaction(input: {
 }) {
   const apiKey = getApiKey();
 
-  if (input.plan !== "starter") {
-    throw new Error(
-      "Only the Starter Paddle sandbox catalog is configured.",
-    );
+  if (!(input.plan in paddleCatalog)) {
+    throw new Error("Unsupported AgentSiraji Commerce Paddle plan.");
   }
 
-  const catalog = paddleCatalog.starter;
+  const catalog = paddleCatalog[input.plan as CommercePlanCode];
 
   const response = await fetch(
     "https://sandbox-api.paddle.com/transactions",
