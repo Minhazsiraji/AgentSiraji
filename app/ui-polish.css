@@ -61,6 +61,34 @@
   font-size: 15px;
 }
 
+/* Checkout package scope: compact the service list and keep both cards balanced. */
+.checkout-package-grid {
+  align-items: start;
+}
+
+.checkout-scope-card {
+  align-self: start;
+}
+
+.checkout-scope-copy {
+  padding: 28px 30px 30px;
+}
+
+.checkout-scope-copy h3 {
+  margin-bottom: 14px;
+}
+
+.checkout-scope-list {
+  display: grid;
+  gap: 10px;
+}
+
+.checkout-scope-list span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 /* Keep all commercial forms visually consistent and touch friendly. */
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
   min-height: 50px;
@@ -91,10 +119,15 @@
   .commerce-plans .plan-copy {
     padding: 26px 24px 28px;
   }
+
+  .checkout-scope-copy {
+    padding: 26px 24px 28px;
+  }
 }
 
 @media (max-width: 600px) {
-  .commerce-plans .plan-includes {
+  .commerce-plans .plan-includes,
+  .checkout-scope-list {
     gap: 8px;
   }
 
