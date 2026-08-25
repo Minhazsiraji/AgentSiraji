@@ -38,7 +38,7 @@ export default function CommercePage() {
         <p>Your business owns its domain, brand, content, products, and customer data. AgentSiraji manages the core commerce platform, deployment, shared improvements, and the technical foundation under the managed plans.</p>
       </section>
 
-      <section className="products shell section">
+      <section className="products shell section commerce-plans">
         <div className="section-heading">
           <div><span className="kicker">Plans</span><h2>Start where you are.<br /><em>Know exactly what is included.</em></h2></div>
           <p>Every package shows its included service scope before checkout so customers can compare Starter, Growth, and Pro with confidence.</p>
@@ -47,16 +47,20 @@ export default function CommercePage() {
           {commercePlans.map((plan, index) => (
             <article className={`product-card ${index % 2 === 0 ? "lead-card" : "diary-card"}`} key={plan.id}>
               <div className="card-top"><span className="status">{plan.highlight ? "Most popular" : "Managed plan"}</span><span className="card-num">0{index + 1}</span></div>
-              <div className="product-copy">
+              <div className="product-copy plan-copy">
                 <span className="product-label">{plan.bestFor}</span>
                 <h3>{plan.name}</h3>
-                <p><strong>Bangladesh:</strong> {plan.setup.bd} setup + {plan.monthly.bd}</p>
-                <p><strong>International:</strong> {plan.setup.international} setup + {plan.monthly.international}</p>
-                <p><strong>Included:</strong></p>
-                {plan.includes.map((item) => (
-                  <p key={item}>✓ {item}</p>
-                ))}
-                <Link className="button button-primary" style={{ fontSize: "15px" }} href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
+                <div className="plan-pricing">
+                  <p><strong>Bangladesh:</strong> {plan.setup.bd} setup + {plan.monthly.bd}</p>
+                  <p><strong>International:</strong> {plan.setup.international} setup + {plan.monthly.international}</p>
+                </div>
+                <strong className="plan-includes-title">Included</strong>
+                <div className="plan-includes">
+                  {plan.includes.map((item) => (
+                    <span key={item}>✓ {item}</span>
+                  ))}
+                </div>
+                <Link className="button button-primary" href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
               </div>
             </article>
           ))}
