@@ -16,13 +16,15 @@ type ReviewResult = {
 export function ManualPaymentReviewForm() {
   const [paymentId, setPaymentId] = useState("");
   const [token, setToken] = useState("");
-  const [decision, setDecision] = useState<ReviewDecision>("APPROVED");
+  const [decision, setDecision] = useState<ReviewDecision | "">("");
   const [reviewNote, setReviewNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ReviewResult | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!decision) return;
+
     setLoading(true);
     setResult(null);
 
@@ -45,6 +47,7 @@ export function ManualPaymentReviewForm() {
 
       if (response.ok) {
         setToken("");
+        setDecision("");
       }
     } catch {
       setResult({ error: "The manual-payment review request could not be reached." });
@@ -89,9 +92,11 @@ export function ManualPaymentReviewForm() {
         <label>
           <strong>Decision</strong><br />
           <select
+            required
             value={decision}
-            onChange={(event) => setDecision(event.target.value as ReviewDecision)}
+            onChange={(event) => setDecision(event.target.value as ReviewDecision | "")}
           >
+            <option value="" disabled>Select a decision</option>
             <option value="APPROVED">Approve</option>
             <option value="REJECTED">Reject</option>
             <option value="NEEDS_INFORMATION">Need more information</option>
@@ -108,7 +113,7 @@ export function ManualPaymentReviewForm() {
           />
         </label>
 
-        <button className="button button-primary" type="submit" disabled={loading}>
+        <button className="button button-primary" type="submit" disabled={loading || !decision}>
           {loading ? "Reviewing…" : "Submit review →"}
         </button>
 
