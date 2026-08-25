@@ -57,9 +57,9 @@ export async function createSSLCommerzSandboxSession(
     currency: "BDT",
     tran_id: input.tranId,
 
-    success_url: `${input.baseUrl}/api/payments/sslcommerz/success?tran_id=                 	${encodeURIComponent(input.tranId)}`,
-    fail_url: `${input.baseUrl}/checkout/commerce?payment=failed`,
-    cancel_url: `${input.baseUrl}/checkout/commerce?payment=cancelled`,
+    success_url: `${input.baseUrl}/api/payments/sslcommerz/success?tran_id=${encodeURIComponent(input.tranId)}`,
+    fail_url: `${input.baseUrl}/api/payments/sslcommerz/fail?tran_id=${encodeURIComponent(input.tranId)}`,
+    cancel_url: `${input.baseUrl}/api/payments/sslcommerz/cancel?tran_id=${encodeURIComponent(input.tranId)}`,
     ipn_url: `${input.baseUrl}/api/webhooks/sslcommerz`,
 
     cus_name: input.customerName,
