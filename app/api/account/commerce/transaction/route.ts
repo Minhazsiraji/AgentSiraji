@@ -6,9 +6,16 @@ const providerMap = {
   sslcommerz: "SSLCOMMERZ",
 } as const;
 
+function json(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  response.headers.set("Cache-Control", "no-store, private");
+  response.headers.set("Pragma", "no-cache");
+  return response;
+}
+
 export async function GET(request: Request) {
   if (process.env.VERCEL_ENV === "production" && process.env.COMMERCIAL_ACCOUNT_PREVIEW_ENABLED !== "true") {
-    return NextResponse.json({ error: "Customer account sign-in is required for production access." }, { status: 403 });
+    return json({ error: "Customer account sign-in is required for production access." }, { status: 403 });
   }
 
   try {
@@ -17,7 +24,7 @@ export async function GET(request: Request) {
     const transactionId = url.searchParams.get("transactionId")?.trim() ?? "";
 
     if (!provider || !(provider in providerMap) || !transactionId) {
-      return NextResponse.json({ error: "A valid provider and transaction reference are required." }, { status: 400 });
+      return json({ error: "A valid provider and transaction reference are required." }, { status: 400 });
     }
 
     const sql = db();
@@ -51,10 +58,10 @@ export async function GET(request: Request) {
 
     const row = rows[0];
     if (!row) {
-      return NextResponse.json({ error: "Commerce transaction was not found." }, { status: 404 });
+      return json({ error: "Commerce transaction was not found." }, { status: 404 });
     }
 
-    return NextResponse.json({
+    return json({
       ok: true,
       provider,
       transactionId: String(row.provider_transaction_id),
@@ -75,6 +82,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Commerce customer transaction lookup failed", error);
-    return NextResponse.json({ error: "Commerce account status could not be loaded." }, { status: 500 });
+    return json({ error: "Commerce account status could not be loaded." }, { status: 500 });
   }
 }
