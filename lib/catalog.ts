@@ -7,6 +7,7 @@ export type CommercePlan = {
   bestFor: string;
   setup: Record<Market, string>;
   monthly: Record<Market, string>;
+  includes: readonly string[];
   highlight?: boolean;
 };
 
@@ -60,6 +61,18 @@ export const commercePlans: CommercePlan[] = [
     bestFor: "New and focused online stores",
     setup: { bd: "৳29,900", international: "$399" },
     monthly: { bd: "৳1,990/mo", international: "$29/mo" },
+    includes: [
+      "Single-store setup",
+      "Custom branding",
+      "Product and category setup",
+      "Responsive mobile and desktop storefront",
+      "Checkout and order flow",
+      "Basic SEO foundation",
+      "SSL and security baseline",
+      "Analytics foundation",
+      "Managed hosting and deployment",
+      "Monthly maintenance",
+    ],
   },
   {
     id: "growth",
@@ -67,6 +80,18 @@ export const commercePlans: CommercePlan[] = [
     bestFor: "Growing brands that need more room",
     setup: { bd: "৳49,900", international: "$699" },
     monthly: { bd: "৳3,490/mo", international: "$49/mo" },
+    includes: [
+      "Everything in Starter",
+      "Advanced storefront configuration",
+      "More catalog capacity",
+      "Enhanced merchandising sections",
+      "More payment and configuration options",
+      "Enhanced SEO setup",
+      "Enhanced integrations",
+      "Enhanced analytics and tracking",
+      "Growth-level support",
+      "Growth-level maintenance",
+    ],
     highlight: true,
   },
   {
@@ -75,6 +100,18 @@ export const commercePlans: CommercePlan[] = [
     bestFor: "Established brands and advanced needs",
     setup: { bd: "৳79,900", international: "$1,199" },
     monthly: { bd: "৳5,990/mo", international: "$89/mo" },
+    includes: [
+      "Everything in Growth",
+      "Priority implementation",
+      "Advanced catalog needs",
+      "Advanced merchandising",
+      "Complex workflow support",
+      "Advanced SEO configuration",
+      "Priority integrations",
+      "Advanced tracking",
+      "Priority support",
+      "Pro-level maintenance",
+    ],
   },
 ];
 
