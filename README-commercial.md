@@ -1,80 +1,78 @@
-# AgentSiraji Commercial Foundation V1
+# AgentSiraji Commercial Foundation
 
-This branch establishes AgentSiraji as the parent commercial platform for Commerce and future products.
+AgentSiraji Commerce is the first sellable product in the AgentSiraji product system.
 
-## Product status
+## Current release state
 
-- AgentSiraji Commerce — commercial foundation ready in sandbox
-- AgentSiraji LeadPilot — coming soon
-- AgentSiraji AdIntel — coming soon
-- Doctor's Diary — AgentSiraji Labs / private development / not for public sale
+Payment Foundation V1 is complete in sandbox and the branch is in final release-readiness hardening.
 
-## Commercial architecture
+### Verified sandbox flows
 
-The commercial layer is product-agnostic and supports accounts, organizations, products, plans, prices, subscriptions, payments, invoices, entitlements, onboarding, and audit history.
+- SSLCOMMERZ success and cancel flows.
+- Paddle Starter, Growth, and Pro checkout flows.
+- Paddle webhook replay/idempotency handling.
+- Bangladesh manual bank payment submission.
+- Manual payment approve, reject, and needs-information review paths.
+- Post-payment Commerce customer account/status preview.
 
-Payment providers are treated as adapters rather than hard-coded product logic:
+### Commercial UX already present
 
-- Bangladesh online: SSLCOMMERZ
-- Bangladesh manual B2B: bank transfer with authorized admin approval
-- International subscription: Paddle
-- International larger B2B: manual invoice / Payoneer or bank transfer
+- Commerce pricing and checkout pages.
+- Commerce product page and homepage/product CTAs.
+- Post-payment customer account/status page.
+- Internal manual-payment review UI.
+- Privacy, Terms, and Refund & Cancellation pages.
+- Contact form product choices aligned to the current product lineup.
 
-## Activation rules
+## Production safety gates
 
-- Browser redirects never activate a subscription.
-- Uploaded or linked payment proof never activates a subscription.
-- SSLCOMMERZ requires verified server-side validation.
-- Paddle requires a verified signed server webhook.
-- Bangladesh manual bank transfer requires authorized AgentSiraji review after independent receipt verification.
-- Manual international invoice requires authorized AgentSiraji review.
-- Entitlements activate only after a verified paid state.
+Production money movement remains intentionally disabled until the final commercial go-live tranche.
 
-## Sandbox acceptance status
+- `COMMERCIAL_LIVE_CHECKOUT_ENABLED=false` keeps production Commerce checkout closed.
+- `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED=false` keeps transaction-reference account lookup closed in production until customer authentication replaces the preview boundary.
+- SSLCOMMERZ is restricted to sandbox mode in the current integration.
+- Paddle is restricted to sandbox mode in the current integration.
+- Manual payment approval requires a server-only admin review token.
+- Manual payment proof never activates service by itself; only an authorized approval can activate the corresponding entitlement.
 
-Completed and verified in the commercial sandbox:
+## Security and hardening completed
 
-- SSLCOMMERZ successful checkout and server-side activation
-- SSLCOMMERZ customer-account redirect
-- SSLCOMMERZ cancellation handling without entitlement activation
-- Paddle Starter, Growth, and Pro checkout
-- Paddle signed webhook activation
-- Paddle replay/idempotency without duplicate commercial state
-- Manual bank-transfer submission → under review → approval
-- Manual bank-transfer rejection without activation
-- Manual invoice needs-information state without activation
-- Customer-facing Commerce purchase/status preview
-- Production safety gates preventing accidental live checkout
-- Production safety gate blocking transaction-reference account lookup until authentication exists
+- Checkout/API error sanitization.
+- `no-store` / private cache controls on sensitive responses.
+- JSON content-type, request-size, and same-origin validation on commercial write endpoints.
+- Manual payment input validation.
+- HTTPS-only proof URL validation.
+- Constant-time admin token comparison.
+- Browser input cannot spoof the authoritative reviewer account identity.
+- Manual-payment admin UI requires an explicit review decision and does not default to approval.
+- Security headers include CSP, HSTS, clickjacking protection, referrer policy, permissions policy, and MIME sniffing protection.
 
-## Current safety mode
+## SEO and indexing
 
-No production payment credentials belong in the repository. Preview deployments use sandbox providers.
+- Production metadata, sitemap, and robots configuration are present.
+- Preview environments are `noindex` / `nofollow`.
+- Sensitive operational/account/checkout paths are excluded from production crawling.
 
-Production checkout is blocked unless `COMMERCIAL_LIVE_CHECKOUT_ENABLED=true` is deliberately configured after go-live acceptance.
+## Automated quality gate
 
-Transaction-reference customer account preview is blocked in production unless `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED=true`. The intended production replacement is authenticated customer account access, so this flag should normally remain disabled.
+`.github/workflows/release-readiness.yml` runs on the commercial branch, pull requests, and `main` and requires:
 
-`.env.example` documents required variables without real credentials.
+1. frozen-lockfile install
+2. lint
+3. TypeScript typecheck
+4. production build
 
-## Database
+## Intentionally deferred before commercial go-live
 
-A dedicated Neon project named `agentsiraji-commercial` contains the commercial schema. It is intentionally separate from the SirajiBD / Commerce product database.
+These are not to be implemented with placeholder identities or credentials:
 
-## Deferred production blockers
-
-These items intentionally remain outside the sandbox foundation and must be completed before live money:
-
-1. Real customer authentication and organization-scoped account access.
-2. Production AgentSiraji business/legal identity and policy details.
-3. Production SSLCOMMERZ merchant credentials and production validation test.
-4. Production Paddle account/catalog/webhook credentials and lifecycle test.
-5. Real Bangladesh business bank details and operational review ownership.
-6. International payout/invoice receiving details where manual B2B payment is offered.
-7. Recurring subscription lifecycle: renewal, past-due/payment failure, cancellation, pause/resume, entitlement suspension/revocation.
-8. Atomic transaction boundaries for payment/subscription/entitlement activation where required.
-9. Final production security, accessibility, responsive, SEO, and operational acceptance.
+1. Customer authentication and authenticated Commerce account ownership.
+2. Production SSLCOMMERZ merchant credentials and live endpoints.
+3. Production Paddle credentials/catalog and live environment.
+4. Final AgentSiraji legal/business identity and legal-page particulars.
+5. Final Bangladesh business bank details and international receiving instructions.
+6. Explicit commercial go-live acceptance before enabling the production checkout gate.
 
 ## Release rule
 
-Do not enable live checkout merely because the branch is deployable. Live money requires explicit commercial go-live acceptance and production credentials for each enabled payment route.
+Do not enable `COMMERCIAL_LIVE_CHECKOUT_ENABLED` or `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED` in production until the corresponding deferred production controls are complete and verified.
