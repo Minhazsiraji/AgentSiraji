@@ -11,6 +11,8 @@ import {
 } from "@/lib/commercial-db";
 import { verifyPaddleWebhook } from "@/lib/paddle";
 
+const maxBodyBytes = 262_144;
+
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -36,7 +38,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (!Number.isFinite(contentLength) || contentLength > maxBodyBytes) {
+      return NextResponse.json({ error: "Paddle webhook payload is too large." }, { status: 413 });
+    }
+
     const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > maxBodyBytes) {
+      return NextResponse.json({ error: "Paddle webhook payload is too large." }, { status: 413 });
+    }
+
     const event = await verifyPaddleWebhook(rawBody, signature);
 
     if (!handledEvents.has(event.eventType)) {
