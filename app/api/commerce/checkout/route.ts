@@ -15,9 +15,15 @@ function createTransactionId() {
   return `AS${time}${random}`.slice(0, 30);
 }
 
+function json(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 export async function POST(request: Request) {
   if (process.env.VERCEL_ENV === "production" && process.env.COMMERCIAL_LIVE_CHECKOUT_ENABLED !== "true") {
-    return NextResponse.json(
+    return json(
       { error: "Live Commerce checkout is not enabled yet. Contact AgentSiraji for launch enquiries." },
       { status: 503 },
     );
@@ -28,11 +34,11 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+      return json({ error: "Invalid JSON payload." }, { status: 400 });
     }
 
     if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid checkout payload." }, { status: 400 });
+      return json({ error: "Invalid checkout payload." }, { status: 400 });
     }
 
     const data = body as Record<string, unknown>;
@@ -41,17 +47,17 @@ export async function POST(request: Request) {
     const provider = typeof data.provider === "string" ? data.provider as PaymentProvider : null;
 
     if (!planIds.has(plan) || !market || !provider) {
-      return NextResponse.json({ error: "Plan, market, and payment method are required." }, { status: 400 });
+      return json({ error: "Plan, market, and payment method are required." }, { status: 400 });
     }
 
     const providerAllowed = market === "bd" ? bdProviders.has(provider) : intlProviders.has(provider);
     if (!providerAllowed) {
-      return NextResponse.json({ error: "That payment method is not available for this market." }, { status: 400 });
+      return json({ error: "That payment method is not available for this market." }, { status: 400 });
     }
 
     const route = checkoutRoutes.find((item) => item.provider === provider && item.market === market);
     if (!route) {
-      return NextResponse.json({ error: "Checkout route is not configured." }, { status: 409 });
+      return json({ error: "Checkout route is not configured." }, { status: 409 });
     }
 
     const sandboxCustomer = {
@@ -85,7 +91,7 @@ export async function POST(request: Request) {
         baseUrl,
       });
 
-      return NextResponse.json({
+      return json({
         ok: true,
         mode: "sandbox",
         provider,
@@ -114,7 +120,7 @@ export async function POST(request: Request) {
         providerTransactionId: paddleTransaction.transactionId,
       });
 
-      return NextResponse.json({
+      return json({
         ok: true,
         mode: "sandbox",
         provider,
@@ -128,7 +134,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({
+    return json({
       ok: true,
       mode: route.mode,
       provider,
@@ -144,9 +150,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Commerce checkout failed", error);
-    const diagnostic = process.env.VERCEL_ENV === "preview" && error instanceof Error
-      ? error.message
-      : "The Commerce checkout could not be created.";
-    return NextResponse.json({ error: diagnostic }, { status: 500 });
+    return json({ error: "The Commerce checkout could not be created. Please try again or contact support." }, { status: 500 });
   }
 }
