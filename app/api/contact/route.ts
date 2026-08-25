@@ -72,13 +72,24 @@ export async function POST(request: Request) {
       return json({ message: "Request is too large." }, 413);
     }
 
-    const body = JSON.parse(rawBody);
-    const name = String(body.name || "").trim();
-    const email = String(body.email || "").trim();
-    const interest = String(body.interest || "").trim();
-    const message = String(body.message || "").trim();
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return json({ message: "Invalid JSON payload." }, 400);
+    }
 
-    if (body.website) return json({ ok: true });
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return json({ message: "Invalid contact form payload." }, 400);
+    }
+
+    const data = body as Record<string, unknown>;
+    const name = String(data.name || "").trim();
+    const email = String(data.email || "").trim();
+    const interest = String(data.interest || "").trim();
+    const message = String(data.message || "").trim();
+
+    if (data.website) return json({ ok: true });
     if (
       name.length < 2 || name.length > 80 ||
       !emailPattern.test(email) || email.length > 120 ||
