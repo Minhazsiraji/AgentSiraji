@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
+import "./form-controls.css";
 
 const siteUrl = getSiteUrl();
 
