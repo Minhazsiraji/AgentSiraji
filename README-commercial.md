@@ -79,3 +79,5 @@ Do not enable either production gate until all relevant prerequisites are comple
 
 - customer authentication is live before `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED=true`;
 - production merchant credentials, production provider endpoints/catalog, final business/legal identity, final receiving details, and end-to-end live-readiness acceptance are complete before `COMMERCIAL_LIVE_CHECKOUT_ENABLED=true`.
+
+Until then, keep the current branch and any preview deployment in sandbox/test mode only.
