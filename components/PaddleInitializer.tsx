@@ -20,6 +20,13 @@ function updateCheckoutUrl(payment: string) {
   window.history.replaceState({}, "", url.toString());
 }
 
+function goToCommerceAccount(transactionId: string) {
+  const url = new URL("/account/commerce", window.location.origin);
+  url.searchParams.set("provider", "paddle");
+  url.searchParams.set("transactionId", transactionId);
+  window.location.replace(url.toString());
+}
+
 export function PaddleInitializer() {
   const [state, setState] = useState<CheckoutState>("idle");
   const [message, setMessage] = useState("");
@@ -48,7 +55,8 @@ export function PaddleInitializer() {
               sessionStorage.removeItem(STORAGE_KEY);
               updateCheckoutUrl("verified");
               setState("active");
-              setMessage("Payment verified. Your Commerce subscription is active.");
+              setMessage("Payment verified. Opening your Commerce account…");
+              window.setTimeout(() => goToCommerceAccount(transactionId), 700);
               return;
             }
           }
