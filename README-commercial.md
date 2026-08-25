@@ -73,6 +73,9 @@ These are not to be implemented with placeholder identities or credentials:
 5. Final Bangladesh business bank details and international receiving instructions.
 6. Explicit commercial go-live acceptance before enabling the production checkout gate.
 
-## Release rule
+## Go-live release rule
 
-Do not enable `COMMERCIAL_LIVE_CHECKOUT_ENABLED` or `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED` in production until the corresponding deferred production controls are complete and verified.
+Do not enable either production gate until all relevant prerequisites are complete and verified:
+
+- customer authentication is live before `COMMERCIAL_ACCOUNT_PREVIEW_ENABLED=true`;
+- production merchant credentials, production provider endpoints/catalog, final business/legal identity, final receiving details, and end-to-end live-readiness acceptance are complete before `COMMERCIAL_LIVE_CHECKOUT_ENABLED=true`.
