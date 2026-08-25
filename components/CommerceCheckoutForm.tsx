@@ -39,14 +39,19 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
     setLoading(true); resetFlow();
     try {
       const response = await fetch("/api/commerce/checkout", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({ plan, market, provider: effectiveProvider }),
       });
       const payload = await response.json() as CheckoutResult;
       if (response.ok && payload.redirectUrl) { window.location.assign(payload.redirectUrl); return; }
       setResult(payload);
-    } catch { setResult({ error: "The checkout could not be reached." }); }
-    finally { setLoading(false); }
+    } catch {
+      setResult({ error: "Checkout is temporarily unavailable. Please try again." });
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function submitManualEvidence() {
@@ -54,7 +59,9 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
     setManualLoading(true); setManualResult(null);
     try {
       const response = await fetch("/api/commerce/manual-bank", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           paymentId: result.paymentId,
           provider: effectiveProvider,
@@ -67,19 +74,22 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
         }),
       });
       setManualResult(await response.json() as CheckoutResult);
-    } catch { setManualResult({ error: "The payment evidence could not be submitted." }); }
-    finally { setManualLoading(false); }
+    } catch {
+      setManualResult({ error: "Payment evidence could not be submitted. Please try again." });
+    } finally {
+      setManualLoading(false);
+    }
   }
 
   const displayExpectedAmount = result?.expectedAmount
-    ? result.currency === "USD" ? `$${(result.expectedAmount / 100).toFixed(2)}` : `${result.expectedAmount} ${result.currency ?? ""}`
+    ? result.currency === "USD" ? `$${(result.expectedAmount / 100).toFixed(2)}` : `${result.expectedAmount.toLocaleString()} ${result.currency ?? ""}`
     : null;
 
   return (
     <form className="product-card lead-card" onSubmit={submit}>
-      <div className="card-top"><span className="status">Safe test flow</span><span className="card-num">01</span></div>
+      <div className="card-top"><span className="status">Secure checkout</span><span className="card-num">01</span></div>
       <div className="product-copy">
-        <span className="product-label">Commerce checkout simulator</span>
+        <span className="product-label">AgentSiraji Commerce checkout</span>
         <h3>{selectedPlan.name}</h3>
 
         <label><strong>Plan</strong><br />
@@ -90,9 +100,13 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
 
         <label><strong>Market</strong><br />
           <select value={market} onChange={(e) => {
-            const next = e.target.value as Market; setMarket(next); setProvider(next === "bd" ? "sslcommerz" : "paddle"); resetFlow();
+            const next = e.target.value as Market;
+            setMarket(next);
+            setProvider(next === "bd" ? "sslcommerz" : "paddle");
+            resetFlow();
           }}>
-            <option value="bd">Bangladesh</option><option value="international">International</option>
+            <option value="bd">Bangladesh</option>
+            <option value="international">International</option>
           </select>
         </label>
 
@@ -103,28 +117,30 @@ export function CommerceCheckoutForm({ plans, routes, initialPlan }: Props) {
         </label>
 
         <p><strong>Price:</strong> {selectedPlan.setup[market]} setup + {selectedPlan.monthly[market]}</p>
-        <button className="button button-primary" type="submit" disabled={loading}>{loading ? "Creating…" : manualProvider ? "Create payment reference →" : "Continue to payment →"}</button>
+        <button className="button button-primary" type="submit" disabled={loading}>
+          {loading ? "Preparing checkout…" : manualProvider ? "Create payment reference →" : "Continue to payment →"}
+        </button>
 
-        {result?.error && <p aria-live="polite"><strong>Blocked:</strong> {result.error}</p>}
+        {result?.error && <p aria-live="polite"><strong>Checkout unavailable:</strong> {result.error}</p>}
 
         {manualProvider && result?.paymentId && !result.error && (
           <div aria-live="polite">
             <p><strong>Payment reference:</strong> {result.paymentId}</p>
             <p><strong>Expected amount:</strong> {displayExpectedAmount}</p>
-            <p><strong>Important:</strong> submitting evidence does not activate the service. It only creates an admin review.</p>
+            <p><strong>Verification required:</strong> submitting payment evidence does not activate the service. Access is enabled only after authorized review.</p>
 
             <label><strong>{effectiveProvider === "bank-transfer" ? "Sender bank" : "Payment channel"}</strong><br />
-              <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder={effectiveProvider === "bank-transfer" ? "Bank name" : "Payoneer / bank / invoice"} required />
+              <input value={bankName} maxLength={120} onChange={(e) => setBankName(e.target.value)} placeholder={effectiveProvider === "bank-transfer" ? "Bank name" : "Payoneer / bank / invoice"} required />
             </label>
-            <label><strong>Sender / payer name</strong><br /><input value={senderName} onChange={(e) => setSenderName(e.target.value)} required /></label>
-            <label><strong>Transaction / invoice reference</strong><br /><input value={reference} onChange={(e) => setReference(e.target.value)} required /></label>
+            <label><strong>Sender / payer name</strong><br /><input value={senderName} maxLength={120} onChange={(e) => setSenderName(e.target.value)} required /></label>
+            <label><strong>Transaction / invoice reference</strong><br /><input value={reference} maxLength={160} onChange={(e) => setReference(e.target.value)} required /></label>
             <label><strong>Payment date</strong><br /><input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} required /></label>
-            <label><strong>Proof link (optional)</strong><br /><input type="url" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://..." /></label>
+            <label><strong>Proof link (optional)</strong><br /><input type="url" value={proofUrl} maxLength={1000} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://..." /></label>
             <button className="button" type="button" onClick={submitManualEvidence} disabled={manualLoading || !bankName || !senderName || !reference || !paymentDate}>
               {manualLoading ? "Submitting…" : "Submit for verification →"}
             </button>
 
-            {manualResult?.error && <p><strong>Submission blocked:</strong> {manualResult.error}</p>}
+            {manualResult?.error && <p><strong>Submission unavailable:</strong> {manualResult.error}</p>}
             {manualResult?.status === "under_review" && <p><strong>Under review.</strong> Payment evidence is saved, but access remains blocked until authorized approval.</p>}
           </div>
         )}
