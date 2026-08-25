@@ -195,16 +195,16 @@ export async function createPendingCheckout(input: {
   const paymentId = String(paymentRows[0].id);
 
   return {
-  accountId,
-  organizationId,
-  subscriptionId,
-  paymentId,
-  planId: context.planId,
-  priceId: context.priceId,
-  currency: context.currency,
-  amount: totalAmount,
-  setupAmount: context.setupAmount,
-  recurringAmount: context.recurringAmount,
+    accountId,
+    organizationId,
+    subscriptionId,
+    paymentId,
+    planId: context.planId,
+    priceId: context.priceId,
+    currency: context.currency,
+    amount: totalAmount,
+    setupAmount: context.setupAmount,
+    recurringAmount: context.recurringAmount,
   };
 }
 
@@ -279,6 +279,51 @@ export async function getPendingGatewayPayment(input: {
     status: String(row.status),
     providerTransactionId: row.provider_transaction_id
       ? String(row.provider_transaction_id)
+      : null,
+  };
+}
+
+export type GatewayPaymentStatus = {
+  paymentStatus: string;
+  subscriptionStatus: string | null;
+  entitlementStatus: string | null;
+};
+
+export async function getGatewayPaymentStatus(input: {
+  provider: PaymentProvider;
+  providerTransactionId: string;
+}): Promise<GatewayPaymentStatus | null> {
+  const sql = db();
+  const provider = toDatabaseProvider(input.provider);
+
+  const rows = await sql`
+    SELECT
+      p.status AS payment_status,
+      s.status AS subscription_status,
+      e.status AS entitlement_status
+    FROM payments p
+    LEFT JOIN subscriptions s
+      ON s.id = p.subscription_id
+    LEFT JOIN entitlements e
+      ON e.subscription_id = s.id
+    WHERE p.provider = ${provider}
+      AND p.provider_transaction_id = ${input.providerTransactionId}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    paymentStatus: String(row.payment_status),
+    subscriptionStatus: row.subscription_status
+      ? String(row.subscription_status)
+      : null,
+    entitlementStatus: row.entitlement_status
+      ? String(row.entitlement_status)
       : null,
   };
 }
