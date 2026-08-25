@@ -61,16 +61,25 @@
   font-size: 15px;
 }
 
-/* Checkout package scope: compact the service list and keep both cards balanced. */
+/* Checkout package scope: compact the service list and keep both cards equal height. */
 .checkout-package-grid {
-  align-items: start;
+  align-items: stretch;
+}
+
+.checkout-package-grid > .product-card {
+  height: 100%;
 }
 
 .checkout-scope-card {
-  align-self: start;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 
 .checkout-scope-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 28px 30px 30px;
 }
 
@@ -118,6 +127,18 @@
 
   .commerce-plans .plan-copy {
     padding: 26px 24px 28px;
+  }
+
+  .checkout-package-grid {
+    align-items: start;
+  }
+
+  .checkout-package-grid > .product-card {
+    height: auto;
+  }
+
+  .checkout-scope-card {
+    align-self: auto;
   }
 
   .checkout-scope-copy {
