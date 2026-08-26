@@ -5,6 +5,7 @@ import "./globals.css";
 import "./form-controls.css";
 import "./ui-polish.css";
 import "./ticker-fix.css";
+import "./ticker-marquee.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
