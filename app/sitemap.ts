@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/products/adintel",
     "/products/doctors-diary",
     "/privacy",
+    "/security",
     "/terms",
     "/refunds",
   ];
