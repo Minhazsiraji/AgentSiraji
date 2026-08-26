@@ -24,6 +24,7 @@ export function SiteHeader() {
           <Link href="/about">Company</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/contact">Contact</Link>
+          <Link href="/support">24/7 Support</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/security">Security</Link>
           <Link href="/terms">Terms</Link>
@@ -46,6 +47,7 @@ export function SiteFooter() {
         <Link href="/about">Company</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/faq">FAQ</Link>
+        <Link href="/support">24/7 Support</Link>
         <Link href="/privacy">Privacy</Link>
         <Link href="/security">Security</Link>
         <Link href="/terms">Terms</Link>
