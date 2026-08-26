@@ -1,15 +1,49 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
-export const metadata: Metadata = { title: "Frequently asked questions", description: "Answers about AgentSiraji services, products, process, timelines, and support." };
-const faqs=[
-  ["What can AgentSiraji build?","Focused websites, product interfaces, workflow automations, AI-enabled tools, lead-generation systems, and early-stage digital products."],
-  ["Do you work with early ideas?","Yes. An engagement can begin with an unclear idea or business problem. Product strategy helps turn it into a practical scope and roadmap."],
-  ["How long does a project take?","A focused website or automation can often move from definition to launch within a few weeks. Larger product work is divided into clear milestones after discovery."],
-  ["Are LeadPilot and Doctor's Diary available now?","Both products are currently in development. You can register interest through the contact page and receive launch updates."],
-  ["Can the website or system grow later?","Yes. Solutions are built on flexible foundations so new workflows, integrations, authentication, payments, or content can be added when justified."],
-  ["How do support and changes work?","Every project includes a defined handover. Ongoing improvement and support can be arranged according to the product and business need."],
-  ["Do you work outside Bangladesh?","Yes. AgentSiraji is based in Dhaka and can work remotely with businesses and founders internationally."],
-  ["How do we start?","Send a short inquiry with your goal, challenge, and preferred timeline. You will receive a direct response with the most sensible next step."]
-];
-export default function FaqPage(){return <main><SiteHeader/><section className="subhero shell"><span className="kicker">FAQ</span><h1>Useful answers.<br/><em>No sales theatre.</em></h1><p>A quick guide to products, services, process, and working together.</p></section><section className="faq-list shell">{faqs.map(([q,a],i)=><details key={q}><summary><span>{String(i+1).padStart(2,"0")}</span><h2>{q}</h2><b>+</b></summary><p>{a}</p></details>)}</section><section className="mini-cta shell"><div><span className="kicker">Still curious?</span><h2>Ask directly.</h2></div><Link className="button button-primary" href="/contact">Start a conversation →</Link></section><SiteFooter/></main>}
+
+export const metadata: Metadata = {
+  title: "Frequently Asked Questions",
+  description: "Answers about AgentSiraji Commerce, pricing, payments, support, product availability, and working with AgentSiraji.",
+};
+
+const faqs = [
+  ["What is available to buy now?", "AgentSiraji Commerce is the first commercial product. It is a managed e-commerce platform offered in Starter, Growth, and Pro plans. LeadPilot and AdIntel are coming later, while Doctor's Diary remains a private healthcare project and is not currently for public sale."],
+  ["What is included in a Commerce plan?", "Each plan publishes its included scope before checkout. Starter covers the core managed store foundation, Growth adds more capacity and advanced merchandising and integrations, and Pro adds priority implementation, support, and advanced requirements."],
+  ["Why is there a setup fee and a monthly fee?", "The setup fee covers launch and customer-specific implementation work. The monthly fee covers the ongoing managed platform service, including the plan's maintenance, hosting and support scope."],
+  ["How can customers pay in Bangladesh?", "Bangladesh customers can use the supported online gateway or a controlled bank-transfer process. Manual payment proof only requests review; service activates only after authorized verification."],
+  ["How can international customers pay?", "International checkout is designed around Paddle for standard managed plans, with a manual B2B invoice path available for appropriate larger engagements. Live payment credentials remain disabled until production launch gates are complete."],
+  ["Does a payment receipt or success screen activate service?", "No. Access is controlled by verified server-side payment state or authorized manual approval. A browser success screen, screenshot, uploaded receipt, or payment claim never creates access by itself."],
+  ["Can I cancel a Commerce subscription?", "Yes. Cancellation can be requested before the next billing cycle. Refund eligibility depends on whether setup or service work has already started and on any separate written agreement. See the Refund & Cancellation Policy for the standard rules."],
+  ["Who owns my brand, products, and customer data?", "The customer retains ownership of their own brand assets, business content, product information, and customer data. AgentSiraji retains its platform code, shared systems, reusable components, methods, and product intellectual property unless a separate written agreement states otherwise."],
+  ["Can the system grow later?", "Yes. AgentSiraji Commerce is intentionally built on adaptable foundations so integrations, payment providers, workflows, analytics, and other capabilities can evolve without rebuilding the entire platform."],
+  ["Do you work outside Bangladesh?", "Yes. AgentSiraji serves Bangladesh and international customers. Pricing and payment routes are shown separately so the commercial model is clear for each market."],
+  ["What if I need self-hosting or a separate business license?", "That is handled as a separate commercial arrangement rather than mixed into the normal managed subscription. Source-code usage, hosting, updates, support, and resale restrictions are defined explicitly in writing."],
+  ["How do we start?", "Choose a Commerce plan or contact AgentSiraji with your business goal and requirements. If the standard plan is a fit, checkout and onboarding follow the published flow; unusual requirements are scoped separately."],
+] as const;
+
+export default function FaqPage() {
+  return (
+    <main>
+      <SiteHeader />
+      <section className="subhero shell">
+        <span className="kicker">FAQ</span>
+        <h1>Useful answers.<br /><em>No sales theatre.</em></h1>
+        <p>A direct guide to Commerce plans, payments, ownership, support, and AgentSiraji product availability.</p>
+      </section>
+      <section className="faq-list shell">
+        {faqs.map(([question, answer], index) => (
+          <details key={question}>
+            <summary><span>{String(index + 1).padStart(2, "0")}</span><h2>{question}</h2><b>+</b></summary>
+            <p>{answer}</p>
+          </details>
+        ))}
+      </section>
+      <section className="mini-cta shell">
+        <div><span className="kicker">Need a specific answer?</span><h2>Ask directly.</h2></div>
+        <Link className="button button-primary" href="/contact">Contact AgentSiraji →</Link>
+      </section>
+      <SiteFooter />
+    </main>
+  );
+}

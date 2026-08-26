@@ -1,0 +1,83 @@
+/* Premium shared form controls for AgentSiraji */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  width: 100%;
+  border: 1px solid rgba(16, 24, 32, 0.12);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+  border-radius: 14px;
+  min-height: 48px;
+  padding: 0 16px;
+  font: 500 14px "DM Sans", sans-serif;
+  line-height: 1.35;
+  outline: none;
+  box-shadow: 0 8px 24px rgba(31, 56, 96, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+}
+
+:where(textarea) {
+  min-height: 112px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  resize: vertical;
+}
+
+:where(select) {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 46px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #526073 50%),
+    linear-gradient(135deg, #526073 50%, transparent 50%);
+  background-position:
+    calc(100% - 21px) 50%,
+    calc(100% - 16px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea):hover {
+  border-color: rgba(16, 24, 32, 0.23);
+  background-color: rgba(255, 255, 255, 0.98);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea):focus {
+  border-color: #6e8cff;
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(110, 140, 255, 0.13), 0 12px 30px rgba(31, 56, 96, 0.08);
+}
+
+:where(input, textarea)::placeholder {
+  color: #8b96a5;
+  opacity: 1;
+}
+
+.product-copy > label,
+.inquiry-form label {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.product-copy > label > strong,
+.inquiry-form label > strong {
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.product-copy > label br {
+  display: none;
+}
+
+.product-copy > .button {
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+    min-height: 50px;
+    font-size: 16px;
+  }
+}

@@ -6,19 +6,19 @@ const rateLimitWindowMs = 10 * 60 * 1000;
 const rateLimitMax = 5;
 const maxTrackedClients = 5_000;
 const allowedInterests = new Set([
+  "Commerce sales",
   "LeadPilot early access",
+  "AdIntel early access",
   "Doctor's Diary updates",
-  "Website or product build",
-  "Automation & AI",
-  "Product strategy",
-  "Something else"
+  "Business License enquiry",
+  "Partnership or other enquiry",
 ]);
 const attempts = new Map<string, { count: number; resetAt: number }>();
 
 function json(body: object, status = 200, extraHeaders?: HeadersInit) {
   return NextResponse.json(body, {
     status,
-    headers: { "Cache-Control": "no-store", ...extraHeaders }
+    headers: { "Cache-Control": "no-store, max-age=0", Pragma: "no-cache", ...extraHeaders },
   });
 }
 
@@ -71,14 +71,31 @@ export async function POST(request: Request) {
     if (new TextEncoder().encode(rawBody).byteLength > maxBodyBytes) {
       return json({ message: "Request is too large." }, 413);
     }
-    const body = JSON.parse(rawBody);
-    const name = String(body.name || "").trim();
-    const email = String(body.email || "").trim();
-    const interest = String(body.interest || "").trim();
-    const message = String(body.message || "").trim();
 
-    if (body.website) return json({ ok: true });
-    if (name.length < 2 || name.length > 80 || !emailPattern.test(email) || email.length > 120 || !allowedInterests.has(interest) || message.length < 20 || message.length > 2000) {
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return json({ message: "Invalid JSON payload." }, 400);
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return json({ message: "Invalid contact form payload." }, 400);
+    }
+
+    const data = body as Record<string, unknown>;
+    const name = String(data.name || "").trim();
+    const email = String(data.email || "").trim();
+    const interest = String(data.interest || "").trim();
+    const message = String(data.message || "").trim();
+
+    if (data.website) return json({ ok: true });
+    if (
+      name.length < 2 || name.length > 80 ||
+      !emailPattern.test(email) || email.length > 120 ||
+      !allowedInterests.has(interest) ||
+      message.length < 20 || message.length > 2000
+    ) {
       return json({ message: "Please check the form and complete every field." }, 400);
     }
 
@@ -91,9 +108,16 @@ export async function POST(request: Request) {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>", to: [to], reply_to: email, subject: `New AgentSiraji inquiry: ${interest}`, text: `Name: ${name}\nEmail: ${email}\nInterest: ${interest}\n\n${message}` }),
-      signal: AbortSignal.timeout(8_000)
+      body: JSON.stringify({
+        from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>",
+        to: [to],
+        reply_to: email,
+        subject: `New AgentSiraji inquiry: ${interest}`,
+        text: `Name: ${name}\nEmail: ${email}\nInterest: ${interest}\n\n${message}`,
+      }),
+      signal: AbortSignal.timeout(8_000),
     });
+
     if (!response.ok) throw new Error("Email service rejected the request");
     return json({ ok: true });
   } catch {
