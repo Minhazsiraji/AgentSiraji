@@ -25,6 +25,7 @@ export function SiteHeader() {
           <Link href="/faq">FAQ</Link>
           <Link href="/contact">Contact</Link>
           <Link href="/privacy">Privacy</Link>
+          <Link href="/security">Security</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/refunds">Refunds</Link>
         </div>
@@ -46,6 +47,7 @@ export function SiteFooter() {
         <Link href="/contact">Contact</Link>
         <Link href="/faq">FAQ</Link>
         <Link href="/privacy">Privacy</Link>
+        <Link href="/security">Security</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/refunds">Refunds</Link>
       </div>
