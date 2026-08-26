@@ -5,7 +5,6 @@ import { FormEvent, useMemo, useState } from "react";
 
 type ChatLink = { label: string; href: string };
 type Message = {
-  id: string;
   role: "assistant" | "user" | "moderator";
   text: string;
   links?: ChatLink[];
@@ -16,7 +15,6 @@ type Message = {
 const suggestions = ["Commerce pricing", "Payment options", "Refund rules", "Security"];
 
 const initialMessage: Message = {
-  id: "welcome",
   role: "assistant",
   text: "Hi — I’m the AgentSiraji 24/7 Support Assistant mock. Ask me about Commerce, pricing, payments, refunds, privacy, security, LeadPilot, AdIntel, or Doctor’s Diary. If I’m not confident, I’ll escalate instead of guessing.",
 };
@@ -37,7 +35,6 @@ export function SupportAssistant() {
     if (!text || pending) return;
 
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
       role: "user",
       text,
     };
@@ -68,7 +65,6 @@ export function SupportAssistant() {
       setMessages((current) => [
         ...current,
         {
-          id: `assistant-${Date.now()}`,
           role: "assistant",
           text: data.reply!,
           links: data.links,
@@ -80,7 +76,6 @@ export function SupportAssistant() {
       setMessages((current) => [
         ...current,
         {
-          id: `assistant-error-${Date.now()}`,
           role: "assistant",
           text: "I couldn’t complete that mock support request. Please try again. In the final service, repeated failures will automatically route to a moderator queue.",
         },
@@ -100,7 +95,6 @@ export function SupportAssistant() {
     setMessages((current) => [
       ...current,
       {
-        id: `moderator-${Date.now()}`,
         role: "moderator",
         text: `Moderator mock reply for ${ticketId}: Thanks — I have the conversation context. This demonstrates the takeover step. In production, an authorized support operator would reply from the live queue.`,
       },
@@ -127,13 +121,13 @@ export function SupportAssistant() {
           </div>
 
           <div className="support-messages" aria-live="polite">
-            {messages.map((message) => (
-              <article className={`support-message ${message.role}`} key={message.id}>
+            {messages.map((message, index) => (
+              <article className={`support-message ${message.role}`} key={`${message.role}-${index}-${message.ticketId ?? "chat"}`}>
                 <span>{message.role === "user" ? "You" : message.role === "moderator" ? "Moderator" : "AgentSiraji AI"}</span>
                 <p>{message.text}</p>
                 {message.links?.length ? (
                   <div className="support-message-links">
-                    {message.links.map((link) => <Link href={link.href} key={`${message.id}-${link.href}`}>{link.label} →</Link>)}
+                    {message.links.map((link) => <Link href={link.href} key={`${index}-${link.href}`}>{link.label} →</Link>)}
                   </div>
                 ) : null}
                 {message.handoff && message.ticketId ? (
