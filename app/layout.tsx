@@ -4,6 +4,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 import "./form-controls.css";
 import "./ui-polish.css";
+import "./ticker-fix.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
