@@ -1,0 +1,50 @@
+/* Responsive ticker containment fix.
+   Keep the bar inside the same page rhythm and never center an over-wide track,
+   which previously clipped the first and last labels on laptop and mobile. */
+.ticker {
+  width: min(1180px, calc(100% - 48px));
+  max-width: calc(100vw - 48px);
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.ticker > div {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  justify-content: flex-start;
+  gap: clamp(22px, 2.4vw, 34px);
+  padding-inline: 20px;
+}
+
+.ticker > div > * {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 901px) and (max-width: 1600px) {
+  .ticker {
+    width: min(1180px, calc(100% - 56px));
+    max-width: calc(100vw - 56px);
+  }
+
+  .ticker > div {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ticker {
+    width: calc(100% - 28px);
+    max-width: calc(100vw - 28px);
+    margin-top: 16px;
+    border-radius: 14px;
+    padding-block: 11px;
+  }
+
+  .ticker > div {
+    gap: 20px;
+    padding-inline: 14px;
+    font-size: 9px;
+    letter-spacing: .13em;
+  }
+}
