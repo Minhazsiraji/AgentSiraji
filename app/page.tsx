@@ -5,11 +5,30 @@ import { products } from "@/lib/catalog";
 const Arrow = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
 const Spark = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z" /></svg>;
 
+const tickerItems = [
+  "Managed commerce",
+  "Lead conversion",
+  "Advertising intelligence",
+  "Built for growth",
+];
+
 const statusLabel = (status: (typeof products)[number]["status"]) => {
   if (status === "available") return "Available now";
   if (status === "labs") return "Private development";
   return "Coming soon";
 };
+
+function TickerGroup({ hidden = false }: { hidden?: boolean }) {
+  return (
+    <div className="ticker-group" aria-hidden={hidden || undefined}>
+      {tickerItems.map((item) => (
+        <span className="ticker-item" key={item}>
+          <span>{item}</span><b aria-hidden="true">✦</b>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -40,7 +59,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="ticker" aria-label="Core product promise"><div><span>Managed commerce</span><b>✦</b><span>Lead conversion</span><b>✦</b><span>Advertising intelligence</span><b>✦</b><span>Built for growth</span><b>✦</b><span>Managed commerce</span><b>✦</b><span>Lead conversion</span></div></section>
+      <section className="ticker" aria-label="Core product promise">
+        <div className="ticker-viewport" tabIndex={0} aria-label="Swipe or scroll to explore AgentSiraji product promises">
+          <div className="ticker-track">
+            <TickerGroup />
+            <TickerGroup hidden />
+          </div>
+        </div>
+      </section>
 
       <section className="products shell section" id="products">
         <div className="section-heading">
