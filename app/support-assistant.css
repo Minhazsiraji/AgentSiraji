@@ -1,8 +1,8 @@
 /* AgentSiraji 24/7 Support Assistant — mock UI */
 .support-assistant {
   position: fixed;
-  right: clamp(28px, 2.4vw, 42px);
-  bottom: 84px;
+  right: 24px;
+  bottom: 52px;
   z-index: 80;
   display: grid;
   justify-items: end;
@@ -57,7 +57,7 @@
 
 .support-panel {
   width: min(390px, calc(100vw - 32px));
-  max-height: min(650px, calc(100dvh - 185px));
+  max-height: min(650px, calc(100dvh - 150px));
   display: grid;
   grid-template-rows: auto auto minmax(150px, 1fr) auto auto auto;
   overflow: hidden;
@@ -342,36 +342,47 @@
   border: 0;
 }
 
-/* Short laptop screens need a slightly lower lift, but still stay clear of bottom-page UI. */
+/* Keep the desktop utility fully inside common laptop viewports, just above the ticker. */
 @media (min-width: 601px) and (max-height: 760px) {
   .support-assistant {
-    bottom: 64px;
+    right: 20px;
+    bottom: 44px;
   }
 
   .support-panel {
-    max-height: calc(100dvh - 150px);
+    max-height: calc(100dvh - 125px);
   }
 }
 
 @media (max-width: 600px) {
   .support-assistant {
-    right: 12px;
-    bottom: 12px;
+    right: 14px;
+    bottom: max(72px, calc(env(safe-area-inset-bottom) + 56px));
   }
 
   .support-launcher {
-    min-height: 52px;
-    padding-right: 13px;
+    min-height: 48px;
+    gap: 8px;
+    padding: 6px 12px 6px 7px;
   }
 
   .support-launcher-mark {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
+    font-size: 10px;
+  }
+
+  .support-launcher strong {
+    font-size: 11px;
+  }
+
+  .support-launcher small {
+    display: none;
   }
 
   .support-panel {
-    width: calc(100vw - 24px);
-    max-height: calc(100dvh - 82px);
+    width: calc(100vw - 28px);
+    max-height: calc(100dvh - 150px);
     border-radius: 22px;
   }
 
