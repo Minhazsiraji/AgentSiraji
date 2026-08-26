@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SupportAssistant } from "@/components/SupportAssistant";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 import "./form-controls.css";
 import "./ui-polish.css";
 import "./ticker-fix.css";
 import "./ticker-marquee.css";
+import "./support-assistant.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
@@ -50,6 +52,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" data-scroll-behavior="smooth">
       <body>
         {children}
+        <SupportAssistant />
         <SpeedInsights />
       </body>
     </html>
