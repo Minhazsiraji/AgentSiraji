@@ -342,6 +342,35 @@
   border: 0;
 }
 
+/* Footer polish: preserve desktop balance and give mobile a deliberate structure. */
+.footer {
+  align-items: start;
+}
+
+.footer > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, 1fr));
+  column-gap: 24px;
+  row-gap: 10px;
+}
+
+.footer > div a {
+  line-height: 1.45;
+}
+
+@media (min-width: 901px) {
+  .footer {
+    grid-template-columns: 1.05fr 1.15fr 1.15fr .9fr;
+    gap: 42px;
+  }
+
+  .footer small {
+    justify-self: end;
+    max-width: 220px;
+    line-height: 1.5;
+  }
+}
+
 /* Keep the desktop utility fully inside common laptop viewports, just above the ticker. */
 @media (min-width: 601px) and (max-height: 760px) {
   .support-assistant {
@@ -396,6 +425,53 @@
 
   .support-message {
     max-width: 92%;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-block: 28px 34px;
+  }
+
+  .footer .brand {
+    margin-bottom: 14px;
+  }
+
+  .footer > p {
+    max-width: 260px;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  .footer > div {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 0 0 22px;
+    border-top: 1px solid rgba(31, 74, 136, .1);
+    border-bottom: 1px solid rgba(31, 74, 136, .1);
+    padding: 14px 0;
+  }
+
+  .footer > div a {
+    padding: 7px 4px 7px 0;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .footer small {
+    width: 100%;
+    padding-top: 2px;
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: left;
+  }
+}
+
+@media (max-width: 360px) {
+  .footer > div {
+    grid-template-columns: 1fr;
   }
 }
 
