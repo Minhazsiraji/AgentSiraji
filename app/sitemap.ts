@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/contact",
     "/faq",
     "/support",
+    "/store-audit",
     "/pricing",
     "/products/commerce",
     "/products/leadpilot",
@@ -23,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return paths.map((path) => ({
     url: `${base}${path}`,
-    changeFrequency: path === "" || path === "/products/commerce" ? "weekly" : "monthly",
-    priority: path === "" ? 1 : path.startsWith("/products") || path === "/pricing" ? 0.8 : 0.6,
+    changeFrequency: path === "" || path === "/products/commerce" || path === "/store-audit" ? "weekly" : "monthly",
+    priority: path === "" ? 1 : path.startsWith("/products") || path === "/pricing" || path === "/store-audit" ? 0.8 : 0.6,
   }));
 }
