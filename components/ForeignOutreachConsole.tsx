@@ -29,6 +29,7 @@ type Lead = {
 };
 
 type Dashboard = {
+  serverNow: string;
   leads: Lead[];
   countries: Array<{
     country: string;
@@ -99,9 +100,11 @@ export function ForeignOutreachConsole() {
 
   const visibleLeads = useMemo(() => {
     if (!dashboard) return [];
-    const now = Date.now();
+    const serverNow = new Date(dashboard.serverNow).getTime();
     if (filter === "FOLLOWUP") {
-      return dashboard.leads.filter((lead) => lead.nextFollowupAt && new Date(lead.nextFollowupAt).getTime() <= now && !lead.closed);
+      return dashboard.leads.filter(
+        (lead) => lead.nextFollowupAt && new Date(lead.nextFollowupAt).getTime() <= serverNow && !lead.closed,
+      );
     }
     if (filter === "PARTNER") return dashboard.leads.filter((lead) => lead.isPartner && !lead.closed);
     if (filter === "ACTIVE") return dashboard.leads.filter((lead) => !lead.closed);
@@ -118,12 +121,17 @@ export function ForeignOutreachConsole() {
         cache: "no-store",
       });
       const payload = (await response.json()) as ApiPayload;
-      if (!response.ok || !payload.summary || !payload.leads || !payload.countries) {
+      if (!response.ok || !payload.serverNow || !payload.summary || !payload.leads || !payload.countries) {
         setDashboard(null);
         setMessage(payload.error || "Outreach data could not be loaded.");
         return;
       }
-      setDashboard({ summary: payload.summary, leads: payload.leads, countries: payload.countries });
+      setDashboard({
+        serverNow: payload.serverNow,
+        summary: payload.summary,
+        leads: payload.leads,
+        countries: payload.countries,
+      });
     } catch {
       setMessage("The outreach API could not be reached.");
     } finally {
