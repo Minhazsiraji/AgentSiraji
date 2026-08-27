@@ -61,7 +61,7 @@ async function readBody(request: Request) {
 export async function GET(request: Request) {
   if (!authorized(request)) return json({ error: "Unauthorized outreach access." }, 401);
   try {
-    return json({ ok: true, ...(await getOutreachDashboard()) });
+    return json({ ok: true, serverNow: new Date().toISOString(), ...(await getOutreachDashboard()) });
   } catch (error) {
     console.error("Foreign outreach dashboard failed", error);
     return json({ error: "Outreach data could not be loaded." }, 500);
