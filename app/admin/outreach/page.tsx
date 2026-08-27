@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { ForeignOutreachConsole } from "@/components/ForeignOutreachConsole";
 
 export const metadata: Metadata = {
@@ -15,52 +14,33 @@ export default function ForeignOutreachPage() {
   }
 
   return (
-    <main>
-      <SiteHeader />
-
-      <section className="product-hero lead-product shell">
+    <main className="shell" style={{ paddingTop: "1.25rem", paddingBottom: "3rem" }}>
+      <header
+        className="product-card"
+        style={{
+          padding: "1.1rem 1.35rem",
+          marginBottom: "1rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "1rem",
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <span className="status">Internal preview tool</span>
-          <span className="kicker">AgentSiraji Sales Operations</span>
-          <h1>
-            Foreign outreach.
-            <br />
-            <em>Run it like a sales system.</em>
+          <span className="kicker">AgentSiraji · Sales Operations</span>
+          <h1 style={{ fontSize: "clamp(2rem, 4vw, 3.35rem)", margin: ".25rem 0 0" }}>
+            Foreign Outreach
           </h1>
-          <p>
-            Research qualified overseas SMEs, prepare personalized outreach, keep
-            every follow-up in one queue, and let real reply and close rates decide
-            which countries AgentSiraji should scale.
+        </div>
+        <div style={{ maxWidth: "38rem" }}>
+          <p style={{ margin: 0 }}>
+            Daily prospecting, personalized DMs, follow-ups, partner leads and country performance — with every send kept under human approval.
           </p>
         </div>
-        <div className="product-monogram">
-          FO
-          <span>Foreign outreach</span>
-        </div>
-      </section>
+      </header>
 
-      <section className="products shell section">
-        <div className="section-heading">
-          <div>
-            <span className="kicker">Human-approved outbound</span>
-            <h2>
-              AI prepares the work.
-              <br />
-              <em>You approve the send.</em>
-            </h2>
-          </div>
-          <p>
-            This workspace never mass-sends platform DMs. It stores prospect
-            research, prepared messages, send history, follow-ups, pipeline stages,
-            partner leads, and country performance while keeping the final outreach
-            action under human control.
-          </p>
-        </div>
-
-        <ForeignOutreachConsole />
-      </section>
-
-      <SiteFooter />
+      <ForeignOutreachConsole />
     </main>
   );
 }
