@@ -1,0 +1,54 @@
+.workspace :global(button.button),
+.workspace :global(a.button) {
+  appearance: none;
+  min-height: 40px;
+  padding: 0.68rem 0.95rem;
+  border: 1px solid rgba(16, 24, 32, 0.34);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 1px 0 rgba(16, 24, 32, 0.06);
+}
+
+.workspace :global(button.button:hover),
+.workspace :global(a.button:hover) {
+  background: #ffffff;
+  border-color: rgba(16, 24, 32, 0.62);
+  transform: translateY(-1px);
+}
+
+.workspace :global(button.button:focus-visible),
+.workspace :global(a.button:focus-visible) {
+  outline: 3px solid rgba(110, 140, 255, 0.42);
+  outline-offset: 2px;
+}
+
+.workspace :global(button.button.button-primary),
+.workspace :global(a.button.button-primary) {
+  background: var(--lime);
+  border-color: rgba(16, 24, 32, 0.12);
+}
+
+.workspace :global(button.button:active),
+.workspace :global(a.button:active) {
+  transform: translateY(0);
+}
+
+.workspace :global(button.button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 700px) {
+  .workspace :global(button.button),
+  .workspace :global(a.button) {
+    min-height: 44px;
+    padding-inline: 0.9rem;
+  }
+}
