@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ForeignOutreachConsole } from "@/components/ForeignOutreachConsole";
+import styles from "./outreach.module.css";
 
 export const metadata: Metadata = {
   title: "Foreign Outreach | AgentSiraji Sales",
@@ -14,7 +15,7 @@ export default function ForeignOutreachPage() {
   }
 
   return (
-    <main className="shell" style={{ paddingTop: "1.25rem", paddingBottom: "3rem" }}>
+    <main className={`${styles.workspace} shell`} style={{ paddingTop: "1.25rem", paddingBottom: "3rem" }}>
       <header
         className="product-card"
         style={{
