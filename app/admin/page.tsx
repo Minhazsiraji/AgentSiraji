@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
@@ -31,6 +32,9 @@ export default function AdminPage() {
             information for manual bank transfers and manual invoices. The admin
             token is submitted only with the review request and is not stored by
             this page.
+          </p>
+          <p>
+            <Link className="button" href="/admin/outreach">Open Foreign Outreach →</Link>
           </p>
         </div>
         <div className="product-monogram">
