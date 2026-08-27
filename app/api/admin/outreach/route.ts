@@ -7,7 +7,8 @@ import {
 } from "@/lib/outreach-db";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const maxBodyBytes = 32_768;
+const maxBodyBytes = 128_000;
+const maxBatchLeads = 50;
 
 function json(body: object, status = 200) {
   return NextResponse.json(body, {
@@ -58,6 +59,40 @@ async function readBody(request: Request) {
   }
 }
 
+function parseLeadInput(body: Record<string, unknown>) {
+  const businessName = cleanText(body.businessName, 160);
+  const country = cleanText(body.country, 80);
+  const city = cleanText(body.city, 80);
+  const platform = cleanText(body.platform, 40);
+  const profileUrl = cleanText(body.profileUrl, 500);
+  const category = cleanText(body.category, 120);
+  const sellingMethod = cleanText(body.sellingMethod, 160);
+  const messageVariant = cleanText(body.messageVariant, 80);
+  const personalizedDm = cleanText(body.personalizedDm, 2_500);
+  const notes = cleanText(body.notes, 2_000);
+  const score = Number(body.score);
+
+  if (!businessName || !country || !platform || !Number.isInteger(score) || score < 0 || score > 100) {
+    throw new Error("INVALID_LEAD");
+  }
+  if (profileUrl && !validHttpUrl(profileUrl)) throw new Error("INVALID_URL");
+
+  return {
+    businessName,
+    country,
+    city: city || null,
+    platform,
+    profileUrl: profileUrl || null,
+    category: category || null,
+    sellingMethod: sellingMethod || null,
+    score,
+    messageVariant: messageVariant || null,
+    personalizedDm: personalizedDm || null,
+    notes: notes || null,
+    isPartner: body.isPartner === true,
+  };
+}
+
 export async function GET(request: Request) {
   if (!authorized(request)) return json({ error: "Unauthorized outreach access." }, 401);
   try {
@@ -81,40 +116,59 @@ export async function POST(request: Request) {
     const type = String(body.type ?? "");
 
     if (type === "CREATE_LEAD") {
-      const businessName = cleanText(body.businessName, 160);
-      const country = cleanText(body.country, 80);
-      const city = cleanText(body.city, 80);
-      const platform = cleanText(body.platform, 40);
-      const profileUrl = cleanText(body.profileUrl, 500);
-      const category = cleanText(body.category, 120);
-      const sellingMethod = cleanText(body.sellingMethod, 160);
-      const messageVariant = cleanText(body.messageVariant, 80);
-      const personalizedDm = cleanText(body.personalizedDm, 2_500);
-      const notes = cleanText(body.notes, 2_000);
-      const score = Number(body.score);
-
-      if (!businessName || !country || !platform || !Number.isInteger(score) || score < 0 || score > 100) {
+      let input;
+      try {
+        input = parseLeadInput(body);
+      } catch (error) {
+        if (error instanceof Error && error.message === "INVALID_URL") {
+          return json({ error: "Profile URL must be a valid http(s) URL." }, 400);
+        }
         return json({ error: "Business, country, platform, and a 0–100 score are required." }, 400);
       }
-      if (profileUrl && !validHttpUrl(profileUrl)) {
-        return json({ error: "Profile URL must be a valid http(s) URL." }, 400);
+      const lead = await createOutreachLead(input);
+      return json({ ok: true, lead }, 201);
+    }
+
+    if (type === "CREATE_LEADS_BATCH") {
+      if (!Array.isArray(body.leads) || body.leads.length === 0 || body.leads.length > maxBatchLeads) {
+        return json({ error: `Batch import requires 1–${maxBatchLeads} leads.` }, 400);
       }
 
-      const lead = await createOutreachLead({
-        businessName,
-        country,
-        city: city || null,
-        platform,
-        profileUrl: profileUrl || null,
-        category: category || null,
-        sellingMethod: sellingMethod || null,
-        score,
-        messageVariant: messageVariant || null,
-        personalizedDm: personalizedDm || null,
-        notes: notes || null,
-        isPartner: body.isPartner === true,
-      });
-      return json({ ok: true, lead }, 201);
+      let imported = 0;
+      let skipped = 0;
+      const errors: Array<{ index: number; reason: string }> = [];
+
+      for (const [index, rawLead] of body.leads.entries()) {
+        if (!rawLead || typeof rawLead !== "object" || Array.isArray(rawLead)) {
+          errors.push({ index: index + 1, reason: "Lead must be an object." });
+          continue;
+        }
+        try {
+          const input = parseLeadInput(rawLead as Record<string, unknown>);
+          await createOutreachLead(input);
+          imported += 1;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Invalid lead.";
+          if (message.includes("duplicate key")) {
+            skipped += 1;
+            continue;
+          }
+          errors.push({
+            index: index + 1,
+            reason:
+              message === "INVALID_URL"
+                ? "Invalid profile URL."
+                : message === "INVALID_LEAD"
+                  ? "Missing required field or invalid score."
+                  : "Could not import this lead.",
+          });
+        }
+      }
+
+      return json(
+        { ok: errors.length === 0, imported, skipped, errors },
+        errors.length === body.leads.length ? 400 : 200,
+      );
     }
 
     if (type === "ACTION") {
