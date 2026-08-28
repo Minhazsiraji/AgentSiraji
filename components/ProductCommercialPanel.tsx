@@ -49,6 +49,7 @@ export function ProductCommercialPanel({
     grouped.set(offer.planCode, current);
   }
   const plans = [...grouped.values()];
+  const singlePlan = plans.length === 1;
 
   return (
     <section className="products shell section commerce-plans">
@@ -63,7 +64,7 @@ export function ProductCommercialPanel({
       </div>
 
       {offers.length === 0 ? (
-        <article className="product-card lead-card">
+        <article className="product-card lead-card" style={{ maxWidth: 520, margin: "0 auto" }}>
           <div className="product-copy">
             <span className="product-label">Not priced yet</span>
             <h3>{productName}</h3>
@@ -72,7 +73,10 @@ export function ProductCommercialPanel({
           </div>
         </article>
       ) : (
-        <div className="product-grid">
+        <div
+          className="product-grid"
+          style={singlePlan ? { gridTemplateColumns: "minmax(0, 430px)", justifyContent: "center" } : undefined}
+        >
           {plans.map((planOffers, index) => {
             const primary = planOffers[0];
             const allSalesEnabled = planOffers.every((offer) => offer.salesEnabled);
