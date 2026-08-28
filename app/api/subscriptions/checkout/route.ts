@@ -65,14 +65,15 @@ export async function POST(request: Request) {
     const product = bounded(data.product, 64);
     const plan = bounded(data.plan, 64);
     const market = data.market === "bd" || data.market === "international" ? data.market : null;
+    const billingCycle = data.billingCycle === "month" || data.billingCycle === "year" ? data.billingCycle : null;
     const provider = typeof data.provider === "string" ? data.provider as PaymentProvider : null;
     const email = bounded(data.email, 254);
     const displayName = bounded(data.displayName, 120);
     const organizationName = bounded(data.organizationName, 160);
     const phone = bounded(data.phone, 40) ?? "01700000000";
 
-    if (!product || !plan || !codePattern.test(product) || !codePattern.test(plan) || !market || !provider || !email || !emailPattern.test(email) || !organizationName) {
-      return json({ error: "Product, plan, market, customer email, business name, and payment method are required." }, { status: 400 });
+    if (!product || !plan || !codePattern.test(product) || !codePattern.test(plan) || !market || !billingCycle || !provider || !email || !emailPattern.test(email) || !organizationName) {
+      return json({ error: "Product, plan, billing cycle, market, customer email, business name, and payment method are required." }, { status: 400 });
     }
 
     const providerAllowed = market === "bd" ? bdProviders.has(provider) : intlProviders.has(provider);
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
       product,
       plan,
       market,
+      billingCycle,
       provider,
       email,
       displayName: displayName ?? undefined,
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
         product,
         market,
         plan,
+        billingCycle,
         status: "redirect_to_gateway",
         paymentId: pending.paymentId,
         transactionId,
@@ -127,9 +130,10 @@ export async function POST(request: Request) {
         paymentId: pending.paymentId,
         product,
         plan,
+        billingCycle,
         setupAmount: pending.setupAmount,
         recurringAmount: pending.recurringAmount,
-        checkoutUrl: `${baseUrl}/checkout/${encodeURIComponent(product)}?plan=${encodeURIComponent(plan)}`,
+        checkoutUrl: `${baseUrl}/checkout/${encodeURIComponent(product)}?plan=${encodeURIComponent(plan)}&billing=${billingCycle}`,
       });
       await assignProviderTransaction({ paymentId: pending.paymentId, providerTransactionId: paddle.transactionId });
       return json({
@@ -139,6 +143,7 @@ export async function POST(request: Request) {
         product,
         market,
         plan,
+        billingCycle,
         status: "redirect_to_gateway",
         paymentId: pending.paymentId,
         transactionId: paddle.transactionId,
@@ -154,6 +159,7 @@ export async function POST(request: Request) {
       product,
       market,
       plan,
+      billingCycle,
       status: "awaiting_manual_submission",
       paymentId: pending.paymentId,
       expectedAmount: pending.amount,
