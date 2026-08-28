@@ -34,7 +34,11 @@ export default async function AdIntelPage() {
       </section>
 
       <div id="adintel-pricing">
-        <ProductCommercialPanel offers={adIntel?.offers ?? []} productName="AgentSiraji AdIntel" />
+        <ProductCommercialPanel
+          offers={adIntel?.offers ?? []}
+          productName="AgentSiraji AdIntel"
+          checkoutBaseHref="/checkout/adintel"
+        />
       </div>
 
       <section className="product-story shell">
