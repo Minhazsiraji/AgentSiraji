@@ -24,18 +24,21 @@ export async function createProductPaddleSandboxTransaction(input: {
   paymentId: string;
   product: string;
   plan: string;
+  billingCycle: "month" | "year";
   setupAmount: number;
   recurringAmount: number;
   checkoutUrl: string;
 }) {
   const apiKey = getApiKey();
-  const recurringKey = envKey(input.product, input.plan, "RECURRING_PRICE_ID");
+  const cycleSuffix = input.billingCycle === "year" ? "YEAR_PRICE_ID" : "MONTH_PRICE_ID";
+  const cycleKey = envKey(input.product, input.plan, cycleSuffix);
+  const legacyRecurringKey = envKey(input.product, input.plan, "RECURRING_PRICE_ID");
   const setupKey = envKey(input.product, input.plan, "SETUP_PRICE_ID");
-  const recurringPriceId = process.env[recurringKey];
+  const recurringPriceId = process.env[cycleKey] ?? (input.billingCycle === "month" ? process.env[legacyRecurringKey] : undefined);
   const setupPriceId = process.env[setupKey];
 
   if (!recurringPriceId) {
-    throw new Error(`${recurringKey} is not configured.`);
+    throw new Error(`${cycleKey} is not configured.`);
   }
 
   const items = [] as Array<{ price_id: string; quantity: number }>;
@@ -59,6 +62,7 @@ export async function createProductPaddleSandboxTransaction(input: {
         agentsiraji_payment_id: input.paymentId,
         agentsiraji_product: input.product,
         agentsiraji_plan: input.plan,
+        agentsiraji_billing_cycle: input.billingCycle,
         agentsiraji_setup_amount: input.setupAmount,
         agentsiraji_recurring_amount: input.recurringAmount,
       },
