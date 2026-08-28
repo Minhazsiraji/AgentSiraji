@@ -72,6 +72,7 @@ type LeadAction =
   | "POSITIVE_REPLY"
   | "MAYBE_LATER"
   | "NOT_INTERESTED"
+  | "WRONG_FIT"
   | "DO_NOT_CONTACT"
   | "AUDIT_SENT"
   | "DEMO_SENT"
@@ -113,6 +114,16 @@ const batchExample = `[
 function fmtDate(value: string | null) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(value));
+}
+
+function isFollowupDue(lead: Lead, serverNow: string) {
+  return Boolean(
+    lead.firstSentAt &&
+    lead.replyStatus === "NO_REPLY" &&
+    lead.followupCount < 2 &&
+    lead.nextFollowupAt &&
+    new Date(lead.nextFollowupAt).getTime() <= new Date(serverNow).getTime(),
+  );
 }
 
 const compactGrid = {
@@ -264,7 +275,7 @@ export function ForeignOutreachConsole() {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      setMessage("DM copied. Review the prospect page once before sending.");
+      setMessage("DM copied. Verify the official destination once before sending.");
     } catch {
       setMessage("Copy failed. Select the DM text manually.");
     }
@@ -371,7 +382,7 @@ export function ForeignOutreachConsole() {
                 {view === "FOLLOWUP" ? "Follow-ups due" : view === "PARTNER" ? "Partner pipeline" : view === "ALL" ? "All outreach leads" : "Today’s send queue"}
               </h2>
             </div>
-            <p style={{ margin: 0 }}>Open prospect → review → copy DM → send → mark sent.</p>
+            <p style={{ margin: 0 }}>Open official contact → review → copy DM → send → mark sent.</p>
           </div>
 
           <div style={{ display: "grid", gap: ".8rem" }}>
@@ -404,15 +415,16 @@ export function ForeignOutreachConsole() {
                 </div>
 
                 <div style={{ ...actionRow, marginTop: ".85rem" }}>
-                  {lead.profileUrl && <a className="button" href={lead.profileUrl} target="_blank" rel="noreferrer">Open prospect ↗</a>}
+                  {lead.profileUrl && <a className="button" href={lead.profileUrl} target="_blank" rel="noreferrer">Open official contact ↗</a>}
                   {lead.personalizedDm && <button className="button" type="button" onClick={() => void copyDm(lead.personalizedDm)}>Copy DM</button>}
                   {!lead.firstSentAt && <button className="button button-primary" type="button" disabled={loading} onClick={() => void act(lead, "MARK_SENT")}>Mark sent</button>}
-                  {lead.firstSentAt && lead.replyStatus === "NO_REPLY" && lead.followupCount < 2 && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "FOLLOW_UP")}>Follow-up sent</button>}
+                  {isFollowupDue(lead, dashboard.serverNow) && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "FOLLOW_UP")}>Follow-up sent</button>}
                   {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "POSITIVE_REPLY")}>Positive reply</button>}
                   {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "AUDIT_SENT")}>Audit</button>}
                   {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "DEMO_SENT")}>Demo</button>}
                   {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "PROPOSAL_SENT")}>Proposal</button>}
                   {!lead.closed && <button className="button button-primary" type="button" disabled={loading} onClick={() => void act(lead, "CLOSED_WON")}>Closed won</button>}
+                  {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "WRONG_FIT")}>Wrong fit</button>}
                   {!lead.closed && <button className="button" type="button" disabled={loading} onClick={() => void act(lead, "NOT_INTERESTED")}>Not interested</button>}
                 </div>
               </article>
@@ -432,7 +444,7 @@ export function ForeignOutreachConsole() {
           <div style={{ margin: "1rem 0 .75rem" }}>
             <span className="kicker">Fast intake</span>
             <h2 style={{ fontSize: "clamp(1.7rem, 3vw, 2.7rem)", margin: ".2rem 0" }}>Import today&apos;s leads</h2>
-            <p>Paste one JSON batch from the scheduled ChatGPT research. Maximum 50 leads per import; duplicate profile URLs are skipped.</p>
+            <p>Paste one JSON batch from the scheduled ChatGPT research. Maximum 50 leads per import. Only direct official contact URLs are accepted; research mirrors and directories are rejected.</p>
           </div>
 
           <article className="product-card" style={{ padding: "1rem 1.15rem" }}>
@@ -469,7 +481,7 @@ export function ForeignOutreachConsole() {
                 <label><strong>Category</strong><br /><input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
                 <label><strong>Score</strong><br /><input required type="number" min="0" max="100" value={form.score} onChange={(e) => setForm({ ...form, score: e.target.value })} /></label>
               </div>
-              <label><strong>Public profile / website</strong><br /><input type="url" value={form.profileUrl} onChange={(e) => setForm({ ...form, profileUrl: e.target.value })} placeholder="https://…" /></label>
+              <label><strong>Official contact URL</strong><br /><input type="url" value={form.profileUrl} onChange={(e) => setForm({ ...form, profileUrl: e.target.value })} placeholder="https://instagram.com/... or https://wa.me/..." /></label>
               <label><strong>Current selling method</strong><br /><input value={form.sellingMethod} onChange={(e) => setForm({ ...form, sellingMethod: e.target.value })} /></label>
               <label><strong>Personalized DM</strong><br /><textarea rows={5} value={form.personalizedDm} onChange={(e) => setForm({ ...form, personalizedDm: e.target.value })} /></label>
               <label><strong>Research note</strong><br /><textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
