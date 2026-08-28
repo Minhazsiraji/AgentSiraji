@@ -217,6 +217,7 @@ export async function POST(request: Request) {
         "POSITIVE_REPLY",
         "MAYBE_LATER",
         "NOT_INTERESTED",
+        "WRONG_FIT",
         "DO_NOT_CONTACT",
         "AUDIT_SENT",
         "DEMO_SENT",
