@@ -9,6 +9,8 @@ import {
   type PublicCommercialOffer,
 } from "@/lib/public-commercial";
 
+type BillingCycle = "month" | "year";
+
 type CheckoutResult = {
   redirectUrl?: string;
   paymentId?: string;
@@ -20,6 +22,7 @@ type CheckoutResult = {
   market?: Market;
   plan?: string;
   product?: string;
+  billingCycle?: BillingCycle;
   status?: string;
   activationRule?: string;
   expectedAmount?: number;
@@ -33,6 +36,7 @@ type Props = {
   offers: PublicCommercialOffer[];
   routes: CheckoutRoute[];
   initialPlan: string;
+  initialBillingCycle?: BillingCycle;
 };
 
 function offerFor(offers: PublicCommercialOffer[], plan: string, market: Market) {
@@ -40,10 +44,11 @@ function offerFor(offers: PublicCommercialOffer[], plan: string, market: Market)
   return offers.find((offer) => offer.planCode === plan && offer.market === dbMarket);
 }
 
-export function SubscriptionCheckoutForm({ productCode, productName, offers, routes, initialPlan }: Props) {
+export function SubscriptionCheckoutForm({ productCode, productName, offers, routes, initialPlan, initialBillingCycle = "month" }: Props) {
   const planCodes = useMemo(() => [...new Set(offers.map((offer) => offer.planCode))], [offers]);
   const [plan, setPlan] = useState(initialPlan);
   const [market, setMarket] = useState<Market>("bd");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(initialBillingCycle);
   const [provider, setProvider] = useState<PaymentProvider>("sslcommerz");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -84,6 +89,7 @@ export function SubscriptionCheckoutForm({ productCode, productName, offers, rou
           product: productCode,
           plan,
           market,
+          billingCycle,
           provider: effectiveProvider,
           email,
           displayName,
@@ -138,7 +144,9 @@ export function SubscriptionCheckoutForm({ productCode, productName, offers, rou
       : `৳${result.expectedAmount.toLocaleString("en-BD")}`
     : null;
 
-  const currentPrice = selectedOffer ? activeDisplayPrice(selectedOffer) : null;
+  const monthlyPrice = selectedOffer ? activeDisplayPrice(selectedOffer) : null;
+  const selectedPrice = billingCycle === "year" ? selectedOffer?.annualPrice ?? null : monthlyPrice;
+  const selectedUnit = billingCycle === "year" ? "year" : selectedOffer?.billingUnit ?? "month";
 
   return (
     <form className="product-card lead-card" onSubmit={submit}>
@@ -156,6 +164,13 @@ export function SubscriptionCheckoutForm({ productCode, productName, offers, rou
               const offer = offers.find((item) => item.planCode === code);
               return <option value={code} key={code}>{offer?.planName ?? code}</option>;
             })}
+          </select>
+        </label>
+
+        <label><strong>Billing</strong><br />
+          <select value={billingCycle} onChange={(e) => { setBillingCycle(e.target.value as BillingCycle); resetFlow(); }}>
+            <option value="month">Monthly</option>
+            <option value="year" disabled={selectedOffer?.annualPrice == null}>Annual</option>
           </select>
         </label>
 
@@ -192,13 +207,13 @@ export function SubscriptionCheckoutForm({ productCode, productName, offers, rou
 
         <p>
           <strong>Subscription price:</strong>{" "}
-          {selectedOffer ? `${formatCommercialPrice(selectedOffer.currency, currentPrice)} / ${selectedOffer.billingUnit}` : "Price not configured"}
+          {selectedOffer ? `${formatCommercialPrice(selectedOffer.currency, selectedPrice)} / ${selectedUnit}` : "Price not configured"}
         </p>
-        {selectedOffer?.annualPrice != null ? (
-          <p><small>Annual option displayed on pricing: {formatCommercialPrice(selectedOffer.currency, selectedOffer.annualPrice)}</small></p>
+        {billingCycle === "month" && selectedOffer?.annualPrice != null ? (
+          <p><small>Or {formatCommercialPrice(selectedOffer.currency, selectedOffer.annualPrice)} / year</small></p>
         ) : null}
 
-        <button className="button button-primary" type="submit" disabled={loading || !selectedOffer}>
+        <button className="button button-primary" type="submit" disabled={loading || !selectedOffer || selectedPrice == null}>
           {loading ? "Preparing checkout…" : manualProvider ? "Create payment reference →" : "Continue to payment →"}
         </button>
 
