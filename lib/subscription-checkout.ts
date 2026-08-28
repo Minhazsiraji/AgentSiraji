@@ -3,6 +3,8 @@ import type { Market } from "@/lib/catalog";
 import type { PaymentProvider } from "@/lib/billing";
 import { toDatabaseProvider } from "@/lib/commercial-db";
 
+export type BillingCycle = "month" | "year";
+
 export type ProductSubscriptionContext = {
   productId: string;
   productCode: string;
@@ -15,12 +17,13 @@ export type ProductSubscriptionContext = {
   setupAmount: number;
   recurringAmount: number;
   billingInterval: string;
+  billingCycle: BillingCycle;
   salesEnabled: boolean;
   displayPrice: number | null;
   billingMatchesDisplay: boolean;
 };
 
-function activeOfferPrice(row: Record<string, unknown>, now = new Date()) {
+function activeMonthlyOfferPrice(row: Record<string, unknown>, now = new Date()) {
   const regular = row.regular_price == null ? null : Number(row.regular_price);
   const offer = row.offer_price == null ? null : Number(row.offer_price);
   if (!row.offer_enabled || offer == null) return regular;
@@ -35,15 +38,17 @@ export async function getProductSubscriptionContext(input: {
   product: string;
   plan: string;
   market: Market;
+  billingCycle: BillingCycle;
 }): Promise<ProductSubscriptionContext> {
   const sql = db();
   const dbMarket = input.market === "bd" ? "BD" : "INTL";
+  const dbInterval = input.billingCycle === "year" ? "YEAR" : "MONTH";
   const rows = await sql`
     SELECT prod.id AS product_id, prod.code AS product_code,
       p.id AS plan_id, p.code AS plan_code, p.name AS plan_name,
       pr.id AS price_id, pr.market, pr.currency, pr.setup_amount,
       pr.recurring_amount, pr.billing_interval,
-      o.regular_price, o.offer_price, o.offer_enabled,
+      o.regular_price, o.offer_price, o.annual_price, o.offer_enabled,
       o.offer_starts_at, o.offer_ends_at, o.sales_enabled
     FROM products prod
     JOIN plans p ON p.product_id = prod.id
@@ -53,6 +58,7 @@ export async function getProductSubscriptionContext(input: {
     WHERE prod.code = ${input.product}
       AND p.code = ${input.plan}
       AND pr.market = ${dbMarket}
+      AND pr.billing_interval = ${dbInterval}
       AND p.active = true
       AND pr.active = true
     LIMIT 1
@@ -60,7 +66,9 @@ export async function getProductSubscriptionContext(input: {
   const row = rows[0] as Record<string, unknown> | undefined;
   if (!row) throw new Error("Subscription plan or billing price is not configured.");
 
-  const displayPrice = activeOfferPrice(row);
+  const displayPrice = input.billingCycle === "year"
+    ? row.annual_price == null ? null : Number(row.annual_price)
+    : activeMonthlyOfferPrice(row);
   const currency = String(row.currency);
   const recurringAmount = Number(row.recurring_amount);
   const displayInBillingUnits = displayPrice == null
@@ -81,6 +89,7 @@ export async function getProductSubscriptionContext(input: {
     setupAmount: Number(row.setup_amount),
     recurringAmount,
     billingInterval: String(row.billing_interval),
+    billingCycle: input.billingCycle,
     salesEnabled: Boolean(row.sales_enabled),
     displayPrice,
     billingMatchesDisplay: displayInBillingUnits != null && displayInBillingUnits === recurringAmount,
@@ -103,6 +112,7 @@ export async function createPendingProductSubscription(input: {
   product: string;
   plan: string;
   market: Market;
+  billingCycle: BillingCycle;
   provider: PaymentProvider;
   email: string;
   displayName?: string;
@@ -113,6 +123,7 @@ export async function createPendingProductSubscription(input: {
     product: input.product,
     plan: input.plan,
     market: input.market,
+    billingCycle: input.billingCycle,
   });
 
   if (!context.billingMatchesDisplay) {
