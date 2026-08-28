@@ -9,6 +9,28 @@ import {
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const maxBodyBytes = 128_000;
 const maxBatchLeads = 50;
+const researchOnlyHosts = new Set([
+  "imginn.com",
+  "www.imginn.com",
+  "globuya.com",
+  "www.globuya.com",
+  "findglocal.com",
+  "www.findglocal.com",
+  "bakerias.com",
+  "www.bakerias.com",
+  "fashyas.com",
+  "www.fashyas.com",
+  "urlebird.com",
+  "www.urlebird.com",
+  "heepsy.com",
+  "www.heepsy.com",
+  "direct.me",
+  "www.direct.me",
+  "linktr.ee",
+  "www.linktr.ee",
+  "worldplaces.me",
+  "www.worldplaces.me",
+]);
 
 function json(body: object, status = 200) {
   return NextResponse.json(body, {
@@ -31,6 +53,15 @@ function validHttpUrl(value: string) {
   try {
     const url = new URL(value);
     return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function isResearchOnlyUrl(value: string) {
+  if (!value) return false;
+  try {
+    return researchOnlyHosts.has(new URL(value).hostname.toLowerCase());
   } catch {
     return false;
   }
@@ -76,6 +107,7 @@ function parseLeadInput(body: Record<string, unknown>) {
     throw new Error("INVALID_LEAD");
   }
   if (profileUrl && !validHttpUrl(profileUrl)) throw new Error("INVALID_URL");
+  if (profileUrl && isResearchOnlyUrl(profileUrl)) throw new Error("RESEARCH_URL");
 
   return {
     businessName,
@@ -121,7 +153,10 @@ export async function POST(request: Request) {
         input = parseLeadInput(body);
       } catch (error) {
         if (error instanceof Error && error.message === "INVALID_URL") {
-          return json({ error: "Profile URL must be a valid http(s) URL." }, 400);
+          return json({ error: "Official contact URL must be a valid http(s) URL." }, 400);
+        }
+        if (error instanceof Error && error.message === "RESEARCH_URL") {
+          return json({ error: "Use a direct official contact URL, not a research mirror or directory." }, 400);
         }
         return json({ error: "Business, country, platform, and a 0–100 score are required." }, 400);
       }
@@ -157,10 +192,12 @@ export async function POST(request: Request) {
             index: index + 1,
             reason:
               message === "INVALID_URL"
-                ? "Invalid profile URL."
-                : message === "INVALID_LEAD"
-                  ? "Missing required field or invalid score."
-                  : "Could not import this lead.",
+                ? "Invalid official contact URL."
+                : message === "RESEARCH_URL"
+                  ? "Research/directory URL rejected; provide the direct official contact destination."
+                  : message === "INVALID_LEAD"
+                    ? "Missing required field or invalid score."
+                    : "Could not import this lead.",
           });
         }
       }
@@ -223,7 +260,7 @@ export async function POST(request: Request) {
     if (message === "UNSUPPORTED_MEDIA_TYPE") return json({ error: "Content-Type must be application/json." }, 415);
     if (message === "TOO_LARGE") return json({ error: "Request is too large." }, 413);
     if (message === "INVALID_JSON") return json({ error: "Invalid JSON payload." }, 400);
-    if (message.includes("duplicate key")) return json({ error: "That public profile URL is already in the outreach database." }, 409);
+    if (message.includes("duplicate key")) return json({ error: "That official contact URL is already in the outreach database." }, 409);
     console.error("Foreign outreach operation failed", error);
     return json({ error: message || "Outreach operation could not be completed." }, 409);
   }
