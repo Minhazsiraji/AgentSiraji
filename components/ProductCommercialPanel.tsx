@@ -38,9 +38,11 @@ function priceLine(offer: PublicCommercialOffer) {
 export function ProductCommercialPanel({
   offers,
   productName,
+  checkoutBaseHref,
 }: {
   offers: PublicCommercialOffer[];
   productName: string;
+  checkoutBaseHref?: string;
 }) {
   const grouped = new Map<string, PublicCommercialOffer[]>();
   for (const offer of offers) {
@@ -50,6 +52,7 @@ export function ProductCommercialPanel({
   }
   const plans = [...grouped.values()];
   const singlePlan = plans.length === 1;
+  const isPreview = process.env.VERCEL_ENV !== "production";
 
   return (
     <section className="products shell section commerce-plans">
@@ -83,6 +86,10 @@ export function ProductCommercialPanel({
             const includes = Object.entries(primary.usageLimits ?? {})
               .map(([key, value]) => humanizeLimit(key, value))
               .filter((item): item is string => Boolean(item));
+            const canOpenCheckout = Boolean(checkoutBaseHref) && (allSalesEnabled || isPreview);
+            const checkoutHref = checkoutBaseHref
+              ? `${checkoutBaseHref}?plan=${encodeURIComponent(primary.planCode)}`
+              : "/contact";
 
             return (
               <article className={`product-card ${index % 2 === 0 ? "lead-card" : "diary-card"}`} key={primary.planCode}>
@@ -119,8 +126,12 @@ export function ProductCommercialPanel({
                       </div>
                     </>
                   ) : null}
-                  <Link className="button button-primary" href="/contact">
-                    {allSalesEnabled ? `Start with ${primary.planName} →` : "Join early access →"}
+                  <Link className="button button-primary" href={canOpenCheckout ? checkoutHref : "/contact"}>
+                    {allSalesEnabled
+                      ? `Start with ${primary.planName} →`
+                      : isPreview && checkoutBaseHref
+                        ? "Test subscription checkout →"
+                        : "Join early access →"}
                   </Link>
                 </div>
               </article>
