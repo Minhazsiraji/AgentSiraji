@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { scanStore, type StoreAuditResult } from "@/lib/store-audit-scanner";
+
+export const runtime = "nodejs";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\-\s\d]{7,40}$/;
@@ -37,6 +40,59 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function auditSummary(result: StoreAuditResult) {
+  return [
+    `Automated preliminary score: ${result.overallScore}/100 (Grade ${result.grade})`,
+    ...result.categories.map((item) => `${item.name}: ${item.score}/100 — ${item.summary}`),
+    "",
+    "Limitations:",
+    ...result.limitations.map((item) => `- ${item}`),
+  ].join("\n");
+}
+
+async function notifyLead(input: {
+  businessName: string;
+  country: string;
+  storeUrl: string;
+  email: string;
+  whatsapp: string;
+  productCount: string;
+  result: StoreAuditResult | null;
+  scanError: string | null;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.CONTACT_TO_EMAIL;
+  if (!apiKey || !to) return false;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>",
+      to: [to],
+      reply_to: input.email,
+      subject: `Store Audit V2 — ${input.businessName} (${input.country})${input.result ? ` — ${input.result.overallScore}/100` : ""}`,
+      text: [
+        "New AgentSiraji Store Audit V2 request",
+        "",
+        `Business: ${input.businessName}`,
+        `Country: ${input.country}`,
+        `Store/Page: ${input.storeUrl}`,
+        `Email: ${input.email}`,
+        `WhatsApp: ${input.whatsapp}`,
+        `Product count: ${input.productCount}`,
+        "",
+        input.result ? auditSummary(input.result) : `Automated scan unavailable: ${input.scanError || "Unknown scan error"}`,
+        "",
+        "Human review should verify browser performance, checkout behavior, tracking accuracy, and business-specific recommendations before a final commercial audit is sent.",
+      ].join("\n"),
+    }),
+    signal: AbortSignal.timeout(8_000),
+  });
+
+  return response.ok;
 }
 
 export async function POST(request: Request) {
@@ -96,39 +152,41 @@ export async function POST(request: Request) {
       return json({ message: "Please check the form and complete every field correctly." }, 400);
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    const to = process.env.CONTACT_TO_EMAIL;
-    if (!apiKey || !to) {
-      return json({ message: "Store Audit is being connected. Please email hello@agentsiraji.com for now." }, 503);
+    let result: StoreAuditResult | null = null;
+    let scanError: string | null = null;
+    try {
+      result = await scanStore(storeUrl);
+    } catch (error) {
+      scanError = error instanceof Error ? error.message : "The automated scan could not access this store.";
     }
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>",
-        to: [to],
-        reply_to: email,
-        subject: `Store Audit request — ${businessName} (${country})`,
-        text: [
-          "New AgentSiraji Store Audit request",
-          "",
-          `Business: ${businessName}`,
-          `Country: ${country}`,
-          `Store/Page: ${storeUrl}`,
-          `Email: ${email}`,
-          `WhatsApp: ${whatsapp}`,
-          `Product count: ${productCount}`,
-          "",
-          "Audit manually across: performance, mobile UX, product discovery, checkout, SEO, tracking, trust, media, conversion, and future readiness.",
-        ].join("\n"),
-      }),
-      signal: AbortSignal.timeout(8_000),
-    });
+    let notificationDelivered = false;
+    try {
+      notificationDelivered = await notifyLead({ businessName, country, storeUrl, email, whatsapp, productCount, result, scanError });
+    } catch {
+      notificationDelivered = false;
+    }
 
-    if (!response.ok) throw new Error("Email service rejected the request");
-    return json({ ok: true });
+    if (!result) {
+      return json({
+        ok: true,
+        result: null,
+        manualReview: true,
+        notificationDelivered,
+        message: `We could not create an automated score for this page (${scanError || "access unavailable"}). It needs manual review.`,
+      });
+    }
+
+    return json({
+      ok: true,
+      result,
+      manualReview: true,
+      notificationDelivered,
+      message: notificationDelivered
+        ? "Preliminary score created. Your request was also sent for human review."
+        : "Preliminary score created. Email notification is not connected yet, so please save this result and contact hello@agentsiraji.com if you want the human review now.",
+    });
   } catch {
-    return json({ message: "Unable to submit the audit right now. Please email hello@agentsiraji.com." }, 500);
+    return json({ message: "Unable to run the audit right now. Please try again or email hello@agentsiraji.com." }, 500);
   }
 }
