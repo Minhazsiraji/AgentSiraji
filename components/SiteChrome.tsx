@@ -5,7 +5,7 @@ export function SiteHeader() {
     <nav className="nav shell" aria-label="Main navigation">
       <Link className="brand" href="/"><span className="brand-mark">AS</span><span>AgentSiraji</span></Link>
       <div className="nav-links">
-        <Link href="/#products">Products</Link>
+        <Link href="/products">Products</Link>
         <Link href="/#solutions">Solutions</Link>
         <Link href="/pricing">Pricing</Link>
         <Link href="/about">Company</Link>
@@ -14,7 +14,7 @@ export function SiteHeader() {
       <details className="mobile-menu">
         <summary aria-label="Open menu"><span /><span /><span /></summary>
         <div>
-          <Link href="/#products">Products</Link>
+          <Link href="/products">Products</Link>
           <Link href="/#solutions">Solutions</Link>
           <Link href="/pricing">Pricing</Link>
           <Link href="/products/commerce">Commerce</Link>
@@ -41,7 +41,7 @@ export function SiteFooter() {
       <Link className="brand" href="/"><span className="brand-mark">AS</span><span>AgentSiraji</span></Link>
       <p>Practical software for businesses that want to move.</p>
       <div>
-        <Link href="/#products">Products</Link>
+        <Link href="/products">Products</Link>
         <Link href="/products/commerce">Commerce</Link>
         <Link href="/pricing">Pricing</Link>
         <Link href="/about">Company</Link>
