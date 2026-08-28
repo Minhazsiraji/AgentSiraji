@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/support",
     "/store-audit",
     "/pricing",
+    "/products",
     "/products/commerce",
     "/products/leadpilot",
     "/products/adintel",
@@ -24,7 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return paths.map((path) => ({
     url: `${base}${path}`,
-    changeFrequency: path === "" || path === "/products/commerce" || path === "/store-audit" ? "weekly" : "monthly",
+    changeFrequency: path === "" || path === "/products" || path === "/products/commerce" || path === "/store-audit" ? "weekly" : "monthly",
     priority: path === "" ? 1 : path.startsWith("/products") || path === "/pricing" || path === "/store-audit" ? 0.8 : 0.6,
   }));
 }
