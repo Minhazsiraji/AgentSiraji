@@ -190,6 +190,7 @@ export async function applyOutreachAction(input: {
     | "POSITIVE_REPLY"
     | "MAYBE_LATER"
     | "NOT_INTERESTED"
+    | "WRONG_FIT"
     | "DO_NOT_CONTACT"
     | "AUDIT_SENT"
     | "DEMO_SENT"
@@ -243,8 +244,8 @@ export async function applyOutreachAction(input: {
     return mapLead(rows[0] as Record<string, unknown>);
   }
 
-  if (input.action === "NOT_INTERESTED" || input.action === "DO_NOT_CONTACT") {
-    const reply = input.action === "NOT_INTERESTED" ? "NOT_INTERESTED" : "DO_NOT_CONTACT";
+  if (input.action === "NOT_INTERESTED" || input.action === "WRONG_FIT" || input.action === "DO_NOT_CONTACT") {
+    const reply = input.action === "WRONG_FIT" ? "WRONG_FIT" : input.action === "NOT_INTERESTED" ? "NOT_INTERESTED" : "DO_NOT_CONTACT";
     const rows = await sql`
       UPDATE outreach_leads SET
         status = 'ARCHIVED', reply_status = ${reply}, closed = true, last_touch_at = now(), next_followup_at = NULL, updated_at = now()
@@ -300,7 +301,7 @@ export async function getOutreachDashboard(): Promise<OutreachDashboard> {
       SELECT
         count(*)::int AS total_leads,
         count(*) FILTER (WHERE first_sent_at IS NOT NULL)::int AS sent,
-        count(*) FILTER (WHERE reply_status <> 'NO_REPLY')::int AS replies,
+        count(*) FILTER (WHERE reply_status IN ('POSITIVE', 'MAYBE_LATER', 'NOT_INTERESTED', 'DO_NOT_CONTACT'))::int AS replies,
         count(*) FILTER (WHERE reply_status = 'POSITIVE')::int AS positive_replies,
         count(*) FILTER (WHERE demo_sent)::int AS demos,
         count(*) FILTER (WHERE proposal_sent)::int AS proposals,
@@ -315,7 +316,7 @@ export async function getOutreachDashboard(): Promise<OutreachDashboard> {
         country,
         count(*)::int AS leads,
         count(*) FILTER (WHERE first_sent_at IS NOT NULL)::int AS sent,
-        count(*) FILTER (WHERE reply_status <> 'NO_REPLY')::int AS replies,
+        count(*) FILTER (WHERE reply_status IN ('POSITIVE', 'MAYBE_LATER', 'NOT_INTERESTED', 'DO_NOT_CONTACT'))::int AS replies,
         count(*) FILTER (WHERE demo_sent)::int AS demos,
         count(*) FILTER (WHERE proposal_sent)::int AS proposals,
         count(*) FILTER (WHERE status = 'CLOSED')::int AS closed,
