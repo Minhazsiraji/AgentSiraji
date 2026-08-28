@@ -44,8 +44,13 @@ export function activeDisplayPrice(offer: PublicCommercialOffer, now = new Date(
 
 export function formatCommercialPrice(currency: string, amount: number | null) {
   if (amount == null) return "Price not set";
+  if (currency === "BDT") {
+    return `৳${new Intl.NumberFormat("en-BD", {
+      maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    }).format(amount)}`;
+  }
   try {
-    return new Intl.NumberFormat(currency === "BDT" ? "en-BD" : "en-US", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
