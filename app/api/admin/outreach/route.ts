@@ -190,6 +190,15 @@ export async function POST(request: Request) {
         return json({ error: "A valid lead and action are required." }, 400);
       }
 
+      if (action === "FOLLOW_UP") {
+        const dashboard = await getOutreachDashboard();
+        const lead = dashboard.leads.find((item) => item.id === id);
+        if (!lead) return json({ error: "Lead was not found." }, 404);
+        if (!lead.nextFollowupAt || new Date(lead.nextFollowupAt).getTime() > Date.now()) {
+          return json({ error: `Follow-up is not due yet${lead.nextFollowupAt ? `; scheduled for ${new Date(lead.nextFollowupAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}` : ""}.` }, 409);
+        }
+      }
+
       const setupValueUsd = Number(body.setupValueUsd ?? 0);
       const monthlyValueUsd = Number(body.monthlyValueUsd ?? 0);
       if (
