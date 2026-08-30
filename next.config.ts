@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
 
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://*.paddle.com https://*.paddle.io",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://*.paddle.com https://*.paddle.io",
 
       [
         "connect-src",
