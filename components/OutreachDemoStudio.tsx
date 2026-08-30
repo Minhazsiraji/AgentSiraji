@@ -1,0 +1,276 @@
+"use client";
+
+import { useState } from "react";
+
+type DemoLead = {
+  id: string;
+  businessName: string;
+  country: string;
+  city: string | null;
+  category: string | null;
+  profileUrl: string | null;
+  replyStatus: string;
+  status: string;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  price: string;
+  size: string;
+  description: string;
+  imageUrl: string;
+};
+
+type DemoForm = {
+  businessName: string;
+  country: string;
+  city: string;
+  template: "STANDARD" | "FOOD" | "FASHION" | "AGRI" | "ELECTRONICS" | "HOME";
+  tagline: string;
+  currencyCode: string;
+  currencySymbol: string;
+  contactUrl: string;
+  contactLabel: string;
+  heroImageUrl: string;
+  products: ProductRow[];
+};
+
+type SavedDemo = DemoForm & { slug: string; updatedAt?: string };
+
+type DemoPayload = { ok?: boolean; error?: string; demo?: SavedDemo | null; demoUrl?: string };
+
+const modalStyle = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 120,
+  background: "rgba(8, 18, 31, .52)",
+  backdropFilter: "blur(6px)",
+  display: "grid",
+  placeItems: "center",
+  padding: "1rem",
+} as const;
+
+const panelStyle = {
+  width: "min(980px, 100%)",
+  maxHeight: "92vh",
+  overflow: "auto",
+  borderRadius: "1.6rem",
+  background: "#f7f9ff",
+  border: "1px solid rgba(20, 47, 91, .12)",
+  boxShadow: "0 30px 100px rgba(7, 23, 52, .28)",
+  padding: "1.25rem",
+} as const;
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+  gap: ".75rem",
+} as const;
+
+const rowStyle = { display: "flex", gap: ".55rem", flexWrap: "wrap", alignItems: "center" } as const;
+
+function currencyFor(country: string) {
+  const key = country.trim().toLowerCase();
+  if (key.includes("nepal")) return { code: "NPR", symbol: "Rs" };
+  if (key.includes("ghana")) return { code: "GHS", symbol: "GH₵" };
+  if (key.includes("rwanda")) return { code: "RWF", symbol: "RWF" };
+  if (key.includes("kenya")) return { code: "KES", symbol: "KSh" };
+  if (key.includes("nigeria")) return { code: "NGN", symbol: "₦" };
+  if (key.includes("bangladesh")) return { code: "BDT", symbol: "৳" };
+  return { code: "USD", symbol: "$" };
+}
+
+function templateFor(category: string | null): DemoForm["template"] {
+  const value = (category || "").toLowerCase();
+  if (/feed|farm|agri|livestock|poultry/.test(value)) return "AGRI";
+  if (/food|organic|drink|beverage|bakery|grocery|wellness/.test(value)) return "FOOD";
+  if (/fashion|cloth|apparel|jewel|cosmetic|beauty|accessor/.test(value)) return "FASHION";
+  if (/electronic|phone|computer|gadget|tech/.test(value)) return "ELECTRONICS";
+  if (/home|kitchen|furniture|decor|household/.test(value)) return "HOME";
+  return "STANDARD";
+}
+
+function blankProduct(index: number): ProductRow {
+  return { id: `product-${index + 1}`, name: "", price: "", size: "", description: "", imageUrl: "" };
+}
+
+function initialForm(lead: DemoLead): DemoForm {
+  const currency = currencyFor(lead.country);
+  return {
+    businessName: lead.businessName,
+    country: lead.country,
+    city: lead.city || "",
+    template: templateFor(lead.category),
+    tagline: `A simpler way to buy from ${lead.businessName}.`,
+    currencyCode: currency.code,
+    currencySymbol: currency.symbol,
+    contactUrl: lead.profileUrl || "",
+    contactLabel: lead.profileUrl?.includes("wa.me") ? "WhatsApp us" : "Contact us",
+    heroImageUrl: "",
+    products: [blankProduct(0), blankProduct(1), blankProduct(2), blankProduct(3)],
+  };
+}
+
+function normalizeExisting(demo: SavedDemo, lead: DemoLead): DemoForm {
+  const products = (demo.products || []).map((product, index) => ({
+    id: product.id || `product-${index + 1}`,
+    name: product.name || "",
+    price: String(product.price ?? ""),
+    size: product.size || "",
+    description: product.description || "",
+    imageUrl: product.imageUrl || "",
+  }));
+  while (products.length < 4) products.push(blankProduct(products.length));
+  return {
+    ...initialForm(lead),
+    ...demo,
+    city: demo.city || "",
+    contactUrl: demo.contactUrl || "",
+    heroImageUrl: demo.heroImageUrl || "",
+    products,
+  };
+}
+
+export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: string }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<DemoForm>(() => initialForm(lead));
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [demoUrl, setDemoUrl] = useState("");
+
+  const eligible = !["NOT_INTERESTED", "WRONG_FIT", "DO_NOT_CONTACT"].includes(lead.replyStatus);
+
+  async function openStudio() {
+    setOpen(true);
+    setNotice("");
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/outreach/demo?leadId=${encodeURIComponent(lead.id)}`, {
+        headers: { "x-agentsiraji-admin-token": token },
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as DemoPayload;
+      if (!response.ok) throw new Error(payload.error || "Demo could not be loaded.");
+      if (payload.demo) {
+        setForm(normalizeExisting(payload.demo, lead));
+        setDemoUrl(`${window.location.origin}/demo/${payload.demo.slug}`);
+      } else {
+        setForm(initialForm(lead));
+        setDemoUrl("");
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Demo could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function product(index: number, patch: Partial<ProductRow>) {
+    setForm((current) => ({
+      ...current,
+      products: current.products.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
+    }));
+  }
+
+  function addProduct() {
+    if (form.products.length >= 8) return;
+    setForm((current) => ({ ...current, products: [...current.products, blankProduct(current.products.length)] }));
+  }
+
+  async function saveDemo() {
+    const products = form.products
+      .filter((item) => item.name.trim() && item.price.trim())
+      .map((item) => ({ ...item, price: Number(item.price) }));
+    if (products.length < 1) {
+      setNotice("Add at least one product name and price.");
+      return;
+    }
+    setLoading(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/outreach/demo", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-agentsiraji-admin-token": token },
+        body: JSON.stringify({ ...form, leadId: lead.id, products }),
+      });
+      const payload = (await response.json()) as DemoPayload;
+      if (!response.ok || !payload.demo || !payload.demoUrl) throw new Error(payload.error || "Demo could not be generated.");
+      const absolute = `${window.location.origin}${payload.demoUrl}`;
+      setDemoUrl(absolute);
+      setNotice("Personalized demo saved. Review it before sending to the prospect.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Demo could not be generated.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!demoUrl) return;
+    await navigator.clipboard.writeText(demoUrl);
+    setNotice("Private demo link copied. After you actually send it, mark Demo on the lead card.");
+  }
+
+  if (!eligible) return null;
+
+  return (
+    <>
+      <button className="button" type="button" onClick={() => void openStudio()}>
+        {lead.status === "DEMO" || lead.status === "PROPOSAL" ? "Edit demo" : "Create demo"}
+      </button>
+
+      {open && (
+        <div style={modalStyle} onMouseDown={(event) => { if (event.currentTarget === event.target) setOpen(false); }}>
+          <section style={panelStyle} aria-label={`Demo Studio for ${lead.businessName}`}>
+            <div style={{ ...rowStyle, justifyContent: "space-between" }}>
+              <div><span className="kicker">AgentSiraji Demo Studio</span><h2 style={{ margin: ".2rem 0 0" }}>{lead.businessName}</h2><p style={{ marginBottom: 0 }}>Build a 3–5 minute personalized Commerce micro-demo. No new branch required.</p></div>
+              <button className="button" type="button" onClick={() => setOpen(false)}>Close ×</button>
+            </div>
+
+            {notice && <div className="product-card" style={{ padding: ".7rem .85rem", marginTop: ".8rem" }}><strong>{notice}</strong></div>}
+
+            <div style={{ ...gridStyle, marginTop: "1rem" }}>
+              <label><strong>Business name</strong><br /><input value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} /></label>
+              <label><strong>Template</strong><br /><select value={form.template} onChange={(e) => setForm({ ...form, template: e.target.value as DemoForm["template"] })}><option value="STANDARD">Standard commerce</option><option value="FOOD">Food & wellness</option><option value="FASHION">Fashion & beauty</option><option value="AGRI">Agriculture</option><option value="ELECTRONICS">Electronics</option><option value="HOME">Home & living</option></select></label>
+              <label><strong>Country</strong><br /><input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></label>
+              <label><strong>City</strong><br /><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
+              <label><strong>Currency code</strong><br /><input value={form.currencyCode} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} /></label>
+              <label><strong>Currency symbol</strong><br /><input value={form.currencySymbol} onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })} /></label>
+            </div>
+
+            <label style={{ display: "block", marginTop: ".75rem" }}><strong>Hero headline</strong><br /><input style={{ width: "100%" }} value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} /></label>
+            <div style={{ ...gridStyle, marginTop: ".75rem" }}>
+              <label><strong>Hero image URL (optional)</strong><br /><input type="url" value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} placeholder="https://..." /></label>
+              <label><strong>Contact URL (optional)</strong><br /><input type="url" value={form.contactUrl} onChange={(e) => setForm({ ...form, contactUrl: e.target.value })} placeholder="https://wa.me/..." /></label>
+              <label><strong>Contact button</strong><br /><input value={form.contactLabel} onChange={(e) => setForm({ ...form, contactLabel: e.target.value })} /></label>
+            </div>
+
+            <div style={{ ...rowStyle, justifyContent: "space-between", marginTop: "1rem" }}><div><strong>Products</strong><div style={{ fontSize: ".82rem", opacity: .72 }}>Use 3–5 real products when possible. Image URLs are optional.</div></div><button className="button" type="button" onClick={addProduct} disabled={form.products.length >= 8}>+ Product</button></div>
+
+            <div style={{ display: "grid", gap: ".65rem", marginTop: ".65rem" }}>
+              {form.products.map((item, index) => (
+                <article className="product-card" key={item.id} style={{ padding: ".8rem" }}>
+                  <div style={gridStyle}>
+                    <label><strong>Product {index + 1}</strong><br /><input value={item.name} onChange={(e) => product(index, { name: e.target.value })} placeholder="Product name" /></label>
+                    <label><strong>Price</strong><br /><input type="number" min="0" value={item.price} onChange={(e) => product(index, { price: e.target.value })} placeholder="0" /></label>
+                    <label><strong>Size / variant</strong><br /><input value={item.size} onChange={(e) => product(index, { size: e.target.value })} placeholder="25 kg / 250 ml / XL" /></label>
+                    <label><strong>Image URL</strong><br /><input type="url" value={item.imageUrl} onChange={(e) => product(index, { imageUrl: e.target.value })} placeholder="https://..." /></label>
+                  </div>
+                  <label style={{ display: "block", marginTop: ".55rem" }}><strong>Short description</strong><br /><input style={{ width: "100%" }} value={item.description} onChange={(e) => product(index, { description: e.target.value })} placeholder="One short product benefit or detail" /></label>
+                </article>
+              ))}
+            </div>
+
+            <div style={{ ...rowStyle, marginTop: "1rem" }}>
+              <button className="button button-primary" type="button" disabled={loading} onClick={() => void saveDemo()}>{loading ? "Saving…" : demoUrl ? "Update demo →" : "Generate demo →"}</button>
+              {demoUrl && <a className="button" href={demoUrl} target="_blank" rel="noreferrer">Open demo ↗</a>}
+              {demoUrl && <button className="button" type="button" onClick={() => void copyLink()}>Copy demo link</button>}
+            </div>
+            {demoUrl && <p style={{ fontSize: ".82rem", overflowWrap: "anywhere" }}><strong>Private share URL:</strong> {demoUrl}</p>}
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
