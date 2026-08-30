@@ -25,6 +25,8 @@ function templateLabel(template: OutreachDemo["template"]) {
   return "Browse · order · stay connected";
 }
 
+const logoStyle = { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" } as const;
+
 export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
@@ -64,7 +66,7 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
         <div className={styles.headerInner}>
           <div className={styles.brand}>
             <div className={styles.mark}>
-              {demo.logoImageUrl ? <img src={demo.logoImageUrl} alt={`${demo.businessName} logo`} /> : demo.businessName.slice(0, 2).toUpperCase()}
+              {demo.logoImageUrl ? <img src={demo.logoImageUrl} alt={`${demo.businessName} logo`} style={logoStyle} /> : demo.businessName.slice(0, 2).toUpperCase()}
             </div>
             <div><strong>{demo.businessName}</strong><span>{demo.city ? `${demo.city}, ` : ""}{demo.country}</span></div>
           </div>
