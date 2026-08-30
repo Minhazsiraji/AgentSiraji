@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ForeignOutreachConsole } from "@/components/ForeignOutreachConsole";
+import { OutreachReplyFirstDmPolicy } from "@/components/OutreachReplyFirstDmPolicy";
 import styles from "./outreach.module.css";
 
 export const metadata: Metadata = {
@@ -42,6 +43,7 @@ export default function ForeignOutreachPage() {
       </header>
 
       <ForeignOutreachConsole />
+      <OutreachReplyFirstDmPolicy />
     </main>
   );
 }
