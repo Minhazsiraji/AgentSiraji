@@ -33,10 +33,16 @@ type DemoForm = {
   contactUrl: string;
   contactLabel: string;
   heroImageUrl: string;
+  logoImageUrl: string;
+  brandColor: string;
   products: ProductRow[];
 };
 
-type SavedDemo = DemoForm & { slug: string; updatedAt?: string };
+type SavedDemo = Omit<DemoForm, "products"> & {
+  slug: string;
+  updatedAt?: string;
+  products: Array<Omit<ProductRow, "price"> & { price: string | number }>;
+};
 
 type DemoPayload = { ok?: boolean; error?: string; demo?: SavedDemo | null; demoUrl?: string };
 
@@ -91,23 +97,35 @@ function templateFor(category: string | null): DemoForm["template"] {
   return "STANDARD";
 }
 
+function defaultBrandColor(template: DemoForm["template"]) {
+  if (template === "AGRI") return "#205a3b";
+  if (template === "FOOD") return "#7a3f24";
+  if (template === "FASHION") return "#5a3158";
+  if (template === "ELECTRONICS") return "#253c70";
+  if (template === "HOME") return "#735b3f";
+  return "#245c45";
+}
+
 function blankProduct(index: number): ProductRow {
   return { id: `product-${index + 1}`, name: "", price: "", size: "", description: "", imageUrl: "" };
 }
 
 function initialForm(lead: DemoLead): DemoForm {
   const currency = currencyFor(lead.country);
+  const template = templateFor(lead.category);
   return {
     businessName: lead.businessName,
     country: lead.country,
     city: lead.city || "",
-    template: templateFor(lead.category),
+    template,
     tagline: `A simpler way to buy from ${lead.businessName}.`,
     currencyCode: currency.code,
     currencySymbol: currency.symbol,
     contactUrl: lead.profileUrl || "",
     contactLabel: lead.profileUrl?.includes("wa.me") ? "WhatsApp us" : "Contact us",
     heroImageUrl: "",
+    logoImageUrl: "",
+    brandColor: defaultBrandColor(template),
     products: [blankProduct(0), blankProduct(1), blankProduct(2), blankProduct(3)],
   };
 }
@@ -122,12 +140,15 @@ function normalizeExisting(demo: SavedDemo, lead: DemoLead): DemoForm {
     imageUrl: product.imageUrl || "",
   }));
   while (products.length < 4) products.push(blankProduct(products.length));
+  const base = initialForm(lead);
   return {
-    ...initialForm(lead),
+    ...base,
     ...demo,
     city: demo.city || "",
     contactUrl: demo.contactUrl || "",
     heroImageUrl: demo.heroImageUrl || "",
+    logoImageUrl: demo.logoImageUrl || "",
+    brandColor: demo.brandColor || defaultBrandColor(demo.template || base.template),
     products,
   };
 }
@@ -232,7 +253,7 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
 
             <div style={{ ...gridStyle, marginTop: "1rem" }}>
               <label><strong>Business name</strong><br /><input value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} /></label>
-              <label><strong>Template</strong><br /><select value={form.template} onChange={(e) => setForm({ ...form, template: e.target.value as DemoForm["template"] })}><option value="STANDARD">Standard commerce</option><option value="FOOD">Food & wellness</option><option value="FASHION">Fashion & beauty</option><option value="AGRI">Agriculture</option><option value="ELECTRONICS">Electronics</option><option value="HOME">Home & living</option></select></label>
+              <label><strong>Template</strong><br /><select value={form.template} onChange={(e) => { const template = e.target.value as DemoForm["template"]; setForm({ ...form, template, brandColor: defaultBrandColor(template) }); }}><option value="STANDARD">Standard commerce</option><option value="FOOD">Food & wellness</option><option value="FASHION">Fashion & beauty</option><option value="AGRI">Agriculture</option><option value="ELECTRONICS">Electronics</option><option value="HOME">Home & living</option></select></label>
               <label><strong>Country</strong><br /><input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></label>
               <label><strong>City</strong><br /><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
               <label><strong>Currency code</strong><br /><input value={form.currencyCode} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} /></label>
@@ -241,6 +262,8 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
 
             <label style={{ display: "block", marginTop: ".75rem" }}><strong>Hero headline</strong><br /><input style={{ width: "100%" }} value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} /></label>
             <div style={{ ...gridStyle, marginTop: ".75rem" }}>
+              <label><strong>Logo image URL (optional)</strong><br /><input type="url" value={form.logoImageUrl} onChange={(e) => setForm({ ...form, logoImageUrl: e.target.value })} placeholder="https://..." /></label>
+              <label><strong>Brand color</strong><br /><input type="color" value={form.brandColor} onChange={(e) => setForm({ ...form, brandColor: e.target.value })} style={{ width: "100%", minHeight: "2.6rem" }} /></label>
               <label><strong>Hero image URL (optional)</strong><br /><input type="url" value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} placeholder="https://..." /></label>
               <label><strong>Contact URL (optional)</strong><br /><input type="url" value={form.contactUrl} onChange={(e) => setForm({ ...form, contactUrl: e.target.value })} placeholder="https://wa.me/..." /></label>
               <label><strong>Contact button</strong><br /><input value={form.contactLabel} onChange={(e) => setForm({ ...form, contactLabel: e.target.value })} /></label>
