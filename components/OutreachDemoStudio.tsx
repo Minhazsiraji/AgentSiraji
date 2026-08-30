@@ -159,6 +159,7 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [demoUrl, setDemoUrl] = useState("");
+  const [quickProducts, setQuickProducts] = useState("");
 
   const eligible = !["NOT_INTERESTED", "WRONG_FIT", "DO_NOT_CONTACT"].includes(lead.replyStatus);
 
@@ -197,6 +198,39 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
   function addProduct() {
     if (form.products.length >= 8) return;
     setForm((current) => ({ ...current, products: [...current.products, blankProduct(current.products.length)] }));
+  }
+
+  function applyQuickProducts() {
+    const rows = quickProducts
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const imported: ProductRow[] = [];
+    for (const row of rows) {
+      const [name = "", rawPrice = "", size = "", description = "", imageUrl = ""] = row.split("|").map((part) => part.trim());
+      const numericPrice = Number(rawPrice.replace(/[^0-9.]/g, ""));
+      if (!name || !Number.isFinite(numericPrice) || numericPrice < 0) continue;
+      imported.push({
+        id: `product-${imported.length + 1}`,
+        name,
+        price: String(numericPrice),
+        size,
+        description,
+        imageUrl,
+      });
+      if (imported.length >= 8) break;
+    }
+
+    if (imported.length < 1) {
+      setNotice("Quick import format: Product name | price | size/variant | short description | optional image URL");
+      return;
+    }
+
+    const loadedCount = imported.length;
+    while (imported.length < 4) imported.push(blankProduct(imported.length));
+    setForm((current) => ({ ...current, products: imported }));
+    setNotice(`${loadedCount} product${loadedCount === 1 ? "" : "s"} loaded. Review the details, then generate the demo.`);
   }
 
   async function saveDemo() {
@@ -270,6 +304,19 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
             </div>
 
             <div style={{ ...rowStyle, justifyContent: "space-between", marginTop: "1rem" }}><div><strong>Products</strong><div style={{ fontSize: ".82rem", opacity: .72 }}>Use 3–5 real products when possible. Image URLs are optional.</div></div><button className="button" type="button" onClick={addProduct} disabled={form.products.length >= 8}>+ Product</button></div>
+
+            <details className="product-card" style={{ padding: ".8rem", marginTop: ".65rem" }}>
+              <summary><strong>Quick product import</strong> · paste all products at once</summary>
+              <p style={{ fontSize: ".82rem", margin: ".6rem 0" }}>One product per line: <strong>Name | price | size/variant | short description | optional image URL</strong></p>
+              <textarea
+                rows={6}
+                value={quickProducts}
+                onChange={(event) => setQuickProducts(event.target.value)}
+                placeholder={"Example Product | 12 | Standard | Short benefit\nSecond Product | 8.5 | 250 ml | Short benefit"}
+                style={{ width: "100%", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              />
+              <button className="button" type="button" onClick={applyQuickProducts} disabled={!quickProducts.trim()} style={{ marginTop: ".55rem" }}>Apply list →</button>
+            </details>
 
             <div style={{ display: "grid", gap: ".65rem", marginTop: ".65rem" }}>
               {form.products.map((item, index) => (
