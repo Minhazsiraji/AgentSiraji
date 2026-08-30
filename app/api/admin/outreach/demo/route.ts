@@ -9,6 +9,7 @@ import {
 } from "@/lib/outreach-demo-db";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const hexColorPattern = /^#[0-9a-f]{6}$/i;
 const allowedTemplates = new Set<OutreachDemoTemplate>(["STANDARD", "FOOD", "FASHION", "AGRI", "ELECTRONICS", "HOME"]);
 const maxBodyBytes = 40_000;
 
@@ -118,13 +119,22 @@ export async function POST(request: Request) {
     const contactUrl = text(input.contactUrl, 600);
     const contactLabel = text(input.contactLabel, 60) || "Contact us";
     const heroImageUrl = text(input.heroImageUrl, 600);
+    const logoImageUrl = text(input.logoImageUrl, 600);
+    const brandColor = text(input.brandColor, 7);
     const products = parseProducts(input.products);
 
     if (!businessName || !country || !tagline || !currencyCode || !currencySymbol) {
       return json({ error: "Business name, country, tagline and currency are required." }, 400);
     }
-    if ((contactUrl && !httpUrl(contactUrl)) || (heroImageUrl && !httpUrl(heroImageUrl))) {
+    if (
+      (contactUrl && !httpUrl(contactUrl)) ||
+      (heroImageUrl && !httpUrl(heroImageUrl)) ||
+      (logoImageUrl && !httpUrl(logoImageUrl))
+    ) {
       return json({ error: "Contact and image URLs must be valid http(s) URLs." }, 400);
+    }
+    if (brandColor && !hexColorPattern.test(brandColor)) {
+      return json({ error: "Brand color must be a 6-digit hex color such as #245c45." }, 400);
     }
 
     const demo = await saveOutreachDemo({
@@ -139,6 +149,8 @@ export async function POST(request: Request) {
       contactUrl: contactUrl || null,
       contactLabel,
       heroImageUrl: heroImageUrl || null,
+      logoImageUrl: logoImageUrl || null,
+      brandColor: brandColor || null,
       products,
     });
 
