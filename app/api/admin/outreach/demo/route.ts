@@ -46,7 +46,7 @@ function httpUrl(value: string) {
 
 function parseProducts(value: unknown): OutreachDemoProduct[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 8) throw new Error("PRODUCTS");
-  const products = value.map((raw, index) => {
+  return value.map((raw, index) => {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("PRODUCTS");
     const item = raw as Record<string, unknown>;
     const name = text(item.name, 120);
@@ -65,7 +65,6 @@ function parseProducts(value: unknown): OutreachDemoProduct[] {
       imageUrl: imageUrl || undefined,
     };
   });
-  return products;
 }
 
 async function body(request: Request) {
@@ -75,12 +74,26 @@ async function body(request: Request) {
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+async function resolveLead(input: { leadId?: string; profileUrl?: string }) {
+  const dashboard = await getOutreachDashboard();
+  const leadId = input.leadId || "";
+  const profileUrl = input.profileUrl || "";
+  if (uuidPattern.test(leadId)) return dashboard.leads.find((item) => item.id === leadId) || null;
+  if (profileUrl && httpUrl(profileUrl)) return dashboard.leads.find((item) => item.profileUrl === profileUrl) || null;
+  return null;
+}
+
 export async function GET(request: Request) {
   if (!authorized(request)) return json({ error: "Unauthorized outreach access." }, 401);
-  const leadId = new URL(request.url).searchParams.get("leadId") || "";
-  if (!uuidPattern.test(leadId)) return json({ error: "Valid leadId is required." }, 400);
-  const demo = await getOutreachDemoByLeadId(leadId);
-  return json({ ok: true, demo });
+  const url = new URL(request.url);
+  const lead = await resolveLead({
+    leadId: url.searchParams.get("leadId") || "",
+    profileUrl: url.searchParams.get("profileUrl") || "",
+  });
+  if (!lead) return json({ error: "Lead was not found." }, 404);
+  if (lead.closed || lead.isPartner) return json({ error: "This lead is not eligible for a Commerce demo." }, 409);
+  const demo = await getOutreachDemoByLeadId(lead.id);
+  return json({ ok: true, demo, lead });
 }
 
 export async function POST(request: Request) {
@@ -90,11 +103,7 @@ export async function POST(request: Request) {
 
   try {
     const input = await body(request);
-    const leadId = text(input.leadId, 64);
-    if (!uuidPattern.test(leadId)) return json({ error: "Valid leadId is required." }, 400);
-
-    const dashboard = await getOutreachDashboard();
-    const lead = dashboard.leads.find((item) => item.id === leadId);
+    const lead = await resolveLead({ leadId: text(input.leadId, 64), profileUrl: text(input.profileUrl, 600) });
     if (!lead || lead.closed || lead.isPartner) return json({ error: "This lead is not eligible for a Commerce demo." }, 409);
 
     const template = text(input.template, 30) as OutreachDemoTemplate;
@@ -119,7 +128,7 @@ export async function POST(request: Request) {
     }
 
     const demo = await saveOutreachDemo({
-      leadId,
+      leadId: lead.id,
       businessName,
       country,
       city: city || null,
@@ -133,7 +142,7 @@ export async function POST(request: Request) {
       products,
     });
 
-    return json({ ok: true, demo, demoUrl: `/demo/${demo.slug}` }, 200);
+    return json({ ok: true, demo, lead, demoUrl: `/demo/${demo.slug}` }, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message === "MEDIA") return json({ error: "Content-Type must be application/json." }, 415);
