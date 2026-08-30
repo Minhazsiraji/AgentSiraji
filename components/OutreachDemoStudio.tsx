@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 type DemoLead = {
   id: string;
@@ -49,23 +50,40 @@ type DemoPayload = { ok?: boolean; error?: string; demo?: SavedDemo | null; demo
 const modalStyle = {
   position: "fixed",
   inset: 0,
-  zIndex: 120,
-  background: "rgba(8, 18, 31, .52)",
-  backdropFilter: "blur(6px)",
+  zIndex: 10000,
+  background: "rgba(8, 18, 31, .58)",
+  backdropFilter: "blur(8px)",
   display: "grid",
   placeItems: "center",
   padding: "1rem",
 } as const;
 
 const panelStyle = {
-  width: "min(980px, 100%)",
+  width: "min(1040px, 96vw)",
   maxHeight: "92vh",
   overflow: "auto",
   borderRadius: "1.6rem",
   background: "#f7f9ff",
   border: "1px solid rgba(20, 47, 91, .12)",
-  boxShadow: "0 30px 100px rgba(7, 23, 52, .28)",
-  padding: "1.25rem",
+  boxShadow: "0 30px 100px rgba(7, 23, 52, .34)",
+  padding: "0 1.25rem 1.25rem",
+  isolation: "isolate",
+} as const;
+
+const stickyHeaderStyle = {
+  position: "sticky",
+  top: 0,
+  zIndex: 5,
+  margin: "0 -1.25rem",
+  padding: "1rem 1.25rem",
+  background: "rgba(247, 249, 255, .96)",
+  backdropFilter: "blur(12px)",
+  borderBottom: "1px solid rgba(20, 47, 91, .1)",
+} as const;
+
+const closeStyle = {
+  minWidth: "92px",
+  fontWeight: 900,
 } as const;
 
 const gridStyle = {
@@ -269,78 +287,92 @@ export function OutreachDemoStudio({ lead, token }: { lead: DemoLead; token: str
 
   if (!eligible) return null;
 
+  const modal = open && typeof document !== "undefined" ? createPortal(
+    <div
+      style={modalStyle}
+      role="presentation"
+      onMouseDown={(event) => { if (event.currentTarget === event.target) setOpen(false); }}
+    >
+      <section style={panelStyle} role="dialog" aria-modal="true" aria-label={`Demo Studio for ${lead.businessName}`}>
+        <div style={{ ...stickyHeaderStyle, ...rowStyle, justifyContent: "space-between" }}>
+          <div>
+            <span className="kicker">AgentSiraji Demo Studio</span>
+            <h2 style={{ margin: ".2rem 0 0" }}>{lead.businessName}</h2>
+            <p style={{ margin: ".25rem 0 0" }}>Build a personalized Commerce micro-demo. No new branch required.</p>
+          </div>
+          <button className="button" type="button" style={closeStyle} onClick={() => setOpen(false)} aria-label="Close Demo Studio">Close ×</button>
+        </div>
+
+        {notice && <div className="product-card" style={{ padding: ".7rem .85rem", marginTop: ".8rem" }}><strong>{notice}</strong></div>}
+
+        <div style={{ ...gridStyle, marginTop: "1rem" }}>
+          <label><strong>Business name</strong><br /><input value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} /></label>
+          <label><strong>Template</strong><br /><select value={form.template} onChange={(e) => { const template = e.target.value as DemoForm["template"]; setForm({ ...form, template, brandColor: defaultBrandColor(template) }); }}><option value="STANDARD">Standard commerce</option><option value="FOOD">Food & wellness</option><option value="FASHION">Fashion & beauty</option><option value="AGRI">Agriculture</option><option value="ELECTRONICS">Electronics</option><option value="HOME">Home & living</option></select></label>
+          <label><strong>Country</strong><br /><input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></label>
+          <label><strong>City</strong><br /><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
+          <label><strong>Currency code</strong><br /><input value={form.currencyCode} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} /></label>
+          <label><strong>Currency symbol</strong><br /><input value={form.currencySymbol} onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })} /></label>
+        </div>
+
+        <label style={{ display: "block", marginTop: ".75rem" }}><strong>Hero headline</strong><br /><input style={{ width: "100%" }} value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} /></label>
+        <div style={{ ...gridStyle, marginTop: ".75rem" }}>
+          <label><strong>Logo image URL (optional)</strong><br /><input type="url" value={form.logoImageUrl} onChange={(e) => setForm({ ...form, logoImageUrl: e.target.value })} placeholder="https://..." /></label>
+          <label><strong>Brand color</strong><br /><input type="color" value={form.brandColor} onChange={(e) => setForm({ ...form, brandColor: e.target.value })} style={{ width: "100%", minHeight: "2.6rem" }} /></label>
+          <label><strong>Hero image URL (optional)</strong><br /><input type="url" value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} placeholder="https://..." /></label>
+          <label><strong>Contact URL (optional)</strong><br /><input type="url" value={form.contactUrl} onChange={(e) => setForm({ ...form, contactUrl: e.target.value })} placeholder="https://wa.me/..." /></label>
+          <label><strong>Contact button</strong><br /><input value={form.contactLabel} onChange={(e) => setForm({ ...form, contactLabel: e.target.value })} /></label>
+        </div>
+
+        <div style={{ ...rowStyle, justifyContent: "space-between", marginTop: "1rem" }}>
+          <div><strong>Products</strong><div style={{ fontSize: ".82rem", opacity: .72 }}>Use 3–5 real products when possible. Image URLs are optional.</div></div>
+          <button className="button" type="button" onClick={addProduct} disabled={form.products.length >= 8}>+ Product</button>
+        </div>
+
+        <details className="product-card" style={{ padding: ".8rem", marginTop: ".65rem" }}>
+          <summary><strong>Quick product import</strong> · paste all products at once</summary>
+          <p style={{ fontSize: ".82rem", margin: ".6rem 0" }}>One product per line: <strong>Name | price | size/variant | short description | optional image URL</strong></p>
+          <textarea
+            rows={6}
+            value={quickProducts}
+            onChange={(event) => setQuickProducts(event.target.value)}
+            placeholder={"Example Product | 12 | Standard | Short benefit\nSecond Product | 8.5 | 250 ml | Short benefit"}
+            style={{ width: "100%", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          />
+          <button className="button" type="button" onClick={applyQuickProducts} disabled={!quickProducts.trim()} style={{ marginTop: ".55rem" }}>Apply list →</button>
+        </details>
+
+        <div style={{ display: "grid", gap: ".65rem", marginTop: ".65rem" }}>
+          {form.products.map((item, index) => (
+            <article className="product-card" key={item.id} style={{ padding: ".8rem" }}>
+              <div style={gridStyle}>
+                <label><strong>Product {index + 1}</strong><br /><input value={item.name} onChange={(e) => product(index, { name: e.target.value })} placeholder="Product name" /></label>
+                <label><strong>Price</strong><br /><input type="number" min="0" value={item.price} onChange={(e) => product(index, { price: e.target.value })} placeholder="0" /></label>
+                <label><strong>Size / variant</strong><br /><input value={item.size} onChange={(e) => product(index, { size: e.target.value })} placeholder="25 kg / 250 ml / XL" /></label>
+                <label><strong>Image URL</strong><br /><input type="url" value={item.imageUrl} onChange={(e) => product(index, { imageUrl: e.target.value })} placeholder="https://..." /></label>
+              </div>
+              <label style={{ display: "block", marginTop: ".55rem" }}><strong>Short description</strong><br /><input style={{ width: "100%" }} value={item.description} onChange={(e) => product(index, { description: e.target.value })} placeholder="One short product benefit or detail" /></label>
+            </article>
+          ))}
+        </div>
+
+        <div style={{ ...rowStyle, marginTop: "1rem", paddingBottom: ".25rem" }}>
+          <button className="button button-primary" type="button" disabled={loading} onClick={() => void saveDemo()}>{loading ? "Saving…" : demoUrl ? "Update demo →" : "Generate demo →"}</button>
+          {demoUrl && <a className="button" href={demoUrl} target="_blank" rel="noreferrer">Open demo ↗</a>}
+          {demoUrl && <button className="button" type="button" onClick={() => void copyLink()}>Copy demo link</button>}
+          <button className="button" type="button" onClick={() => setOpen(false)}>Close</button>
+        </div>
+        {demoUrl && <p style={{ fontSize: ".82rem", overflowWrap: "anywhere" }}><strong>Private share URL:</strong> {demoUrl}</p>}
+      </section>
+    </div>,
+    document.body,
+  ) : null;
+
   return (
     <>
       <button className="button" type="button" onClick={() => void openStudio()}>
         {lead.status === "DEMO" || lead.status === "PROPOSAL" ? "Edit demo" : "Create demo"}
       </button>
-
-      {open && (
-        <div style={modalStyle} onMouseDown={(event) => { if (event.currentTarget === event.target) setOpen(false); }}>
-          <section style={panelStyle} aria-label={`Demo Studio for ${lead.businessName}`}>
-            <div style={{ ...rowStyle, justifyContent: "space-between" }}>
-              <div><span className="kicker">AgentSiraji Demo Studio</span><h2 style={{ margin: ".2rem 0 0" }}>{lead.businessName}</h2><p style={{ marginBottom: 0 }}>Build a 3–5 minute personalized Commerce micro-demo. No new branch required.</p></div>
-              <button className="button" type="button" onClick={() => setOpen(false)}>Close ×</button>
-            </div>
-
-            {notice && <div className="product-card" style={{ padding: ".7rem .85rem", marginTop: ".8rem" }}><strong>{notice}</strong></div>}
-
-            <div style={{ ...gridStyle, marginTop: "1rem" }}>
-              <label><strong>Business name</strong><br /><input value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} /></label>
-              <label><strong>Template</strong><br /><select value={form.template} onChange={(e) => { const template = e.target.value as DemoForm["template"]; setForm({ ...form, template, brandColor: defaultBrandColor(template) }); }}><option value="STANDARD">Standard commerce</option><option value="FOOD">Food & wellness</option><option value="FASHION">Fashion & beauty</option><option value="AGRI">Agriculture</option><option value="ELECTRONICS">Electronics</option><option value="HOME">Home & living</option></select></label>
-              <label><strong>Country</strong><br /><input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></label>
-              <label><strong>City</strong><br /><input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
-              <label><strong>Currency code</strong><br /><input value={form.currencyCode} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} /></label>
-              <label><strong>Currency symbol</strong><br /><input value={form.currencySymbol} onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })} /></label>
-            </div>
-
-            <label style={{ display: "block", marginTop: ".75rem" }}><strong>Hero headline</strong><br /><input style={{ width: "100%" }} value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} /></label>
-            <div style={{ ...gridStyle, marginTop: ".75rem" }}>
-              <label><strong>Logo image URL (optional)</strong><br /><input type="url" value={form.logoImageUrl} onChange={(e) => setForm({ ...form, logoImageUrl: e.target.value })} placeholder="https://..." /></label>
-              <label><strong>Brand color</strong><br /><input type="color" value={form.brandColor} onChange={(e) => setForm({ ...form, brandColor: e.target.value })} style={{ width: "100%", minHeight: "2.6rem" }} /></label>
-              <label><strong>Hero image URL (optional)</strong><br /><input type="url" value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} placeholder="https://..." /></label>
-              <label><strong>Contact URL (optional)</strong><br /><input type="url" value={form.contactUrl} onChange={(e) => setForm({ ...form, contactUrl: e.target.value })} placeholder="https://wa.me/..." /></label>
-              <label><strong>Contact button</strong><br /><input value={form.contactLabel} onChange={(e) => setForm({ ...form, contactLabel: e.target.value })} /></label>
-            </div>
-
-            <div style={{ ...rowStyle, justifyContent: "space-between", marginTop: "1rem" }}><div><strong>Products</strong><div style={{ fontSize: ".82rem", opacity: .72 }}>Use 3–5 real products when possible. Image URLs are optional.</div></div><button className="button" type="button" onClick={addProduct} disabled={form.products.length >= 8}>+ Product</button></div>
-
-            <details className="product-card" style={{ padding: ".8rem", marginTop: ".65rem" }}>
-              <summary><strong>Quick product import</strong> · paste all products at once</summary>
-              <p style={{ fontSize: ".82rem", margin: ".6rem 0" }}>One product per line: <strong>Name | price | size/variant | short description | optional image URL</strong></p>
-              <textarea
-                rows={6}
-                value={quickProducts}
-                onChange={(event) => setQuickProducts(event.target.value)}
-                placeholder={"Example Product | 12 | Standard | Short benefit\nSecond Product | 8.5 | 250 ml | Short benefit"}
-                style={{ width: "100%", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-              />
-              <button className="button" type="button" onClick={applyQuickProducts} disabled={!quickProducts.trim()} style={{ marginTop: ".55rem" }}>Apply list →</button>
-            </details>
-
-            <div style={{ display: "grid", gap: ".65rem", marginTop: ".65rem" }}>
-              {form.products.map((item, index) => (
-                <article className="product-card" key={item.id} style={{ padding: ".8rem" }}>
-                  <div style={gridStyle}>
-                    <label><strong>Product {index + 1}</strong><br /><input value={item.name} onChange={(e) => product(index, { name: e.target.value })} placeholder="Product name" /></label>
-                    <label><strong>Price</strong><br /><input type="number" min="0" value={item.price} onChange={(e) => product(index, { price: e.target.value })} placeholder="0" /></label>
-                    <label><strong>Size / variant</strong><br /><input value={item.size} onChange={(e) => product(index, { size: e.target.value })} placeholder="25 kg / 250 ml / XL" /></label>
-                    <label><strong>Image URL</strong><br /><input type="url" value={item.imageUrl} onChange={(e) => product(index, { imageUrl: e.target.value })} placeholder="https://..." /></label>
-                  </div>
-                  <label style={{ display: "block", marginTop: ".55rem" }}><strong>Short description</strong><br /><input style={{ width: "100%" }} value={item.description} onChange={(e) => product(index, { description: e.target.value })} placeholder="One short product benefit or detail" /></label>
-                </article>
-              ))}
-            </div>
-
-            <div style={{ ...rowStyle, marginTop: "1rem" }}>
-              <button className="button button-primary" type="button" disabled={loading} onClick={() => void saveDemo()}>{loading ? "Saving…" : demoUrl ? "Update demo →" : "Generate demo →"}</button>
-              {demoUrl && <a className="button" href={demoUrl} target="_blank" rel="noreferrer">Open demo ↗</a>}
-              {demoUrl && <button className="button" type="button" onClick={() => void copyLink()}>Copy demo link</button>}
-            </div>
-            {demoUrl && <p style={{ fontSize: ".82rem", overflowWrap: "anywhere" }}><strong>Private share URL:</strong> {demoUrl}</p>}
-          </section>
-        </div>
-      )}
+      {modal}
     </>
   );
 }
