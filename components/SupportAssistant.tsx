@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 type ChatLink = { label: string; href: string };
@@ -20,6 +21,7 @@ const initialMessage: Message = {
 };
 
 export function SupportAssistant() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [input, setInput] = useState("");
@@ -29,6 +31,10 @@ export function SupportAssistant() {
     () => [...messages].reverse().find((message) => message.handoff && message.ticketId),
     [messages],
   );
+
+  if (pathname?.startsWith("/demo/kountry-feed")) {
+    return null;
+  }
 
   async function sendMessage(value: string) {
     const text = value.trim();
