@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 type ChatLink = { label: string; href: string };
@@ -20,6 +21,7 @@ const initialMessage: Message = {
 };
 
 export function SupportAssistant() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [input, setInput] = useState("");
@@ -30,15 +32,13 @@ export function SupportAssistant() {
     [messages],
   );
 
+  if (pathname.startsWith("/demo/")) return null;
+
   async function sendMessage(value: string) {
     const text = value.trim();
     if (!text || pending) return;
 
-    const userMessage: Message = {
-      role: "user",
-      text,
-    };
-
+    const userMessage: Message = { role: "user", text };
     setMessages((current) => [...current, userMessage]);
     setInput("");
     setPending(true);
@@ -58,9 +58,7 @@ export function SupportAssistant() {
         links?: ChatLink[];
       };
 
-      if (!response.ok || !data.reply) {
-        throw new Error(data.error || "Support request failed.");
-      }
+      if (!response.ok || !data.reply) throw new Error(data.error || "Support request failed.");
 
       setMessages((current) => [
         ...current,
@@ -108,79 +106,39 @@ export function SupportAssistant() {
           <header className="support-panel-header">
             <div>
               <span className="support-status-dot" />
-              <div>
-                <strong>24/7 Support Assistant</strong>
-                <small>Mock test · AI-first handoff design</small>
-              </div>
+              <div><strong>24/7 Support Assistant</strong><small>Mock test · AI-first handoff design</small></div>
             </div>
             <button type="button" aria-label="Close support assistant" onClick={() => setOpen(false)}>×</button>
           </header>
 
-          <div className="support-safety-note">
-            Never share passwords, OTPs, full card numbers, CVVs, API keys, or identity documents in chat.
-          </div>
+          <div className="support-safety-note">Never share passwords, OTPs, full card numbers, CVVs, API keys, or identity documents in chat.</div>
 
           <div className="support-messages" aria-live="polite">
             {messages.map((message, index) => (
               <article className={`support-message ${message.role}`} key={`${message.role}-${index}-${message.ticketId ?? "chat"}`}>
                 <span>{message.role === "user" ? "You" : message.role === "moderator" ? "Moderator" : "AgentSiraji AI"}</span>
                 <p>{message.text}</p>
-                {message.links?.length ? (
-                  <div className="support-message-links">
-                    {message.links.map((link) => <Link href={link.href} key={`${index}-${link.href}`}>{link.label} →</Link>)}
-                  </div>
-                ) : null}
-                {message.handoff && message.ticketId ? (
-                  <div className="support-handoff-card">
-                    <strong>Moderator handoff queued · mock</strong>
-                    <small>Reference {message.ticketId}</small>
-                  </div>
-                ) : null}
+                {message.links?.length ? <div className="support-message-links">{message.links.map((link) => <Link href={link.href} key={`${index}-${link.href}`}>{link.label} →</Link>)}</div> : null}
+                {message.handoff && message.ticketId ? <div className="support-handoff-card"><strong>Moderator handoff queued · mock</strong><small>Reference {message.ticketId}</small></div> : null}
               </article>
             ))}
             {pending ? <div className="support-typing" aria-label="Assistant is replying"><i /><i /><i /></div> : null}
           </div>
 
-          {messages.length === 1 ? (
-            <div className="support-suggestions">
-              {suggestions.map((suggestion) => (
-                <button type="button" key={suggestion} onClick={() => void sendMessage(suggestion)}>{suggestion}</button>
-              ))}
-            </div>
-          ) : null}
+          {messages.length === 1 ? <div className="support-suggestions">{suggestions.map((suggestion) => <button type="button" key={suggestion} onClick={() => void sendMessage(suggestion)}>{suggestion}</button>)}</div> : null}
 
-          {latestHandoff ? (
-            <button type="button" className="support-moderator-demo" onClick={simulateModerator}>
-              Simulate moderator takeover
-            </button>
-          ) : null}
+          {latestHandoff ? <button type="button" className="support-moderator-demo" onClick={simulateModerator}>Simulate moderator takeover</button> : null}
 
           <form className="support-compose" onSubmit={submit}>
             <label htmlFor="support-message-input" className="sr-only">Support message</label>
-            <textarea
-              id="support-message-input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask a question…"
-              maxLength={1000}
-              rows={2}
-            />
+            <textarea id="support-message-input" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question…" maxLength={1000} rows={2} />
             <button type="submit" disabled={pending || !input.trim()} aria-label="Send support message">↑</button>
           </form>
-          <footer>
-            <Link href="/support">Open support centre</Link>
-            <span>Mock mode — no live AI or moderator connected</span>
-          </footer>
+          <footer><Link href="/support">Open support centre</Link><span>Mock mode — no live AI or moderator connected</span></footer>
         </section>
       ) : null}
 
-      <button
-        type="button"
-        className="support-launcher"
-        aria-label={open ? "Close support assistant" : "Open 24/7 support assistant"}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
+      <button type="button" className="support-launcher" aria-label={open ? "Close support assistant" : "Open 24/7 support assistant"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <span className="support-launcher-mark">AI</span>
         <span><strong>24/7 Support</strong><small>Ask AgentSiraji</small></span>
       </button>
