@@ -18,15 +18,14 @@ type DemoLead = {
 };
 
 type ApiResponse = { ok?: boolean; error?: string; lead?: DemoLead };
+type DemoContext = { lead: DemoLead; token: string };
 
 function DemoStudioMount({ profileUrl }: { profileUrl: string }) {
-  const [lead, setLead] = useState<DemoLead | null>(null);
-  const [token, setToken] = useState("");
+  const [context, setContext] = useState<DemoContext | null>(null);
 
   useEffect(() => {
     const sessionToken = sessionStorage.getItem(tokenKey) || "";
     if (!sessionToken) return;
-    setToken(sessionToken);
     let cancelled = false;
 
     void (async () => {
@@ -36,7 +35,9 @@ function DemoStudioMount({ profileUrl }: { profileUrl: string }) {
           cache: "no-store",
         });
         const payload = (await response.json()) as ApiResponse;
-        if (!cancelled && response.ok && payload.lead) setLead(payload.lead);
+        if (!cancelled && response.ok && payload.lead) {
+          setContext({ lead: payload.lead, token: sessionToken });
+        }
       } catch {
         // Keep the lead card usable if Demo Studio cannot initialize.
       }
@@ -45,8 +46,8 @@ function DemoStudioMount({ profileUrl }: { profileUrl: string }) {
     return () => { cancelled = true; };
   }, [profileUrl]);
 
-  if (!lead || !token) return null;
-  return <OutreachDemoStudio lead={lead} token={token} />;
+  if (!context) return null;
+  return <OutreachDemoStudio lead={context.lead} token={context.token} />;
 }
 
 export function OutreachDemoStudioPolicy() {
