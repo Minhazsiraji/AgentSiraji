@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import type { OutreachDemo } from "@/lib/outreach-demo-db";
 import styles from "@/app/demo/[slug]/demo.module.css";
 
@@ -39,6 +39,7 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
   const count = items.reduce((sum, item) => sum + item.qty, 0);
   const total = items.reduce((sum, item) => sum + item.qty * item.price, 0);
   const orderRef = useMemo(() => `${demo.businessName.replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase() || "ORD"}-${demo.slug.slice(-5).toUpperCase()}`, [demo.businessName, demo.slug]);
+  const pageStyle = demo.brandColor ? ({ "--brand": demo.brandColor } as CSSProperties) : undefined;
 
   function add(id: string) {
     setCart((current) => ({ ...current, [id]: (current[id] ?? 0) + 1 }));
@@ -56,13 +57,15 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
   }
 
   return (
-    <main className={styles.page} data-template={demo.template.toLowerCase()}>
+    <main className={styles.page} data-template={demo.template.toLowerCase()} style={pageStyle}>
       <div className={styles.previewBar}>Private concept preview prepared for {demo.businessName}</div>
 
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <div className={styles.brand}>
-            <div className={styles.mark}>{demo.businessName.slice(0, 2).toUpperCase()}</div>
+            <div className={styles.mark}>
+              {demo.logoImageUrl ? <img src={demo.logoImageUrl} alt={`${demo.businessName} logo`} /> : demo.businessName.slice(0, 2).toUpperCase()}
+            </div>
             <div><strong>{demo.businessName}</strong><span>{demo.city ? `${demo.city}, ` : ""}{demo.country}</span></div>
           </div>
           <nav className={styles.nav}><a href="#products">Products</a><a href="#how">How it works</a></nav>
@@ -93,7 +96,7 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
           {demo.products.map((product) => (
             <article className={styles.productCard} key={product.id}>
               <div className={styles.productImage}>
-                {product.imageUrl ? <img src={product.imageUrl} alt="" /> : <div className={styles.placeholder}>{product.name.slice(0, 1).toUpperCase()}</div>}
+                {product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : <div className={styles.placeholder}>{product.name.slice(0, 1).toUpperCase()}</div>}
               </div>
               <div className={styles.productBody}>
                 <div className={styles.productTop}><div><h3>{product.name}</h3>{product.size && <span>{product.size}</span>}</div><strong>{money(demo, product.price)}</strong></div>
