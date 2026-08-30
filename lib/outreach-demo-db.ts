@@ -26,6 +26,8 @@ export type OutreachDemo = {
   contactUrl: string | null;
   contactLabel: string;
   heroImageUrl: string | null;
+  logoImageUrl: string | null;
+  brandColor: string | null;
   products: OutreachDemoProduct[];
   createdAt: string;
   updatedAt: string;
@@ -53,11 +55,15 @@ async function ensureOutreachDemoTable() {
       contact_url text,
       contact_label text NOT NULL DEFAULT 'Contact us',
       hero_image_url text,
+      logo_image_url text,
+      brand_color text,
       products jsonb NOT NULL DEFAULT '[]'::jsonb,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     )
   `;
+  await sql`ALTER TABLE outreach_demos ADD COLUMN IF NOT EXISTS logo_image_url text`;
+  await sql`ALTER TABLE outreach_demos ADD COLUMN IF NOT EXISTS brand_color text`;
   await sql`CREATE INDEX IF NOT EXISTS outreach_demos_slug_idx ON outreach_demos (slug)`;
 }
 
@@ -92,6 +98,8 @@ function mapDemo(row: Record<string, unknown>): OutreachDemo {
     contactUrl: row.contact_url ? String(row.contact_url) : null,
     contactLabel: String(row.contact_label),
     heroImageUrl: row.hero_image_url ? String(row.hero_image_url) : null,
+    logoImageUrl: row.logo_image_url ? String(row.logo_image_url) : null,
+    brandColor: row.brand_color ? String(row.brand_color) : null,
     products: safeProducts(row.products),
     createdAt: asIso(row.created_at),
     updatedAt: asIso(row.updated_at),
@@ -134,6 +142,8 @@ export async function saveOutreachDemo(input: {
   contactUrl?: string | null;
   contactLabel: string;
   heroImageUrl?: string | null;
+  logoImageUrl?: string | null;
+  brandColor?: string | null;
   products: OutreachDemoProduct[];
 }) {
   await ensureOutreachDemoTable();
@@ -154,6 +164,8 @@ export async function saveOutreachDemo(input: {
         contact_url = ${input.contactUrl || null},
         contact_label = ${input.contactLabel},
         hero_image_url = ${input.heroImageUrl || null},
+        logo_image_url = ${input.logoImageUrl || null},
+        brand_color = ${input.brandColor || null},
         products = ${productsJson}::jsonb,
         updated_at = now()
       WHERE lead_id = ${input.leadId}
@@ -167,11 +179,13 @@ export async function saveOutreachDemo(input: {
   const rows = await sql`
     INSERT INTO outreach_demos (
       id, slug, lead_id, business_name, country, city, template, tagline,
-      currency_code, currency_symbol, contact_url, contact_label, hero_image_url, products
+      currency_code, currency_symbol, contact_url, contact_label, hero_image_url,
+      logo_image_url, brand_color, products
     ) VALUES (
       ${id}, ${slug}, ${input.leadId}, ${input.businessName}, ${input.country}, ${input.city || null},
       ${input.template}, ${input.tagline}, ${input.currencyCode}, ${input.currencySymbol},
-      ${input.contactUrl || null}, ${input.contactLabel}, ${input.heroImageUrl || null}, ${productsJson}::jsonb
+      ${input.contactUrl || null}, ${input.contactLabel}, ${input.heroImageUrl || null},
+      ${input.logoImageUrl || null}, ${input.brandColor || null}, ${productsJson}::jsonb
     )
     RETURNING *
   `;
