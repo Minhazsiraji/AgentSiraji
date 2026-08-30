@@ -11,21 +11,37 @@ type Checkout = {
   payment: string;
 };
 
+const legacyTemplateColors = new Set([
+  "#245c45",
+  "#5a3158",
+  "#7a3f24",
+  "#205a3b",
+  "#253c70",
+  "#735b3f",
+]);
+
 function money(demo: OutreachDemo, value: number) {
   const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
   return `${demo.currencySymbol}${demo.currencySymbol.length > 2 ? " " : ""}${amount}`;
 }
 
 function templateLabel(template: OutreachDemo["template"]) {
-  if (template === "AGRI") return "Locally made · trusted supply";
-  if (template === "FOOD") return "Fresh products · simple ordering";
-  if (template === "FASHION") return "New arrivals · easy checkout";
-  if (template === "ELECTRONICS") return "Useful tech · clear prices";
-  if (template === "HOME") return "Everyday essentials · delivered";
+  if (template === "AGRI") return "Clear products · easier ordering";
+  if (template === "FOOD") return "Fresh catalogue · simple checkout";
+  if (template === "FASHION") return "Browse collections · order easily";
+  if (template === "ELECTRONICS") return "Clear choices · structured orders";
+  if (template === "HOME") return "Everyday products · easy checkout";
   return "Browse · order · stay connected";
 }
 
 const logoStyle = { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" } as const;
+
+function customBrandStyle(brandColor: string | null | undefined) {
+  if (!brandColor) return undefined;
+  const normalized = brandColor.toLowerCase();
+  if (legacyTemplateColors.has(normalized)) return undefined;
+  return { "--brand": normalized } as CSSProperties;
+}
 
 export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -41,7 +57,7 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
   const count = items.reduce((sum, item) => sum + item.qty, 0);
   const total = items.reduce((sum, item) => sum + item.qty * item.price, 0);
   const orderRef = useMemo(() => `${demo.businessName.replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase() || "ORD"}-${demo.slug.slice(-5).toUpperCase()}`, [demo.businessName, demo.slug]);
-  const pageStyle = demo.brandColor ? ({ "--brand": demo.brandColor } as CSSProperties) : undefined;
+  const pageStyle = customBrandStyle(demo.brandColor);
 
   function add(id: string) {
     setCart((current) => ({ ...current, [id]: (current[id] ?? 0) + 1 }));
@@ -80,20 +96,35 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
           <div className={styles.heroCopy}>
             <span className={styles.eyebrow}>{templateLabel(demo.template)}</span>
             <h1>{demo.tagline}</h1>
-            <p>Customers can browse what is available, see prices clearly and place an order directly — while your existing WhatsApp or social relationship can stay part of the customer experience.</p>
+            <p>Give customers a clear place to browse products, compare prices and place an order directly — while WhatsApp or your existing social channels stay available for conversation and support.</p>
             <div className={styles.heroActions}>
-              <a className={styles.primary} href="#products">Browse products</a>
+              <a className={styles.primary} href="#products">Browse products <span aria-hidden="true">→</span></a>
               {demo.contactUrl && <a className={styles.secondary} href={demo.contactUrl} target="_blank" rel="noreferrer">{demo.contactLabel} ↗</a>}
             </div>
           </div>
-          <div className={styles.heroVisual} style={demo.heroImageUrl ? { backgroundImage: `linear-gradient(180deg, rgba(9,26,19,.18), rgba(9,26,19,.72)), url(${demo.heroImageUrl})` } : undefined}>
-            {!demo.heroImageUrl && <><span>ONLINE STORE CONCEPT</span><strong>{demo.businessName}</strong><p>Own the direct buying journey without giving up the channels customers already use.</p></>}
+          <div className={styles.heroVisual} style={demo.heroImageUrl ? { backgroundImage: `linear-gradient(145deg, rgba(33,96,207,.14), rgba(16,34,74,.42)), url(${demo.heroImageUrl})` } : undefined}>
+            {!demo.heroImageUrl && (
+              <>
+                <span className={styles.heroBlobA} aria-hidden="true" />
+                <span className={styles.heroBlobB} aria-hidden="true" />
+                <div className={styles.heroBrandTile}>
+                  <div className={styles.heroBrandMark}>
+                    {demo.logoImageUrl ? <img src={demo.logoImageUrl} alt="" style={logoStyle} /> : demo.businessName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <strong>{demo.businessName}</strong>
+                  <span>Personalized commerce preview</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
 
       <section id="products" className={styles.productsSection}>
-        <div className={styles.sectionHead}><div><span>Sample catalogue</span><h2>Shop {demo.businessName}</h2></div><p>This personalized concept uses the business information supplied for the demo. Final products, branding, delivery and payment rules are configured during setup.</p></div>
+        <div className={styles.sectionHead}>
+          <div><span>Featured products</span><h2>Shop {demo.businessName}</h2></div>
+          <p>A quick preview of how customers could browse key products, see prices clearly and move into a structured checkout.</p>
+        </div>
         <div className={styles.productGrid}>
           {demo.products.map((product) => (
             <article className={styles.productCard} key={product.id}>
@@ -111,9 +142,9 @@ export function CommerceDemoPreview({ demo }: { demo: OutreachDemo }) {
       </section>
 
       <section id="how" className={styles.howSection}>
-        <div><span>01</span><strong>Browse</strong><p>Products, prices and details are visible before the customer starts a chat.</p></div>
-        <div><span>02</span><strong>Order</strong><p>The website captures products, quantities and customer delivery details in a structured flow.</p></div>
-        <div><span>03</span><strong>Continue the relationship</strong><p>WhatsApp, Instagram or your existing channels can remain available for support and repeat business.</p></div>
+        <div><span>01</span><strong>Browse</strong><p>Customers see products, prices and useful details before they need to start a chat.</p></div>
+        <div><span>02</span><strong>Order</strong><p>The website captures products, quantities and delivery details in one structured buying flow.</p></div>
+        <div><span>03</span><strong>Stay connected</strong><p>WhatsApp and social channels remain available for support, confirmation and repeat business.</p></div>
       </section>
 
       <footer className={styles.footer}>Concept powered by AgentSiraji Commerce</footer>
