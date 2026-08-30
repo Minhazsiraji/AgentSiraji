@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+const tokenKey = "agentsiraji-outreach-admin-token";
 const salesyPattern = /(AgentSiraji Commerce|branded store|proper online store|high-performance ecommerce|structured orders|excellent fit|checkout|order tracking|own domain|I help businesses like yours|I noticed you are selling)/i;
 
 function isGoodFirstDm(text: string) {
@@ -85,6 +86,22 @@ function scan() {
 
 export function OutreachReplyFirstDmPolicy() {
   useEffect(() => {
+    const nativeFetch = window.fetch.bind(window);
+
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      try {
+        const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes("/api/admin/outreach") && !url.includes("/api/admin/outreach/message")) {
+          const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+          const token = headers.get("x-agentsiraji-admin-token");
+          if (token) sessionStorage.setItem(tokenKey, token);
+        }
+      } catch {
+        // Token capture is best-effort; the protected API still performs authentication.
+      }
+      return nativeFetch(input, init);
+    };
+
     scan();
 
     const observer = new MutationObserver(() => scan());
@@ -106,14 +123,33 @@ export function OutreachReplyFirstDmPolicy() {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
+      const original = button.textContent;
+      button.textContent = "Saving DM…";
+
       try {
+        const officialContact = article.querySelector<HTMLAnchorElement>('a[href]')?.href || "";
+        const token = sessionStorage.getItem(tokenKey) || "";
+
+        if (officialContact && token) {
+          const response = await nativeFetch("/api/admin/outreach/message", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-agentsiraji-admin-token": token,
+            },
+            body: JSON.stringify({ profileUrl: officialContact, dm }),
+          });
+          if (!response.ok) throw new Error("DM could not be saved");
+        }
+
         await navigator.clipboard.writeText(dm);
-        const original = button.textContent;
         button.textContent = "Reply-first DM copied ✓";
         window.setTimeout(() => { button.textContent = original; }, 1400);
       } catch {
+        button.textContent = "Open DM and copy manually";
         const details = article.querySelector("details");
         if (details) details.open = true;
+        window.setTimeout(() => { button.textContent = original; }, 1800);
       }
     };
 
@@ -121,6 +157,7 @@ export function OutreachReplyFirstDmPolicy() {
     return () => {
       observer.disconnect();
       document.removeEventListener("click", onClick, true);
+      window.fetch = nativeFetch;
     };
   }, []);
 
