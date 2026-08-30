@@ -67,6 +67,11 @@ export function KountryFeedDemo() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   const [province, setProvince] = useState("Eastern Province");
   const [payment, setPayment] = useState("MTN Mobile Money");
 
@@ -86,10 +91,21 @@ export function KountryFeedDemo() {
     setCart((current) => ({ ...current, [id]: Math.max(0, (current[id] ?? 0) + delta) }));
   }
 
+  function placeOrder() {
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    setOrderNumber(`KF-${suffix}`);
+    setOrderPlaced(true);
+  }
+
+  function closeCheckout() {
+    setCheckoutOpen(false);
+    setOrderPlaced(false);
+  }
+
   const orderText = encodeURIComponent(
-    `Hello Kountry Feed, I would like to place this order:\n${items
+    `Hello Kountry Feed, I have placed order ${orderNumber || "KF-DEMO"} on the website concept.\n\n${items
       .map((item) => `• ${item.name} (${item.size}) × ${item.qty} — ${money(item.price * item.qty)}`)
-      .join("\n")}\n\nSubtotal: ${money(subtotal)}\nDelivery: ${province}\nPreferred payment: ${payment}`,
+      .join("\n")}\n\nTotal: ${money(subtotal)}\nCustomer: ${customerName || "Demo customer"}\nPhone: ${phone || "Not provided"}\nDelivery: ${location ? `${location}, ` : ""}${province}\nPreferred payment: ${payment}`,
   );
   const whatsappHref = `https://wa.me/250787391260?text=${orderText}`;
 
@@ -120,7 +136,7 @@ export function KountryFeedDemo() {
           <div className={styles.heroCopy}>
             <div className={styles.pill}>🇷🇼 100% Organic · Made in Rwanda</div>
             <h1>Better feed.<br />Easier ordering.</h1>
-            <p>Let customers browse feed types, bag sizes and prices, build an order, then continue the final conversation on WhatsApp.</p>
+            <p>Let customers browse feed types, bag sizes and prices, place a complete order online, then keep WhatsApp available for questions and follow-up.</p>
             <div className={styles.heroActions}>
               <a className={styles.primaryCta} href="#products">Browse feed products</a>
               <a className={styles.secondaryCta} href="https://wa.me/250787391260" target="_blank" rel="noreferrer">WhatsApp sales ↗</a>
@@ -139,8 +155,8 @@ export function KountryFeedDemo() {
             <div className={styles.visualGrid}>
               <div className={styles.visualCard}><span>🌽</span><strong>Local sourcing</strong><p>Maize, soya and sunflower from Rwandan farmers.</p></div>
               <div className={styles.visualCard}><span>🌱</span><strong>Organic positioning</strong><p>No synthetic additives in the brand story.</p></div>
-              <div className={styles.visualCard}><span>📦</span><strong>Clear products</strong><p>Feed, bag size, price and stock before the chat starts.</p></div>
-              <div className={styles.visualCard}><span>💬</span><strong>WhatsApp stays</strong><p>Structured order first, conversation second.</p></div>
+              <div className={styles.visualCard}><span>📦</span><strong>Clear products</strong><p>Feed, bag size, price and stock before checkout.</p></div>
+              <div className={styles.visualCard}><span>💬</span><strong>WhatsApp stays</strong><p>Use chat for questions and follow-up after the order is captured.</p></div>
             </div>
             <div className={styles.locationStrip}><span>Production</span><strong>Rwamagana · Eastern Province</strong></div>
           </div>
@@ -181,8 +197,8 @@ export function KountryFeedDemo() {
       <section id="why" className={styles.whySection}>
         <div className={styles.whyInner}>
           <div><span>01</span><h3>Browse before messaging</h3><p>Customers see the product, size, price and stock signal before asking repetitive questions.</p></div>
-          <div><span>02</span><h3>Build a structured cart</h3><p>They select quantities themselves instead of typing product names and bag counts manually.</p></div>
-          <div><span>03</span><h3>Keep WhatsApp</h3><p>The prepared order moves into WhatsApp with products, quantities, province and payment preference already written.</p></div>
+          <div><span>02</span><h3>Place a structured order</h3><p>They select quantities, delivery details and payment preference directly on the website.</p></div>
+          <div><span>03</span><h3>Keep WhatsApp</h3><p>After the website captures the order, WhatsApp remains available for confirmation, support and customer relationships.</p></div>
         </div>
       </section>
 
@@ -211,7 +227,7 @@ export function KountryFeedDemo() {
                 </div>
               ))}
             </div>
-            <div className={styles.cartFoot}><div><span>Product subtotal</span><strong>{money(subtotal)}</strong></div><button disabled={!items.length} onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>Continue to order details</button></div>
+            <div className={styles.cartFoot}><div><span>Product subtotal</span><strong>{money(subtotal)}</strong></div><button disabled={!items.length} onClick={() => { setCartOpen(false); setCheckoutOpen(true); setOrderPlaced(false); }}>Checkout</button></div>
           </aside>
         </div>
       )}
@@ -219,15 +235,33 @@ export function KountryFeedDemo() {
       {checkoutOpen && (
         <div className={styles.modalOverlay}>
           <div className={styles.checkoutModal}>
-            <div className={styles.panelHead}><div><span>Structured WhatsApp order</span><h2>Finish the details</h2></div><button onClick={() => setCheckoutOpen(false)}>×</button></div>
-            <p className={styles.modalIntro}>This demo does not take payment. It prepares a complete order for the Kountry Feed sales team.</p>
-            <div className={styles.fields}>
-              <label>Delivery province<select value={province} onChange={(event) => setProvince(event.target.value)}>{provinces.map((item) => <option key={item}>{item}</option>)}</select></label>
-              <label>Preferred payment<select value={payment} onChange={(event) => setPayment(event.target.value)}><option>MTN Mobile Money</option><option>Airtel Money</option><option>Bank transfer</option><option>Cash on delivery</option></select></label>
-            </div>
-            <div className={styles.orderSummary}><span>{count} bag(s)</span><strong>{money(subtotal)}</strong></div>
-            <a className={styles.whatsappButton} href={whatsappHref} target="_blank" rel="noreferrer">Send complete order to WhatsApp ↗</a>
-            <button className={styles.backButton} onClick={() => { setCheckoutOpen(false); setCartOpen(true); }}>Back to cart</button>
+            {!orderPlaced ? (
+              <>
+                <div className={styles.panelHead}><div><span>Secure order details</span><h2>Checkout</h2></div><button onClick={closeCheckout}>×</button></div>
+                <p className={styles.modalIntro}>This personalized preview simulates the website checkout. No payment is charged in demo mode.</p>
+                <div className={styles.fields}>
+                  <label>Full name<input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Customer name" /></label>
+                  <label>Phone number<input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 07xx xxx xxx" /></label>
+                  <label>Delivery province<select value={province} onChange={(event) => setProvince(event.target.value)}>{provinces.map((item) => <option key={item}>{item}</option>)}</select></label>
+                  <label>Town / delivery location<input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="e.g. Rwamagana" /></label>
+                  <label>Preferred payment<select value={payment} onChange={(event) => setPayment(event.target.value)}><option>MTN Mobile Money</option><option>Airtel Money</option><option>Bank transfer</option><option>Cash on delivery</option></select></label>
+                </div>
+                <div className={styles.orderSummary}><span>{count} bag(s)</span><strong>{money(subtotal)}</strong></div>
+                <button className={styles.placeOrderButton} onClick={placeOrder}>Place demo order</button>
+                <button className={styles.backButton} onClick={() => { setCheckoutOpen(false); setCartOpen(true); }}>Back to cart</button>
+              </>
+            ) : (
+              <div className={styles.confirmationCard}>
+                <div className={styles.confirmationIcon}>✓</div>
+                <span>Order received</span>
+                <h2>Thank you{customerName ? `, ${customerName}` : ""}.</h2>
+                <p>Your order has been captured by the Kountry Feed website concept. A sales team member can now confirm delivery and payment.</p>
+                <div className={styles.confirmationNumber}><small>Order number</small><strong>{orderNumber}</strong></div>
+                <div className={styles.orderSummary}><span>{count} bag(s)</span><strong>{money(subtotal)}</strong></div>
+                <a className={styles.whatsappButton} href={whatsappHref} target="_blank" rel="noreferrer">Continue on WhatsApp ↗</a>
+                <button className={styles.backButton} onClick={closeCheckout}>Continue shopping</button>
+              </div>
+            )}
           </div>
         </div>
       )}
