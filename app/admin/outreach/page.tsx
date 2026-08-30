@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ForeignOutreachConsole } from "@/components/ForeignOutreachConsole";
 import { OutreachReplyFirstDmPolicy } from "@/components/OutreachReplyFirstDmPolicy";
 import { OutreachReplyAssistantPolicy } from "@/components/OutreachReplyAssistantPolicy";
+import { OutreachDemoStudioPolicy } from "@/components/OutreachDemoStudioPolicy";
 import styles from "./outreach.module.css";
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export default function ForeignOutreachPage() {
         </div>
         <div style={{ maxWidth: "38rem" }}>
           <p style={{ margin: 0 }}>
-            Daily prospecting, personalized DMs, follow-ups, reply intelligence, partner leads and country performance — with every external send kept under human approval.
+            Daily prospecting, personalized DMs, follow-ups, reply intelligence, fast personalized demos, partner leads and country performance — with every external send kept under human approval.
           </p>
         </div>
       </header>
@@ -46,6 +47,7 @@ export default function ForeignOutreachPage() {
       <ForeignOutreachConsole />
       <OutreachReplyFirstDmPolicy />
       <OutreachReplyAssistantPolicy />
+      <OutreachDemoStudioPolicy />
     </main>
   );
 }
