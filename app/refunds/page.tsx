@@ -52,7 +52,7 @@ export default function RefundPolicyPage() {
         <p>Customers should contact us first so we can investigate billing concerns quickly. A chargeback or payment dispute does not itself determine entitlement to continued service. Where a dispute is opened, we may provide relevant transaction, service, and communication records to the payment provider as permitted by law and may temporarily restrict disputed service access where reasonably necessary.</p>
 
         <h2>How to request cancellation or a refund</h2>
-        <p>Contact hello@agentsiraji.com with your organization name, product or plan, payment reference, requested action, and reason. Do not email full card numbers, passwords, one-time codes, or unnecessary sensitive financial information. We will confirm receipt and review the commercial record.</p>
+        <p>Contact info@agentsiraji.com with your organization name, product or plan, payment reference, requested action, and reason. Do not email full card numbers, passwords, one-time codes, or unnecessary sensitive financial information. We will confirm receipt and review the commercial record.</p>
 
         <h2>Refund method and timing</h2>
         <p>Approved refunds are normally sent to the original payment method where available and appropriate. The time for funds to appear depends on the provider and financial institution. Where a manual refund is necessary, additional identity or account verification may be required to reduce fraud risk.</p>

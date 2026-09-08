@@ -184,9 +184,9 @@ export async function POST(request: Request) {
       notificationDelivered,
       message: notificationDelivered
         ? "Preliminary score created. Your request was also sent for human review."
-        : "Preliminary score created. Email notification is not connected yet, so please save this result and contact hello@agentsiraji.com if you want the human review now.",
+        : "Preliminary score created. Email notification is not connected yet, so please save this result and contact info@agentsiraji.com if you want the human review now.",
     });
   } catch {
-    return json({ message: "Unable to run the audit right now. Please try again or email hello@agentsiraji.com." }, 500);
+    return json({ message: "Unable to run the audit right now. Please try again or email info@agentsiraji.com." }, 500);
   }
 }

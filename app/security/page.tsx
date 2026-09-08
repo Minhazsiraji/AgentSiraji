@@ -49,7 +49,7 @@ export default function SecurityPage() {
         <p>Customers should protect account credentials, restrict staff access appropriately, use supported browsers and devices, keep their own domain and third-party accounts secure, and promptly report suspected compromise. Customers should never send passwords, full card numbers, private keys, or one-time authentication codes through ordinary support messages.</p>
 
         <h2>Responsible reporting</h2>
-        <p>If you believe you have discovered a security vulnerability affecting AgentSiraji, report it privately to hello@agentsiraji.com with enough detail for us to reproduce and assess the issue. Please avoid accessing, changing, retaining, or disclosing data that is not yours and avoid actions that could disrupt service availability.</p>
+        <p>If you believe you have discovered a security vulnerability affecting AgentSiraji, report it privately to info@agentsiraji.com with enough detail for us to reproduce and assess the issue. Please avoid accessing, changing, retaining, or disclosing data that is not yours and avoid actions that could disrupt service availability.</p>
 
         <h2>Compliance statement</h2>
         <p>This page describes current security practices and design goals. It does not claim ISO, SOC, PCI DSS, or other independent certification unless AgentSiraji explicitly publishes evidence of that certification. Payment-card handling responsibilities are primarily delegated to supported payment providers where applicable.</p>

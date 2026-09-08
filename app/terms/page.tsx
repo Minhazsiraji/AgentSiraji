@@ -76,7 +76,7 @@ export default function TermsPage() {
         <p>Any specific governing law, forum, arbitration, or dispute-resolution process will be stated in the applicable customer order or separate agreement where required. If no separate term applies, mandatory law and legally competent courts will determine the applicable rights and forum. Nothing in these terms prevents either party from seeking urgent relief where legally available.</p>
 
         <h2>Contact</h2>
-        <p>Questions about these terms can be sent to hello@agentsiraji.com.</p>
+        <p>Questions about these terms can be sent to info@agentsiraji.com.</p>
       </article>
       <SiteFooter />
     </main>

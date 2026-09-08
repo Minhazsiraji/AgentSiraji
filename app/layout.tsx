@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SupportAssistant } from "@/components/SupportAssistant";
 import { getSiteUrl } from "@/lib/site-url";
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         {children}
         <SupportAssistant />
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>

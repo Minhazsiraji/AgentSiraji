@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         <p>We may update this policy when our services, providers, or legal obligations change. The current version and its last-updated date will remain published here. Material changes will receive additional notice where applicable law requires it.</p>
 
         <h2>Contact and requests</h2>
-        <p>For privacy questions or requests, contact hello@agentsiraji.com. We will use reasonable steps to authenticate rights requests and respond within the period required by applicable law.</p>
+        <p>For privacy questions or requests, contact info@agentsiraji.com. We will use reasonable steps to authenticate rights requests and respond within the period required by applicable law.</p>
       </article>
       <SiteFooter />
     </main>

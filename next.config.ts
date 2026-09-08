@@ -5,6 +5,17 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
 
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.agentsiraji.com" }],
+        destination: "https://agentsiraji.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     const scriptPolicy =
       process.env.NODE_ENV === "development"

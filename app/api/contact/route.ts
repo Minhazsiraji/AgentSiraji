@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.CONTACT_TO_EMAIL;
     if (!apiKey || !to) {
-      return json({ message: "The contact form is being connected. For now, email hello@agentsiraji.com." }, 503);
+      return json({ message: "The contact form is being connected. For now, email info@agentsiraji.com." }, 503);
     }
 
     const response = await fetch("https://api.resend.com/emails", {
@@ -121,6 +121,6 @@ export async function POST(request: Request) {
     if (!response.ok) throw new Error("Email service rejected the request");
     return json({ ok: true });
   } catch {
-    return json({ message: "Unable to send right now. Please email hello@agentsiraji.com." }, 500);
+    return json({ message: "Unable to send right now. Please email info@agentsiraji.com." }, 500);
   }
 }
