@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 
+type ContactResponse = { ok?: boolean; leadId?: string; message?: string };
+
 export default function ContactForm() {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -19,11 +21,12 @@ export default function ContactForm() {
         cache: "no-store",
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const data = await response.json() as ContactResponse;
       if (!response.ok) throw new Error(data.message || "Unable to send your message.");
+      if (data.leadId) window.dispatchEvent(new Event("agentsiraji:contact-saved"));
       form.reset();
       setState("sent");
-      setMessage("Thanks—your message is in. We’ll reply as soon as possible.");
+      setMessage(data.message || "Thanks—your message is saved. We’ll reply as soon as possible.");
     } catch (error) {
       setState("error");
       const fallback = error instanceof Error ? error.message : "Something went wrong.";
