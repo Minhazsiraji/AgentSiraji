@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { attributionFromRequest } from "@/lib/attribution";
+import { deliverLeadToLeadPilot } from "@/lib/leadpilot";
 import { isMetaEventId, sendMetaEvent } from "@/lib/meta";
-import { createSalesLead } from "@/lib/sales-leads";
+import { createSalesLead, recordSalesLeadEvent } from "@/lib/sales-leads";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const maxBodyBytes = 16_384;
@@ -61,6 +62,23 @@ function metaContext(data: Record<string, unknown>) {
   };
 }
 
+async function mirrorContactLead(input: { leadId: string; name: string; email: string; interest: string; message: string; pageUrl: string }) {
+  const delivery = await deliverLeadToLeadPilot({
+    customerName: input.name,
+    email: input.email,
+    service: input.interest,
+    pageUrl: input.pageUrl,
+    sourceName: "AgentSiraji Contact",
+    message: `AgentSiraji lead #${input.leadId}. ${input.message}`,
+  });
+  if (!delivery.configured) return;
+  const eventType = delivery.delivered ? "LEADPILOT_DELIVERED" : "LEADPILOT_FAILED";
+  const note = delivery.delivered
+    ? `Contact mirrored${delivery.leadId ? ` as LeadPilot lead ${delivery.leadId}` : ""}${delivery.duplicate ? " (duplicate matched)" : ""}.`
+    : `Contact mirror failed${delivery.status ? ` with HTTP ${delivery.status}` : ""}.`;
+  await recordSalesLeadEvent(input.leadId, eventType, note).catch(() => undefined);
+}
+
 export async function POST(request: Request) {
   try {
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
@@ -87,15 +105,8 @@ export async function POST(request: Request) {
     }
 
     let body: unknown;
-    try {
-      body = JSON.parse(rawBody);
-    } catch {
-      return json({ message: "Invalid JSON payload." }, 400);
-    }
-
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return json({ message: "Invalid contact form payload." }, 400);
-    }
+    try { body = JSON.parse(rawBody); } catch { return json({ message: "Invalid JSON payload." }, 400); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ message: "Invalid contact form payload." }, 400);
 
     const data = body as Record<string, unknown>;
     const name = String(data.name || "").trim();
@@ -109,9 +120,7 @@ export async function POST(request: Request) {
       !emailPattern.test(email) || email.length > 120 ||
       !allowedInterests.has(interest) ||
       message.length < 20 || message.length > 2000
-    ) {
-      return json({ message: "Please check the form and complete every field." }, 400);
-    }
+    ) return json({ message: "Please check the form and complete every field." }, 400);
 
     const attribution = attributionFromRequest(request, "/contact");
     const meta = metaContext(data);
@@ -132,11 +141,12 @@ export async function POST(request: Request) {
       return json({ message: "We could not safely save your enquiry. Please retry." }, 503);
     }
 
+    const pageUrl = new URL("/contact", request.url).toString();
     const metaDelivery = meta.marketingConsent && meta.eventId
       ? sendMetaEvent({
         eventName: "Contact",
         eventId: meta.eventId,
-        eventSourceUrl: new URL("/contact", request.url).toString(),
+        eventSourceUrl: pageUrl,
         email,
         fbp: meta.fbp,
         fbc: meta.fbc,
@@ -145,11 +155,12 @@ export async function POST(request: Request) {
         customData: { content_name: "AgentSiraji enquiry", interest },
       }).catch(() => undefined)
       : Promise.resolve(undefined);
+    const leadPilotDelivery = mirrorContactLead({ leadId: lead.id, name, email, interest, message, pageUrl }).catch(() => undefined);
 
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.CONTACT_TO_EMAIL;
     if (!apiKey || !to) {
-      await metaDelivery;
+      await Promise.all([metaDelivery, leadPilotDelivery]);
       return json({ ok: true, leadId: lead.id, notificationDelivered: false, message: `Your enquiry is saved as lead #${lead.id}.` });
     }
 
@@ -168,10 +179,8 @@ export async function POST(request: Request) {
         signal: AbortSignal.timeout(8_000),
       });
       notificationDelivered = response.ok;
-    } catch {
-      notificationDelivered = false;
-    }
-    await metaDelivery;
+    } catch { notificationDelivered = false; }
+    await Promise.all([metaDelivery, leadPilotDelivery]);
 
     return json({ ok: true, leadId: lead.id, notificationDelivered, message: `Your enquiry is saved as lead #${lead.id}.` });
   } catch (error) {
