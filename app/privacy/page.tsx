@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <article className="legal shell">
         <span className="kicker">Privacy</span>
         <h1>Privacy policy</h1>
-        <p className="legal-date">Last updated: August 26, 2026</p>
+        <p className="legal-date">Last updated: September 11, 2026</p>
 
         <h2>Scope and privacy principles</h2>
         <p>This policy explains how AgentSiraji handles personal information relating to visitors, prospects, customers, customer representatives, and users of our commercial services. We follow the principles of purpose limitation, data minimisation, accuracy, security, retention limitation, transparency, and accountability. Product-specific notices may apply where a service processes additional categories of information.</p>
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         <p>We process information to provide requested services and perform contracts; take steps requested before entering a contract; verify payments and manage subscriptions; respond to enquiries and support; secure our systems and prevent abuse or fraud; maintain accounting, audit and dispute records; improve service reliability and usability; comply with legal obligations; and pursue legitimate business interests where those interests are not overridden by applicable privacy rights. Where applicable law requires consent, we rely on consent and permit withdrawal as required by law.</p>
 
         <h2>How we share information</h2>
-        <p>We may disclose information to hosting, database, email, payment, analytics, security, support, professional-adviser and operational service providers where reasonably necessary to deliver or protect the service. We may also disclose information when required by law, valid legal process, or to protect rights, safety, property, and service integrity. We do not sell personal information for money and do not intentionally share personal information for cross-context behavioural advertising.</p>
+        <p>We may disclose information to hosting, database, email, payment, analytics, security, support, professional-adviser and operational service providers where reasonably necessary to deliver or protect the service. We may also disclose information when required by law, valid legal process, or to protect rights, safety, property, and service integrity. We do not sell personal information for money. If you allow optional Meta measurement, we share event information and hashed contact details with Meta for advertising measurement.</p>
 
         <h2>International transfers</h2>
         <p>AgentSiraji and its service providers may process information in countries other than the country where you are located. Where applicable law requires transfer safeguards, we will use an appropriate lawful mechanism or other recognized safeguard and will provide relevant information on request where legally required.</p>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
         <p>Where a US state privacy law applies to AgentSiraji, eligible residents may exercise the rights provided by that law, which can include rights to know/access, correct, delete, obtain a copy, and opt out of covered sale, sharing, targeted advertising, or certain profiling. AgentSiraji does not currently sell personal information for monetary consideration. If our practices materially change, this policy and any required opt-out mechanism will be updated before the new practice is used where required.</p>
 
         <h2>Cookies and similar technologies</h2>
-        <p>Essential technologies may be used for security, session operation, preferences, checkout and service functionality. If we introduce non-essential analytics, advertising, or profiling technologies that require consent or an opt-out in a relevant jurisdiction, we will provide the appropriate control before relying on them as required by law.</p>
+        <p>We use browser storage to remember your privacy choice and a private bKash order reference within your tab. Optional Meta Pixel and Conversions API measurement runs only after you allow it. This can include page visits, accepted enquiries and checkout events, Meta browser identifiers, and hashed email or phone details. Hashing does not make contact information anonymous. Use Privacy choices to withdraw permission for future Meta measurement. Vercel Analytics and Speed Insights measure site usage and performance separately. We store bKash sender numbers, transaction IDs, dates and amounts for owner verification; we never request your bKash PIN or OTP.</p>
 
         <h2>Children</h2>
         <p>AgentSiraji&apos;s commercial website and Commerce services are intended for businesses and adults acting for businesses. We do not knowingly solicit personal information from children through these services. If you believe a child has provided personal information to us inappropriately, contact us so we can review and take appropriate action.</p>
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         <p>We may update this policy when our services, providers, or legal obligations change. The current version and its last-updated date will remain published here. Material changes will receive additional notice where applicable law requires it.</p>
 
         <h2>Contact and requests</h2>
-        <p>For privacy questions or requests, contact info@agentsiraji.com. We will use reasonable steps to authenticate rights requests and respond within the period required by applicable law.</p>
+        <p>For privacy questions or requests, contact business@agentsiraji.com. We will use reasonable steps to authenticate rights requests and respond within the period required by applicable law.</p>
       </article>
       <SiteFooter />
     </main>

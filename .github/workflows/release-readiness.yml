@@ -45,5 +45,8 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Sales flow tests (mocked integrations)
+        run: pnpm test
+
       - name: Build
         run: pnpm build

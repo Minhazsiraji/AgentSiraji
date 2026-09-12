@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SupportAssistant } from "@/components/SupportAssistant";
+import { MetaTracking } from "@/components/MetaTracking";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 import "./form-controls.css";
@@ -9,9 +10,11 @@ import "./ui-polish.css";
 import "./ticker-fix.css";
 import "./ticker-marquee.css";
 import "./support-assistant.css";
+import "./meta-consent.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
+const metaDomainVerification = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -46,6 +49,9 @@ export const metadata: Metadata = {
     ? { index: true, follow: true }
     : { index: false, follow: false, nocache: true },
   manifest: "/manifest.webmanifest",
+  other: metaDomainVerification
+    ? { "facebook-domain-verification": metaDomainVerification }
+    : undefined,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -54,6 +60,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         {children}
         <SupportAssistant />
+        <MetaTracking />
         <Analytics />
         <SpeedInsights />
       </body>

@@ -19,8 +19,8 @@ const nextConfig: NextConfig = {
   async headers() {
     const scriptPolicy =
       process.env.NODE_ENV === "development"
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.paddle.com"
-        : "script-src 'self' 'unsafe-inline' https://cdn.paddle.com";
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.paddle.com https://connect.facebook.net"
+        : "script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://connect.facebook.net";
 
     const contentSecurityPolicy = [
       "default-src 'self'",
@@ -32,12 +32,14 @@ const nextConfig: NextConfig = {
 
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://*.paddle.com https://*.paddle.io",
+      "img-src 'self' data: blob: https://*.paddle.com https://*.paddle.io https://www.facebook.com",
 
       [
         "connect-src",
         "'self'",
         "https://cdn.paddle.com",
+        "https://www.facebook.com",
+        "https://connect.facebook.net",
         "https://*.paddle.com",
         "https://*.paddle.io",
       ].join(" "),
