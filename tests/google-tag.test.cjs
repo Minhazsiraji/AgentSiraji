@@ -70,6 +70,11 @@ test('public integration endpoint exposes only public IDs, never Google API secr
   }
 });
 
+test('AgentSiraji production fallback is the approved GA4 measurement ID', () => {
+  const route = fs.readFileSync('app/api/integrations/public/route.ts', 'utf8');
+  assert.equal(route.includes('G-RQHGR4FNF5'), true);
+});
+
 test('production CSP permits Google tag and Analytics delivery endpoints', () => {
   const config = fs.readFileSync('next.config.ts', 'utf8');
   for (const required of [
