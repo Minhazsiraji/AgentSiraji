@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { attributionFromRequest } from "@/lib/attribution";
+import { deliverLeadToLeadPilot } from "@/lib/leadpilot";
 import { isMetaEventId, sendMetaEvent } from "@/lib/meta";
-import { createSalesLead } from "@/lib/sales-leads";
+import { createSalesLead, recordSalesLeadEvent } from "@/lib/sales-leads";
 import { scanStore, type StoreAuditResult } from "@/lib/store-audit-scanner";
 
 export const runtime = "nodejs";
@@ -113,6 +114,41 @@ async function notifyLead(input: {
   return response.ok;
 }
 
+async function mirrorStoreAuditLead(input: {
+  leadId: string;
+  businessName: string;
+  email: string;
+  whatsapp: string;
+  country: string;
+  storeUrl: string;
+  productCount: string;
+  result: StoreAuditResult | null;
+  scanError: string | null;
+  pageUrl: string;
+}) {
+  const delivery = await deliverLeadToLeadPilot({
+    customerName: input.businessName,
+    email: input.email,
+    phone: input.whatsapp,
+    service: "AgentSiraji Free Store Audit",
+    location: input.country,
+    pageUrl: input.pageUrl,
+    sourceName: "AgentSiraji Store Audit",
+    message: [
+      `AgentSiraji lead #${input.leadId}.`,
+      `Store: ${input.storeUrl}.`,
+      `Products: ${input.productCount}.`,
+      input.result ? `Preliminary score: ${input.result.overallScore}/100, grade ${input.result.grade}.` : `Manual review required: ${input.scanError || "automated scan unavailable"}.`,
+    ].join(" "),
+  });
+  if (!delivery.configured) return;
+  const eventType = delivery.delivered ? "LEADPILOT_DELIVERED" : "LEADPILOT_FAILED";
+  const note = delivery.delivered
+    ? `Store Audit mirrored${delivery.leadId ? ` as LeadPilot lead ${delivery.leadId}` : ""}${delivery.duplicate ? " (duplicate matched)" : ""}.`
+    : `Store Audit mirror failed${delivery.status ? ` with HTTP ${delivery.status}` : ""}.`;
+  await recordSalesLeadEvent(input.leadId, eventType, note).catch(() => undefined);
+}
+
 export async function POST(request: Request) {
   try {
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
@@ -202,11 +238,12 @@ export async function POST(request: Request) {
       return json({ message: "We could not safely save your audit request. Please retry before leaving this page." }, 503);
     }
 
+    const pageUrl = new URL("/store-audit", request.url).toString();
     const metaDelivery = meta.marketingConsent && meta.eventId
       ? sendMetaEvent({
         eventName: "Lead",
         eventId: meta.eventId,
-        eventSourceUrl: new URL("/store-audit", request.url).toString(),
+        eventSourceUrl: pageUrl,
         email,
         phone: whatsapp,
         fbp: meta.fbp,
@@ -216,6 +253,7 @@ export async function POST(request: Request) {
         customData: { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" },
       }).catch(() => undefined)
       : Promise.resolve(undefined);
+    const leadPilotDelivery = mirrorStoreAuditLead({ leadId: lead.id, businessName, email, whatsapp, country, storeUrl, productCount, result, scanError, pageUrl }).catch(() => undefined);
 
     let notificationDelivered = false;
     try {
@@ -234,7 +272,7 @@ export async function POST(request: Request) {
     } catch {
       notificationDelivered = false;
     }
-    await metaDelivery;
+    await Promise.all([metaDelivery, leadPilotDelivery]);
 
     if (!result) {
       return json({
