@@ -7,8 +7,8 @@ const Spark = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1
 
 const tickerItems = [
   "Managed commerce",
+  "Free store audit",
   "Lead conversion",
-  "Advertising intelligence",
   "Built for growth",
 ];
 
@@ -39,22 +39,22 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow"><span className="pulse" /> Building practical software for real business progress</div>
           <h1>Software that moves<br /><em>business forward.</em></h1>
-          <p>AgentSiraji builds focused commerce, conversion, and intelligence products for ambitious businesses—simple to adopt, serious underneath, and designed to grow with you.</p>
+          <p>Start with a free Store Audit. We identify practical gaps in your current selling setup, then help qualified businesses choose the right AgentSiraji Commerce starting point.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/products/commerce">Explore Commerce <Arrow /></Link>
-            <Link className="text-link" href="#products">See all products <span>↗</span></Link>
+            <Link className="button button-primary" href="/store-audit">Get Free Store Audit <Arrow /></Link>
+            <Link className="text-link" href="/products/commerce">Explore Commerce <span>↗</span></Link>
           </div>
           <div className="proof">
+            <div><strong>Audit</strong><span>Find the gaps</span></div>
             <div><strong>Sell</strong><span>Commerce</span></div>
-            <div><strong>Convert</strong><span>LeadPilot</span></div>
-            <div><strong>Grow</strong><span>AdIntel</span></div>
+            <div><strong>Grow</strong><span>AgentSiraji</span></div>
           </div>
         </div>
         <div className="hero-visual" aria-label="AgentSiraji product ecosystem illustration">
           <div className="orb orb-one" /><div className="orb orb-two" />
-          <div className="signal-card"><span>AGENTSIRAJI SYSTEM</span><strong>Sell. Convert. Grow.</strong><div className="signal-line"><i /><i /><i /><i /><i /><i /><i /></div></div>
-          <div className="float-card card-lead"><span className="mini-icon">CO</span><div><small>SELL</small><strong>Commerce</strong></div><b>↗</b></div>
-          <div className="float-card card-doctor"><span className="mini-icon doctor">LP</span><div><small>CONVERT</small><strong>LeadPilot</strong></div><b>↗</b></div>
+          <div className="signal-card"><span>AGENTSIRAJI SYSTEM</span><strong>Audit. Sell. Grow.</strong><div className="signal-line"><i /><i /><i /><i /><i /><i /><i /></div></div>
+          <div className="float-card card-lead"><span className="mini-icon">AU</span><div><small>START</small><strong>Free Audit</strong></div><b>↗</b></div>
+          <div className="float-card card-doctor"><span className="mini-icon doctor">CO</span><div><small>SELL</small><strong>Commerce</strong></div><b>↗</b></div>
           <div className="orbit"><span /><span /><span /></div>
         </div>
       </section>
@@ -71,7 +71,7 @@ export default function Home() {
       <section className="products shell section" id="products">
         <div className="section-heading">
           <div><span className="kicker">01 — Products</span><h2>One company.<br /><em>A growing product system.</em></h2></div>
-          <p>Start with the product you need today. AgentSiraji is designed so future products can join the same consistent brand, account, billing, and support experience.</p>
+          <p>Start with the free Store Audit, then explore the product that fits your business. Commerce is available now; LeadPilot and AdIntel remain in development.</p>
         </div>
         <div className="product-grid">
           {products.map((product, index) => (
@@ -93,14 +93,14 @@ export default function Home() {
 
       <section className="services section" id="solutions"><div className="shell">
         <div className="section-heading light-heading">
-          <div><span className="kicker">02 — The growth loop</span><h2>Sell. Convert.<br /><em>Grow smarter.</em></h2></div>
-          <p>Our commercial products are designed to become more useful together without forcing customers into unnecessary complexity.</p>
+          <div><span className="kicker">02 — The first-customer path</span><h2>Audit. Qualify.<br /><em>Build the right store.</em></h2></div>
+          <p>For the current launch phase, we keep the journey human and practical before automated commercial payments are enabled.</p>
         </div>
         <div className="service-list">
-          <article><span>01</span><div className="service-icon">↗</div><h3>Sell with Commerce</h3><p>Launch a fast, professional online store on a managed commerce foundation.</p></article>
-          <article><span>02</span><div className="service-icon">⌁</div><h3>Capture demand</h3><p>Bring leads and customer conversations from your selling channels into a clearer workflow.</p></article>
-          <article><span>03</span><div className="service-icon">⚡</div><h3>Convert with LeadPilot</h3><p>Help teams reply, qualify intent, and move more conversations toward confirmed orders.</p></article>
-          <article><span>04</span><div className="service-icon">✦</div><h3>Improve with AdIntel</h3><p>Learn from advertising patterns and use the insight to create stronger original campaigns.</p></article>
+          <article><span>01</span><div className="service-icon">↗</div><h3>Run the free audit</h3><p>See practical gaps across performance, mobile UX, checkout, SEO, tracking, trust and conversion.</p></article>
+          <article><span>02</span><div className="service-icon">⌁</div><h3>Review with AgentSiraji</h3><p>Qualified businesses receive human review and a clear recommendation for the next move.</p></article>
+          <article><span>03</span><div className="service-icon">⚡</div><h3>Choose the right plan</h3><p>Compare Starter, Growth and Pro after the business need is understood—not before.</p></article>
+          <article><span>04</span><div className="service-icon">✦</div><h3>Launch with control</h3><p>Early local customers are onboarded manually while gateway payments remain sandbox-only.</p></article>
         </div>
       </div></section>
 
@@ -120,10 +120,10 @@ export default function Home() {
 
       <section className="contact shell" id="contact">
         <div className="contact-inner">
-          <span className="kicker">AgentSiraji Commerce is first to market</span>
-          <h2>Ready to sell<br /><em>professionally?</em></h2>
-          <p>Explore the managed commerce platform, compare plans, or talk to us about the right starting point for your business.</p>
-          <Link className="button button-primary button-large" href="/products/commerce">Explore AgentSiraji Commerce <Arrow /></Link>
+          <span className="kicker">Start before you spend</span>
+          <h2>See what your store<br /><em>actually needs.</em></h2>
+          <p>Run the free Store Audit first. If there is a strong fit, we will follow up and recommend the right Commerce plan and next step.</p>
+          <Link className="button button-primary button-large" href="/store-audit">Get Free Store Audit <Arrow /></Link>
         </div>
         <div className="contact-shape"><span>AS</span></div>
       </section>
