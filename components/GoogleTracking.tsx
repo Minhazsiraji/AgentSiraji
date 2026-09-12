@@ -71,7 +71,7 @@ export function GoogleTracking() {
       id="agentsiraji-google-tag"
       src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(tagId)}`}
       strategy="afterInteractive"
-      onReady={() => initializeGoogleTag(tagId)}
+      onReady={() => { initializeGoogleTag(tagId); }}
     />
   );
 }
