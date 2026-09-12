@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { createSalesLead } from "@/lib/sales-leads";
 import { scanStore, type StoreAuditResult } from "@/lib/store-audit-scanner";
 
 export const runtime = "nodejs";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\-\s\d]{7,40}$/;
-const maxBodyBytes = 12_288;
+const maxBodyBytes = 16_384;
 const rateLimitWindowMs = 10 * 60 * 1000;
 const rateLimitMax = 4;
 const attempts = new Map<string, { count: number; resetAt: number }>();
@@ -42,6 +43,11 @@ function isHttpUrl(value: string) {
   }
 }
 
+function optionalText(data: Record<string, unknown>, key: string, max: number) {
+  const value = typeof data[key] === "string" ? data[key].trim() : "";
+  return value ? value.slice(0, max) : null;
+}
+
 function auditSummary(result: StoreAuditResult) {
   return [
     `Automated preliminary score: ${result.overallScore}/100 (Grade ${result.grade})`,
@@ -53,6 +59,7 @@ function auditSummary(result: StoreAuditResult) {
 }
 
 async function notifyLead(input: {
+  leadId: string;
   businessName: string;
   country: string;
   storeUrl: string;
@@ -61,6 +68,7 @@ async function notifyLead(input: {
   productCount: string;
   result: StoreAuditResult | null;
   scanError: string | null;
+  attribution: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
@@ -76,6 +84,7 @@ async function notifyLead(input: {
       subject: `Store Audit V2 — ${input.businessName} (${input.country})${input.result ? ` — ${input.result.overallScore}/100` : ""}`,
       text: [
         "New AgentSiraji Store Audit V2 request",
+        `Lead ID: ${input.leadId}`,
         "",
         `Business: ${input.businessName}`,
         `Country: ${input.country}`,
@@ -83,10 +92,11 @@ async function notifyLead(input: {
         `Email: ${input.email}`,
         `WhatsApp: ${input.whatsapp}`,
         `Product count: ${input.productCount}`,
+        `Attribution: ${input.attribution}`,
         "",
         input.result ? auditSummary(input.result) : `Automated scan unavailable: ${input.scanError || "Unknown scan error"}`,
         "",
-        "Human review should verify browser performance, checkout behavior, tracking accuracy, and business-specific recommendations before a final commercial audit is sent.",
+        "This lead is saved in AgentSiraji sales operations and queued for human review.",
       ].join("\n"),
     }),
     signal: AbortSignal.timeout(8_000),
@@ -160,9 +170,57 @@ export async function POST(request: Request) {
       scanError = error instanceof Error ? error.message : "The automated scan could not access this store.";
     }
 
+    const utmSource = optionalText(data, "utmSource", 120);
+    const utmMedium = optionalText(data, "utmMedium", 120);
+    const utmCampaign = optionalText(data, "utmCampaign", 160);
+    const utmContent = optionalText(data, "utmContent", 160);
+    const utmTerm = optionalText(data, "utmTerm", 160);
+    const referrer = optionalText(data, "referrer", 500) || request.headers.get("referer")?.slice(0, 500) || null;
+    const landingPath = optionalText(data, "landingPath", 500) || "/store-audit";
+    const metaEventId = optionalText(data, "metaEventId", 100);
+    const marketingConsent = data.marketingConsent === true;
+
+    let lead;
+    try {
+      lead = await createSalesLead({
+        leadType: "STORE_AUDIT",
+        businessName,
+        country,
+        storeUrl,
+        email,
+        phone: whatsapp,
+        productCount,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        utmContent,
+        utmTerm,
+        referrer,
+        landingPath,
+        metaEventId,
+        marketingConsent,
+        auditResult: result,
+        auditScanError: scanError,
+      });
+    } catch (error) {
+      console.error("Store Audit lead persistence failed", error);
+      return json({ message: "We could not safely save your audit request. Please retry before leaving this page." }, 503);
+    }
+
     let notificationDelivered = false;
     try {
-      notificationDelivered = await notifyLead({ businessName, country, storeUrl, email, whatsapp, productCount, result, scanError });
+      notificationDelivered = await notifyLead({
+        leadId: lead.id,
+        businessName,
+        country,
+        storeUrl,
+        email,
+        whatsapp,
+        productCount,
+        result,
+        scanError,
+        attribution: [utmSource, utmMedium, utmCampaign].filter(Boolean).join(" / ") || "Direct / un-attributed",
+      });
     } catch {
       notificationDelivered = false;
     }
@@ -170,23 +228,24 @@ export async function POST(request: Request) {
     if (!result) {
       return json({
         ok: true,
+        leadId: lead.id,
         result: null,
         manualReview: true,
         notificationDelivered,
-        message: `We could not create an automated score for this page (${scanError || "access unavailable"}). It needs manual review.`,
+        message: `Your request is saved as lead #${lead.id}. We could not create an automated score for this page (${scanError || "access unavailable"}), so it is queued for manual review.`,
       });
     }
 
     return json({
       ok: true,
+      leadId: lead.id,
       result,
       manualReview: true,
       notificationDelivered,
-      message: notificationDelivered
-        ? "Preliminary score created. Your request was also sent for human review."
-        : "Preliminary score created. Email notification is not connected yet, so please save this result and contact info@agentsiraji.com if you want the human review now.",
+      message: `Preliminary score created and lead #${lead.id} is saved for human review.`,
     });
-  } catch {
+  } catch (error) {
+    console.error("Store Audit request failed", error);
     return json({ message: "Unable to run the audit right now. Please try again or email info@agentsiraji.com." }, 500);
   }
 }
