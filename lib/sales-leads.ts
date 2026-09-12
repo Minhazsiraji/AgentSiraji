@@ -79,6 +79,31 @@ export async function createSalesLead(input: SalesLeadInput) {
   return { id: String(row.id), status: String(row.status) as SalesLeadStatus, createdAt: String(row.created_at) };
 }
 
+export async function recordSalesLeadEvent(leadId: string, eventType: string, note?: string | null) {
+  const cleanId = leadId.trim();
+  const cleanType = eventType.trim().toUpperCase();
+  if (!/^\d+$/.test(cleanId)) throw new Error("Lead event requires a numeric lead ID.");
+  if (!/^[A-Z0-9_]{2,80}$/.test(cleanType)) throw new Error("Lead event type is invalid.");
+  const sql = db();
+  await sql`
+    INSERT INTO sales_lead_events (lead_id, event_type, note)
+    VALUES (${cleanId}, ${cleanType}, ${text(note, 1000)})
+  `;
+}
+
+export async function latestLeadPilotDeliveryEvent() {
+  const sql = db();
+  const rows = await sql`
+    SELECT event_type, created_at
+    FROM sales_lead_events
+    WHERE event_type IN ('LEADPILOT_DELIVERED', 'LEADPILOT_FAILED')
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  const row = rows[0];
+  return row ? { eventType: String(row.event_type), createdAt: String(row.created_at) } : null;
+}
+
 export async function listSalesLeads(limit = 100) {
   const sql = db();
   const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
