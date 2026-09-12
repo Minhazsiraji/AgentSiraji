@@ -51,8 +51,16 @@ export function MetaTracking() {
       const eventId = createMetaEventId("lead");
       void trackMetaEvent("Lead", { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" }, eventId);
     };
+    const handleSavedContact = () => {
+      const eventId = createMetaEventId("contact");
+      void trackMetaEvent("Contact", { content_name: "AgentSiraji enquiry" }, eventId);
+    };
     window.addEventListener("agentsiraji:lead-saved", handleSavedLead);
-    return () => window.removeEventListener("agentsiraji:lead-saved", handleSavedLead);
+    window.addEventListener("agentsiraji:contact-saved", handleSavedContact);
+    return () => {
+      window.removeEventListener("agentsiraji:lead-saved", handleSavedLead);
+      window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
+    };
   }, [consent, pixelId]);
 
   function choose(value: "granted" | "denied") {
@@ -68,7 +76,7 @@ export function MetaTracking() {
       {consent === "granted" && pixelId ? (
         <>
           <Script id="agentsiraji-meta-pixel-bootstrap" strategy="afterInteractive" onReady={markPixelReady}>
-            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
+            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)n=f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
           </Script>
         </>
       ) : null}
