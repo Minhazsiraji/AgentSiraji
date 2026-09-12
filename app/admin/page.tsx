@@ -1,60 +1,53 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { LeadStatusReviewForm } from "@/components/LeadStatusReviewForm";
 import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
 
 export const metadata: Metadata = {
-  title: "Commercial Payment Review",
-  description: "AgentSiraji internal manual-payment review console.",
+  title: "Commercial Operations",
+  description: "AgentSiraji internal sales lead and manual-payment operations console.",
   robots: { index: false, follow: false },
 };
 
 export default function AdminPage() {
-  if (process.env.VERCEL_ENV === "production") {
-    notFound();
-  }
-
   return (
     <main>
       <SiteHeader />
       <section className="product-hero lead-product shell">
         <div>
-          <span className="status">Internal preview tool</span>
+          <span className="status">Token-gated pilot operations</span>
           <span className="kicker">AgentSiraji Commercial Operations</span>
           <h1>
-            Review manual payments.
+            Follow leads.
             <br />
-            <em>Activation stays controlled.</em>
+            <em>Keep activation controlled.</em>
           </h1>
           <p>
-            Use this preview-only console to approve, reject, or request more
-            information for manual bank transfers and manual invoices. The admin
-            token is submitted only with the review request and is not stored by
-            this page.
+            Use the temporary owner token to update a saved sales lead or review a legacy manual-payment record. Customer data is not listed on this page; lead updates require the durable lead ID from the owner notification.
           </p>
         </div>
         <div className="product-monogram">
-          AR
-          <span>Admin review</span>
+          AO
+          <span>Owner operations</span>
         </div>
       </section>
 
       <section className="products shell section">
         <div className="section-heading">
           <div>
-            <span className="kicker">Manual payment trust boundary</span>
+            <span className="kicker">Pilot sales workflow</span>
             <h2>
-              Proof can request review.
+              New to won.
               <br />
-              <em>Only approval can activate.</em>
+              <em>Every step stays explicit.</em>
             </h2>
           </div>
           <p>
-            Enter the payment reference, your temporary admin review token, and
-            the decision. Never share the token in chat or commit it to source.
+            Move leads through NEW, CONTACTED, QUALIFIED, PROPOSAL, WON or LOST. Record a manual payment reference only after the owner verifies receipt. Never share the owner token in chat or commit it to source.
           </p>
         </div>
         <div className="product-grid">
+          <LeadStatusReviewForm />
           <ManualPaymentReviewForm />
         </div>
       </section>
