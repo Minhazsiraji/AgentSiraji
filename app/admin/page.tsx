@@ -28,6 +28,7 @@ export default function AdminPage() {
           </p>
           <div className="hero-actions">
             <Link className="button button-primary" href="/admin/analytics">Open analytics →</Link>
+            <Link className="text-link" href="/admin/integrations">Manage integrations <span>↗</span></Link>
           </div>
         </div>
         <div className="product-monogram">
