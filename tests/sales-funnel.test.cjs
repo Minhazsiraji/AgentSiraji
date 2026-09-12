@@ -47,9 +47,17 @@ test('lead admin API is token protected and supports funnel/payment states', () 
   for (const status of ['PENDING_VERIFICATION', 'VERIFIED', 'REJECTED']) assert.match(route, new RegExp(status));
 });
 
-test('Meta relay accepts consented lead and contact conversion events', () => {
+test('Store Audit emits a saved-lead signal and consent layer maps it to Meta Lead', () => {
+  const form = read('components/StoreAuditForm.tsx');
+  const tracking = read('components/MetaTracking.tsx');
+  assert.match(form, /agentsiraji:lead-saved/);
+  assert.match(tracking, /agentsiraji:lead-saved/);
+  assert.match(tracking, /trackMetaEvent\("Lead"/);
+  assert.match(tracking, /consent !== "granted"/);
+});
+
+test('public Meta relay continues to reject fabricated conversion events', () => {
   const route = read('app/api/meta/events/route.ts');
-  assert.match(route, /"Lead"/);
-  assert.match(route, /"Contact"/);
+  assert.match(route, /clientEvents = new Set<MetaEventName>\(\["PageView", "ViewContent"\]\)/);
   assert.match(route, /consentGranted !== true/);
 });
