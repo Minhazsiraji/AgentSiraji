@@ -45,6 +45,24 @@ export function MetaTracking() {
     if (contentName) void trackMetaEvent("ViewContent", { content_name: contentName, content_type: "product" });
   }, [consent, pathname, pixelId]);
 
+  useEffect(() => {
+    if (consent !== "granted" || !pixelId) return;
+    const handleSavedLead = () => {
+      const eventId = createMetaEventId("lead");
+      void trackMetaEvent("Lead", { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" }, eventId);
+    };
+    const handleSavedContact = () => {
+      const eventId = createMetaEventId("contact");
+      void trackMetaEvent("Contact", { content_name: "AgentSiraji enquiry" }, eventId);
+    };
+    window.addEventListener("agentsiraji:lead-saved", handleSavedLead);
+    window.addEventListener("agentsiraji:contact-saved", handleSavedContact);
+    return () => {
+      window.removeEventListener("agentsiraji:lead-saved", handleSavedLead);
+      window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
+    };
+  }, [consent, pixelId]);
+
   function choose(value: "granted" | "denied") {
     try { window.localStorage.setItem(marketingConsentKey, value); } catch { value = "denied"; }
     if (value === "denied") { revokePixelConsent(); trackedPath.current = null; }
@@ -66,7 +84,7 @@ export function MetaTracking() {
       {(consent === null || preferencesOpen) && pixelId ? (
         <aside className="marketing-consent" aria-label="Marketing measurement choice">
           <strong>Help us measure AgentSiraji</strong>
-          <p>Allow Meta to measure page visits and enquiries. With permission, we share event details and hashed contact details for ad measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
+          <p>Allow Meta to measure page visits and enquiries. With permission, we share event details for ad measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
           <div><button type="button" onClick={() => choose("granted")}>Allow measurement</button><button type="button" className="secondary" onClick={() => choose("denied")}>Decline</button></div>
         </aside>
       ) : null}

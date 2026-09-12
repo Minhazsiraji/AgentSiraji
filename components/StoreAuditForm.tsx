@@ -23,6 +23,7 @@ type AuditResult = {
 
 type AuditResponse = {
   ok?: boolean;
+  leadId?: string;
   result?: AuditResult | null;
   manualReview?: boolean;
   notificationDelivered?: boolean;
@@ -52,8 +53,9 @@ export default function StoreAuditForm() {
       const data = (await response.json()) as AuditResponse;
       if (!response.ok) throw new Error(data.message || "Unable to request your audit.");
       if (data.result) setResult(data.result);
+      if (data.leadId) window.dispatchEvent(new Event("agentsiraji:lead-saved"));
       setState("sent");
-      setMessage(data.message || "Audit request received.");
+      setMessage(data.message || "Audit request received and saved.");
       if (data.result) form.reset();
     } catch (error) {
       setState("error");

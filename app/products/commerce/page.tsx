@@ -19,8 +19,8 @@ export default function CommercePage() {
           <h1>Your brand.<br /><em>Proven commerce underneath.</em></h1>
           <p>AgentSiraji Commerce gives businesses a production-ready storefront foundation, managed delivery, and a clear path from launch to growth—without starting the technology stack from zero.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/pricing">See Commerce pricing →</Link>
-            <a className="text-link" href="https://sirajibd.com" target="_blank" rel="noreferrer">Open live reference store <span>↗</span></a>
+            <Link className="button button-primary" href="/store-audit">Get Free Store Audit →</Link>
+            <Link className="text-link" href="/pricing">See Commerce pricing <span>↗</span></Link>
           </div>
         </div>
         <div className="product-monogram">CO<span>Commerce</span></div>
@@ -41,7 +41,7 @@ export default function CommercePage() {
       <section className="products shell section commerce-plans">
         <div className="section-heading">
           <div><span className="kicker">Plans</span><h2>Start where you are.<br /><em>Know exactly what is included.</em></h2></div>
-          <p>Every package shows its included service scope before checkout so customers can compare Starter, Growth, and Pro with confidence.</p>
+          <p>Compare Starter, Growth, and Pro, then use the free Store Audit so we can verify the right fit before any commercial onboarding.</p>
         </div>
         <div className="product-grid">
           {commercePlans.map((plan, index) => (
@@ -60,7 +60,7 @@ export default function CommercePage() {
                     <span key={item}>✓ {item}</span>
                   ))}
                 </div>
-                <Link className="button button-primary" href={`/checkout/commerce?plan=${plan.id}`}>Start with {plan.name} →</Link>
+                <Link className="button button-primary" href="/store-audit">Audit my store first →</Link>
               </div>
             </article>
           ))}
@@ -69,10 +69,10 @@ export default function CommercePage() {
 
       <section className="contact shell">
         <div className="contact-inner">
-          <span className="kicker">Need a different commercial model?</span>
-          <h2>Managed by default.<br /><em>Business license by conversation.</em></h2>
-          <p>For businesses that require self-hosting or a separate license arrangement, we will scope the license, support boundary, and usage rights explicitly rather than mixing it into the standard subscription checkout.</p>
-          <Link className="button button-primary button-large" href="/contact">Talk to AgentSiraji →</Link>
+          <span className="kicker">Start with evidence</span>
+          <h2>Not sure which plan?<br /><em>Audit the current store first.</em></h2>
+          <p>The Store Audit gives both sides a practical starting point before we recommend Starter, Growth or Pro.</p>
+          <Link className="button button-primary button-large" href="/store-audit">Get Free Store Audit →</Link>
         </div>
         <div className="contact-shape"><span>CO</span></div>
       </section>

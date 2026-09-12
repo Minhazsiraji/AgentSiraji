@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { attributionFromRequest } from "@/lib/attribution";
+import { createSalesLead } from "@/lib/sales-leads";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const maxBodyBytes = 16_384;
@@ -99,28 +101,50 @@ export async function POST(request: Request) {
       return json({ message: "Please check the form and complete every field." }, 400);
     }
 
+    const attribution = attributionFromRequest(request, "/contact");
+    let lead;
+    try {
+      lead = await createSalesLead({
+        leadType: "CONTACT",
+        contactName: name,
+        email,
+        interest,
+        message,
+        ...attribution,
+      });
+    } catch (error) {
+      console.error("Contact lead persistence failed", error);
+      return json({ message: "We could not safely save your enquiry. Please retry." }, 503);
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.CONTACT_TO_EMAIL;
     if (!apiKey || !to) {
-      return json({ message: "The contact form is being connected. For now, email info@agentsiraji.com." }, 503);
+      return json({ ok: true, leadId: lead.id, notificationDelivered: false, message: `Your enquiry is saved as lead #${lead.id}.` });
     }
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>",
-        to: [to],
-        reply_to: email,
-        subject: `New AgentSiraji inquiry: ${interest}`,
-        text: `Name: ${name}\nEmail: ${email}\nInterest: ${interest}\n\n${message}`,
-      }),
-      signal: AbortSignal.timeout(8_000),
-    });
+    let notificationDelivered = false;
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: process.env.CONTACT_FROM_EMAIL || "AgentSiraji Website <onboarding@resend.dev>",
+          to: [to],
+          reply_to: email,
+          subject: `New AgentSiraji inquiry: ${interest}`,
+          text: `Lead ID: ${lead.id}\nName: ${name}\nEmail: ${email}\nInterest: ${interest}\nSource: ${[attribution.utmSource, attribution.utmMedium, attribution.utmCampaign].filter(Boolean).join(" / ") || "Direct / un-attributed"}\n\n${message}`,
+        }),
+        signal: AbortSignal.timeout(8_000),
+      });
+      notificationDelivered = response.ok;
+    } catch {
+      notificationDelivered = false;
+    }
 
-    if (!response.ok) throw new Error("Email service rejected the request");
-    return json({ ok: true });
-  } catch {
+    return json({ ok: true, leadId: lead.id, notificationDelivered, message: `Your enquiry is saved as lead #${lead.id}.` });
+  } catch (error) {
+    console.error("Contact request failed", error);
     return json({ message: "Unable to send right now. Please email info@agentsiraji.com." }, 500);
   }
 }

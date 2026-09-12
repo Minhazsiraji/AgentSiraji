@@ -35,8 +35,6 @@ export async function POST(request: Request) {
       userAgent: request.headers.get("user-agent") || undefined,
       clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
       customData,
-      email: typeof body.email === "string" ? body.email : undefined,
-      phone: typeof body.phone === "string" ? body.phone : undefined,
       fbp: typeof body.fbp === "string" ? body.fbp : undefined,
       fbc: typeof body.fbc === "string" ? body.fbc : undefined,
       eventSourceUrl: "https://agentsiraji.com",
