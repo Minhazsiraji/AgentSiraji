@@ -17,10 +17,11 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const googleScripts = "https://www.googletagmanager.com https://www.googleadservices.com https://www.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net";
     const scriptPolicy =
       process.env.NODE_ENV === "development"
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.paddle.com https://connect.facebook.net"
-        : "script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://connect.facebook.net";
+        ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.paddle.com https://connect.facebook.net ${googleScripts}`
+        : `script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://connect.facebook.net ${googleScripts}`;
 
     const contentSecurityPolicy = [
       "default-src 'self'",
@@ -32,7 +33,21 @@ const nextConfig: NextConfig = {
 
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://*.paddle.com https://*.paddle.io https://www.facebook.com",
+      [
+        "img-src",
+        "'self'",
+        "data:",
+        "blob:",
+        "https://*.paddle.com",
+        "https://*.paddle.io",
+        "https://www.facebook.com",
+        "https://www.googletagmanager.com",
+        "https://*.google-analytics.com",
+        "https://*.g.doubleclick.net",
+        "https://*.google.com",
+        "https://pagead2.googlesyndication.com",
+        "https://www.googleadservices.com",
+      ].join(" "),
 
       [
         "connect-src",
@@ -42,6 +57,15 @@ const nextConfig: NextConfig = {
         "https://connect.facebook.net",
         "https://*.paddle.com",
         "https://*.paddle.io",
+        "https://www.googletagmanager.com",
+        "https://*.google-analytics.com",
+        "https://*.analytics.google.com",
+        "https://*.g.doubleclick.net",
+        "https://*.google.com",
+        "https://pagead2.googlesyndication.com",
+        "https://www.googleadservices.com",
+        "https://googleads.g.doubleclick.net",
+        "https://ad.doubleclick.net",
       ].join(" "),
 
       [
@@ -49,6 +73,7 @@ const nextConfig: NextConfig = {
         "'self'",
         "https://*.paddle.com",
         "https://*.paddle.io",
+        "https://www.googletagmanager.com",
       ].join(" "),
 
       "manifest-src 'self'",
