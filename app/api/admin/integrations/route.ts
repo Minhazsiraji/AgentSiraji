@@ -69,6 +69,23 @@ async function checkMeta(config: IntegrationConfig) {
   } catch { return { state: "error", detail: "Meta could not be reached from the server." }; }
 }
 
+async function checkGoogle(config: IntegrationConfig) {
+  const googleId = envOrStored(config, "googleMeasurementId", "NEXT_PUBLIC_GOOGLE_MEASUREMENT_ID");
+  if (!validGoogleTagId(googleId)) return { state: "missing", detail: "Add an AgentSiraji Google tag ID starting with G-, AW- or GT-." };
+  try {
+    const response = await fetch(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleId)}`, {
+      method: "GET",
+      redirect: "error",
+      cache: "no-store",
+      signal: AbortSignal.timeout(6000),
+    });
+    await response.body?.cancel().catch(() => undefined);
+    return response.ok
+      ? { state: "unverified", detail: "Google tag loader is reachable for the configured ID. Browser event delivery will be confirmed with Tag Assistant/DebugView in Integration Health." }
+      : { state: "error", detail: `Google tag loader returned HTTP ${response.status}.` };
+  } catch { return { state: "error", detail: "Google tag loader could not be reached from the server." }; }
+}
+
 async function checkLeadPilot(config: IntegrationConfig) {
   const endpoint = envOrStored(config, "leadPilotUrl", "LEADPILOT_WEBSITE_LEADS_URL");
   const key = envOrStored(config, "leadPilotIngestKey", "LEADPILOT_INGEST_KEY");
@@ -84,9 +101,9 @@ export async function GET(request: Request) {
   if (!authorized(request)) return json({ error: "Unauthorized integration access." }, 401);
   try {
     const config = await readStoredIntegrations();
-    const [meta, leadPilot] = await Promise.all([checkMeta(config), checkLeadPilot(config)]);
+    const [meta, google, leadPilot] = await Promise.all([checkMeta(config), checkGoogle(config), checkLeadPilot(config)]);
     const status = publicStatus(config);
-    return json({ ok: true, status, checks: { meta, google: status.google.configured ? { state: "healthy", detail: "Google tag ID format is valid. A delivery check will be added in the dedicated Google tracking stage." } : { state: "missing", detail: "Add an AgentSiraji Google tag ID starting with G-, AW- or GT-." }, leadPilot } });
+    return json({ ok: true, status, checks: { meta, google, leadPilot } });
   } catch (error) {
     console.error("Integration health check failed", error);
     return json({ error: "Integration health could not be loaded." }, 500);
