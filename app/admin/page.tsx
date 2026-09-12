@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { LeadStatusReviewForm } from "@/components/LeadStatusReviewForm";
 import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
@@ -25,6 +26,9 @@ export default function AdminPage() {
           <p>
             Use the temporary owner token to update a saved sales lead or review a legacy manual-payment record. Customer data is not listed on this page; lead updates require the durable lead ID from the owner notification.
           </p>
+          <div className="hero-actions">
+            <Link className="button button-primary" href="/admin/analytics">Open analytics →</Link>
+          </div>
         </div>
         <div className="product-monogram">
           AO
