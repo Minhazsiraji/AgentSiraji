@@ -20,6 +20,8 @@ const tableSql = `
   )
 `;
 
+const defaultGoogleMeasurementId = "G-RQHGR4FNF5";
+
 function databaseUrl() {
   return process.env.DATABASE_URL?.trim() || process.env.BKASH_DATABASE_URL?.trim();
 }
@@ -75,7 +77,8 @@ export async function saveStoredIntegrations(value: IntegrationConfig) {
 
 export function envOrStored(stored: IntegrationConfig, key: keyof IntegrationConfig, envName: string) {
   const storedValue = stored[key];
-  return process.env[envName]?.trim() || (typeof storedValue === "string" ? storedValue.trim() : "") || "";
+  const configured = process.env[envName]?.trim() || (typeof storedValue === "string" ? storedValue.trim() : "") || "";
+  return configured || (key === "googleMeasurementId" ? defaultGoogleMeasurementId : "");
 }
 
 export function redacted(value: string, visible = 4) {
