@@ -4,7 +4,7 @@ import { metaEventNames, sendMetaEvent, type MetaEventName } from "@/lib/meta";
 
 export const runtime = "nodejs";
 
-const clientEvents = new Set<MetaEventName>(["PageView", "ViewContent"]);
+const clientEvents = new Set<MetaEventName>(["PageView", "ViewContent", "Lead", "Contact", "InitiateCheckout"]);
 const maxBodyBytes = 16_384;
 
 export async function POST(request: Request) {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       phone: typeof body.phone === "string" ? body.phone : undefined,
       fbp: typeof body.fbp === "string" ? body.fbp : undefined,
       fbc: typeof body.fbc === "string" ? body.fbc : undefined,
-      eventSourceUrl: "https://agentsiraji.com",
+      eventSourceUrl: typeof body.eventSourceUrl === "string" ? body.eventSourceUrl.slice(0, 500) : "https://agentsiraji.com",
     });
     return NextResponse.json({ ok: true, sent: result.sent });
   } catch {
