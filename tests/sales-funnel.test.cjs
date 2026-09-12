@@ -61,3 +61,41 @@ test('public Meta relay continues to reject fabricated conversion events', () =>
   assert.match(route, /clientEvents = new Set<MetaEventName>\(\["PageView", "ViewContent"\]\)/);
   assert.match(route, /consentGranted !== true/);
 });
+
+test('Stage 4 migration adds structured bKash reconciliation evidence', () => {
+  const sql = read('database/0006_bkash_pilot_payments.sql');
+  for (const field of [
+    'payment_expected_amount', 'payment_verified_amount', 'payment_currency',
+    'payment_sender_hint', 'payment_date', 'payment_verified_at', 'payment_verification_note'
+  ]) assert.match(sql, new RegExp(field));
+  assert.match(sql, /CHECK \(payment_currency = 'BDT'\)/);
+});
+
+test('bKash pilot verification is owner-controlled and exact-amount', () => {
+  const leads = read('lib/sales-leads.ts');
+  assert.match(leads, /BKASH_SEND_MONEY/);
+  assert.match(leads, /Verified amount must exactly match the expected amount/);
+  assert.match(leads, /A lead cannot be marked WON until the payment is verified/);
+  assert.match(leads, /Verified bKash transaction reference is required/);
+  assert.match(leads, /Payment date is required for verification/);
+});
+
+test('bKash receiving number remains server-only and owner-token protected', () => {
+  const route = read('app/api/admin/bkash-pilot/route.ts');
+  const env = read('.env.example');
+  assert.match(route, /COMMERCIAL_ADMIN_REVIEW_TOKEN/);
+  assert.match(route, /timingSafeEqual/);
+  assert.match(route, /BKASH_PILOT_SEND_MONEY_NUMBER/);
+  assert.match(env, /BKASH_PILOT_SEND_MONEY_NUMBER=01XXXXXXXXX/);
+  assert.doesNotMatch(env, /NEXT_PUBLIC_BKASH/);
+});
+
+test('owner UI records bKash transaction evidence without customer self-activation', () => {
+  const form = read('components/LeadStatusReviewForm.tsx');
+  assert.match(form, /Load bKash receiving number/);
+  assert.match(form, /paymentExpectedAmount/);
+  assert.match(form, /paymentVerifiedAmount/);
+  assert.match(form, /paymentReference/);
+  assert.match(form, /paymentDate/);
+  assert.match(form, /only the owner can verify receipt/i);
+});
