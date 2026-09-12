@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SupportAssistant } from "@/components/SupportAssistant";
 import { MetaTracking } from "@/components/MetaTracking";
+import { GoogleTracking } from "@/components/GoogleTracking";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 import "./form-controls.css";
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <SupportAssistant />
         <MetaTracking />
+        <GoogleTracking />
         <Analytics />
         <SpeedInsights />
       </body>

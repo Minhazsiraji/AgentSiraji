@@ -1,4 +1,5 @@
 export const marketingConsentKey = "agentsiraji_marketing_consent";
+export const measurementConsentChangedEvent = "agentsiraji:measurement-consent-changed";
 const pendingPixelEvents: unknown[][] = [];
 let pixelReady = false;
 
