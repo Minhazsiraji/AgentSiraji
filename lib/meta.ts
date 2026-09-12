@@ -39,12 +39,18 @@ function normalizePhone(value: string) {
   return /^01[3-9]\d{8}$/.test(digits) ? `88${digits}` : digits;
 }
 
+export function isMetaEventId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_.:-]{8,100}$/.test(value.trim());
+}
+
 function cleanEventId(value: string) {
   return value.trim().slice(0, 100);
 }
 
 export async function sendMetaEvent(input: MetaEventInput) {
   if (input.eventName === "Purchase") return { sent: false as const, reason: "Purchase reporting is disabled during the pilot." };
+  if (!isMetaEventId(input.eventId)) return { sent: false as const, reason: "A stable Meta event ID is required." };
+
   let stored: Awaited<ReturnType<typeof readStoredIntegrations>> = {};
   if (!process.env.META_PIXEL_ID?.trim() || !process.env.META_CAPI_ACCESS_TOKEN?.trim()) {
     try { stored = await readStoredIntegrations(); } catch { /* Environment configuration remains the primary fail-closed path. */ }
@@ -57,13 +63,11 @@ export async function sendMetaEvent(input: MetaEventInput) {
     return { sent: false as const, reason: "Meta CAPI is not configured." };
   }
 
-  const testEventCode = process.env.META_TEST_EVENT_CODE?.trim() || stored.metaTestEventCode?.trim();
-  if (process.env.VERCEL_ENV !== "production" && !testEventCode) return { sent: false as const, reason: "Test events need a test event code." };
-  const eventId = cleanEventId(input.eventId);
-  if (!eventId) {
-    return { sent: false as const, reason: "A stable Meta event ID is required." };
-  }
+  const configuredTestEventCode = process.env.META_TEST_EVENT_CODE?.trim() || stored.metaTestEventCode?.trim();
+  const production = process.env.VERCEL_ENV === "production";
+  if (!production && !configuredTestEventCode) return { sent: false as const, reason: "Test events need a test event code." };
 
+  const eventId = cleanEventId(input.eventId);
   const userData: Record<string, unknown> = {};
   if (input.email?.trim()) userData.em = [hash(normalizeEmail(input.email))];
   if (input.phone?.trim()) userData.ph = [hash(normalizePhone(input.phone))];
@@ -79,13 +83,12 @@ export async function sendMetaEvent(input: MetaEventInput) {
   const version = process.env.META_GRAPH_API_VERSION?.trim() || "v26.0";
   const endpoint = new URL(`https://graph.facebook.com/${version}/${encodeURIComponent(pixelId)}/events`);
 
-
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
     redirect: "error",
     body: JSON.stringify({
-      ...(testEventCode ? { test_event_code: testEventCode } : {}),
+      ...(!production && configuredTestEventCode ? { test_event_code: configuredTestEventCode } : {}),
       data: [{
         event_name: input.eventName,
         event_time: input.eventTime ?? Math.floor(Date.now() / 1000),

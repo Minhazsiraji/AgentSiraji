@@ -42,6 +42,11 @@ function cookie(name: string) {
   return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
 }
 
+export function getMetaBrowserIdentifiers() {
+  if (!hasMarketingConsent()) return { fbp: undefined, fbc: undefined };
+  return { fbp: cookie("_fbp")?.slice(0, 200), fbc: cookie("_fbc")?.slice(0, 200) };
+}
+
 export async function trackMetaEvent(
   eventName: ClientMetaEventName,
   customData: Record<string, string | number | boolean> = {},
@@ -53,7 +58,8 @@ export async function trackMetaEvent(
   const args = ["track", eventName, customData, { eventID: eventId }];
   if (pixelReady) window.fbq?.(...args);
   else if (pendingPixelEvents.length < 50) pendingPixelEvents.push(args);
-  // These are recorded by the accepting form/order endpoint, not this relay.
+  // Accepted Lead/Contact conversions are paired with CAPI by their accepting form endpoint.
+  // Checkout conversion tracking remains dormant while live checkout is production-gated.
   if (eventName === "Lead" || eventName === "Contact" || eventName === "InitiateCheckout") return eventId;
 
   try {

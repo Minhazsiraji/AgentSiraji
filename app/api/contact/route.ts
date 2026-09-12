@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { attributionFromRequest } from "@/lib/attribution";
+import { isMetaEventId, sendMetaEvent } from "@/lib/meta";
 import { createSalesLead } from "@/lib/sales-leads";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,6 +48,17 @@ function isRateLimited(key: string) {
   }
   current.count += 1;
   return current.count > rateLimitMax;
+}
+
+function metaContext(data: Record<string, unknown>) {
+  const eventId = isMetaEventId(data.metaEventId) ? data.metaEventId.trim() : null;
+  const marketingConsent = data.marketingConsent === true && Boolean(eventId);
+  return {
+    eventId: marketingConsent ? eventId : null,
+    marketingConsent,
+    fbp: marketingConsent && typeof data.fbp === "string" ? data.fbp.trim().slice(0, 200) : undefined,
+    fbc: marketingConsent && typeof data.fbc === "string" ? data.fbc.trim().slice(0, 200) : undefined,
+  };
 }
 
 export async function POST(request: Request) {
@@ -102,6 +114,7 @@ export async function POST(request: Request) {
     }
 
     const attribution = attributionFromRequest(request, "/contact");
+    const meta = metaContext(data);
     let lead;
     try {
       lead = await createSalesLead({
@@ -111,15 +124,32 @@ export async function POST(request: Request) {
         interest,
         message,
         ...attribution,
+        metaEventId: meta.eventId,
+        marketingConsent: meta.marketingConsent,
       });
     } catch (error) {
       console.error("Contact lead persistence failed", error);
       return json({ message: "We could not safely save your enquiry. Please retry." }, 503);
     }
 
+    const metaDelivery = meta.marketingConsent && meta.eventId
+      ? sendMetaEvent({
+        eventName: "Contact",
+        eventId: meta.eventId,
+        eventSourceUrl: new URL("/contact", request.url).toString(),
+        email,
+        fbp: meta.fbp,
+        fbc: meta.fbc,
+        userAgent: request.headers.get("user-agent") || undefined,
+        clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        customData: { content_name: "AgentSiraji enquiry", interest },
+      }).catch(() => undefined)
+      : Promise.resolve(undefined);
+
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.CONTACT_TO_EMAIL;
     if (!apiKey || !to) {
+      await metaDelivery;
       return json({ ok: true, leadId: lead.id, notificationDelivered: false, message: `Your enquiry is saved as lead #${lead.id}.` });
     }
 
@@ -141,6 +171,7 @@ export async function POST(request: Request) {
     } catch {
       notificationDelivered = false;
     }
+    await metaDelivery;
 
     return json({ ok: true, leadId: lead.id, notificationDelivered, message: `Your enquiry is saved as lead #${lead.id}.` });
   } catch (error) {

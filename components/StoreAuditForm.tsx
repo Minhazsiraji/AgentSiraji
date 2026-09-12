@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { createMetaEventId, getMetaBrowserIdentifiers, hasMarketingConsent } from "@/lib/meta-client";
 import styles from "./StoreAuditResult.module.css";
 
 type AuditResult = {
@@ -41,7 +42,15 @@ export default function StoreAuditForm() {
     setMessage("Analyzing the public store page. This can take a few seconds…");
     setResult(null);
     const form = event.currentTarget;
-    const payload = Object.fromEntries(new FormData(form));
+    const marketingConsent = hasMarketingConsent();
+    const metaEventId = marketingConsent ? createMetaEventId("lead") : undefined;
+    const metaIdentifiers = marketingConsent ? getMetaBrowserIdentifiers() : { fbp: undefined, fbc: undefined };
+    const payload = {
+      ...Object.fromEntries(new FormData(form)),
+      marketingConsent,
+      metaEventId,
+      ...metaIdentifiers,
+    };
 
     try {
       const response = await fetch("/api/store-audit", {
@@ -53,7 +62,7 @@ export default function StoreAuditForm() {
       const data = (await response.json()) as AuditResponse;
       if (!response.ok) throw new Error(data.message || "Unable to request your audit.");
       if (data.result) setResult(data.result);
-      if (data.leadId) window.dispatchEvent(new Event("agentsiraji:lead-saved"));
+      if (data.leadId) window.dispatchEvent(new CustomEvent("agentsiraji:lead-saved", { detail: { eventId: metaEventId } }));
       setState("sent");
       setMessage(data.message || "Audit request received and saved.");
       if (data.result) form.reset();

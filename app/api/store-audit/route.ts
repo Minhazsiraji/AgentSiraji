@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { attributionFromRequest } from "@/lib/attribution";
+import { isMetaEventId, sendMetaEvent } from "@/lib/meta";
 import { createSalesLead } from "@/lib/sales-leads";
 import { scanStore, type StoreAuditResult } from "@/lib/store-audit-scanner";
 
@@ -42,6 +43,17 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function metaContext(data: Record<string, unknown>) {
+  const eventId = isMetaEventId(data.metaEventId) ? data.metaEventId.trim() : null;
+  const marketingConsent = data.marketingConsent === true && Boolean(eventId);
+  return {
+    eventId: marketingConsent ? eventId : null,
+    marketingConsent,
+    fbp: marketingConsent && typeof data.fbp === "string" ? data.fbp.trim().slice(0, 200) : undefined,
+    fbc: marketingConsent && typeof data.fbc === "string" ? data.fbc.trim().slice(0, 200) : undefined,
+  };
 }
 
 function auditSummary(result: StoreAuditResult) {
@@ -167,6 +179,7 @@ export async function POST(request: Request) {
     }
 
     const attribution = attributionFromRequest(request, "/store-audit");
+    const meta = metaContext(data);
 
     let lead;
     try {
@@ -179,6 +192,8 @@ export async function POST(request: Request) {
         phone: whatsapp,
         productCount,
         ...attribution,
+        metaEventId: meta.eventId,
+        marketingConsent: meta.marketingConsent,
         auditResult: result,
         auditScanError: scanError,
       });
@@ -186,6 +201,21 @@ export async function POST(request: Request) {
       console.error("Store Audit lead persistence failed", error);
       return json({ message: "We could not safely save your audit request. Please retry before leaving this page." }, 503);
     }
+
+    const metaDelivery = meta.marketingConsent && meta.eventId
+      ? sendMetaEvent({
+        eventName: "Lead",
+        eventId: meta.eventId,
+        eventSourceUrl: new URL("/store-audit", request.url).toString(),
+        email,
+        phone: whatsapp,
+        fbp: meta.fbp,
+        fbc: meta.fbc,
+        userAgent: request.headers.get("user-agent") || undefined,
+        clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        customData: { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" },
+      }).catch(() => undefined)
+      : Promise.resolve(undefined);
 
     let notificationDelivered = false;
     try {
@@ -204,6 +234,7 @@ export async function POST(request: Request) {
     } catch {
       notificationDelivered = false;
     }
+    await metaDelivery;
 
     if (!result) {
       return json({
