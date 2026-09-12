@@ -34,6 +34,10 @@ function endpointOrigin(value: string) {
   try { return new URL(value).origin; } catch { return ""; }
 }
 
+function validGoogleTagId(value: string) {
+  return /^(G-|AW-|GT-)[A-Z0-9_-]+$/i.test(value);
+}
+
 function publicStatus(config: IntegrationConfig) {
   const metaPixelId = envOrStored(config, "metaPixelId", "META_PIXEL_ID") || process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "";
   const metaToken = envOrStored(config, "metaCapiAccessToken", "META_CAPI_ACCESS_TOKEN");
@@ -43,7 +47,7 @@ function publicStatus(config: IntegrationConfig) {
   const leadConfirmed = process.env.LEADPILOT_AGENTSIRAJI_ONLY_CONFIRMED === "true" || config.leadPilotConfirmed === true;
   return {
     meta: { configured: /^\d+$/.test(metaPixelId) && Boolean(metaToken), pixelId: redacted(metaPixelId, 5), testMode: process.env.VERCEL_ENV !== "production" },
-    google: { configured: /^(G-|AW-)[A-Z0-9_-]+$/i.test(googleId), measurementId: redacted(googleId, 4) },
+    google: { configured: validGoogleTagId(googleId), measurementId: redacted(googleId, 4) },
     leadPilot: { configured: /^https:\/\//i.test(leadUrl) && Boolean(leadKey) && leadConfirmed, endpoint: endpointOrigin(leadUrl) },
   };
 }
@@ -81,7 +85,8 @@ export async function GET(request: Request) {
   try {
     const config = await readStoredIntegrations();
     const [meta, leadPilot] = await Promise.all([checkMeta(config), checkLeadPilot(config)]);
-    return json({ ok: true, status: publicStatus(config), checks: { meta, google: publicStatus(config).google.configured ? { state: "healthy", detail: "Measurement ID format is valid. Google has no safe credential-free probe." } : { state: "missing", detail: "Add a GA4 measurement ID (G-…) or Google Ads ID (AW-…)." }, leadPilot } });
+    const status = publicStatus(config);
+    return json({ ok: true, status, checks: { meta, google: status.google.configured ? { state: "healthy", detail: "Google tag ID format is valid. A delivery check will be added in the dedicated Google tracking stage." } : { state: "missing", detail: "Add an AgentSiraji Google tag ID starting with G-, AW- or GT-." }, leadPilot } });
   } catch (error) {
     console.error("Integration health check failed", error);
     return json({ error: "Integration health could not be loaded." }, 500);
@@ -104,13 +109,23 @@ export async function PUT(request: Request) {
       leadPilotConfirmed: body.leadPilotConfirmed === true,
     };
     if (config.metaPixelId && !/^\d+$/.test(config.metaPixelId)) throw new RequestError("Meta pixel ID must contain digits only.");
-    if (config.googleMeasurementId && !/^(G-|AW-)[A-Z0-9_-]+$/i.test(config.googleMeasurementId)) throw new RequestError("Google ID must start with G- or AW-.");
+    if (config.googleMeasurementId && !validGoogleTagId(config.googleMeasurementId)) throw new RequestError("Google tag ID must start with G-, AW- or GT-.");
     if (config.leadPilotUrl && !/^https:\/\//i.test(config.leadPilotUrl)) throw new RequestError("LeadPilot endpoint must use HTTPS.");
+
     const existing = await readStoredIntegrations();
+    const leadDestinationChanged = Boolean(config.leadPilotUrl && config.leadPilotUrl !== existing.leadPilotUrl);
+    const leadKeyChanged = Boolean(config.leadPilotIngestKey && config.leadPilotIngestKey !== existing.leadPilotIngestKey);
+    if (leadDestinationChanged && !config.leadPilotIngestKey) {
+      throw new RequestError("Changing the LeadPilot endpoint requires entering its ingest key again.");
+    }
+    if ((leadDestinationChanged || leadKeyChanged) && config.leadPilotConfirmed !== true) {
+      throw new RequestError("Confirm that the LeadPilot endpoint and ingest key belong to AgentSiraji before replacing them.");
+    }
+
     const merged = { ...existing, ...Object.fromEntries(Object.entries(config).filter(([key, value]) => key !== "leadPilotConfirmed" && typeof value === "string" && value.length > 0)) } as IntegrationConfig;
-    // New destination credentials require a fresh ownership confirmation.
-    const leadChanged = Boolean((config.leadPilotUrl && config.leadPilotUrl !== existing.leadPilotUrl) || (config.leadPilotIngestKey && config.leadPilotIngestKey !== existing.leadPilotIngestKey));
-    merged.leadPilotConfirmed = leadChanged ? config.leadPilotConfirmed === true : existing.leadPilotConfirmed === true || config.leadPilotConfirmed === true;
+    merged.leadPilotConfirmed = leadDestinationChanged || leadKeyChanged
+      ? true
+      : existing.leadPilotConfirmed === true || config.leadPilotConfirmed === true;
     await saveStoredIntegrations(merged);
     return json({ ok: true, message: "Encrypted integration settings saved. Run the health check to verify each connection." });
   } catch (error) {
