@@ -8,12 +8,14 @@ export function SiteHeader() {
         <Link href="/#products">Products</Link>
         <Link href="/#solutions">Solutions</Link>
         <Link href="/pricing">Pricing</Link>
+        <Link href="/store-audit">Free Store Audit</Link>
         <Link href="/about">Company</Link>
       </div>
-      <Link className="button button-small button-dark" href="/products/commerce">Explore Commerce <span>→</span></Link>
+      <Link className="button button-small button-dark" href="/store-audit">Get Free Audit <span>→</span></Link>
       <details className="mobile-menu">
         <summary aria-label="Open menu"><span /><span /><span /></summary>
         <div>
+          <Link href="/store-audit">Free Store Audit</Link>
           <Link href="/#products">Products</Link>
           <Link href="/#solutions">Solutions</Link>
           <Link href="/pricing">Pricing</Link>
@@ -41,6 +43,7 @@ export function SiteFooter() {
       <Link className="brand" href="/"><span className="brand-mark">AS</span><span>AgentSiraji</span></Link>
       <p>Practical software for businesses that want to move.</p>
       <div>
+        <Link href="/store-audit">Free Store Audit</Link>
         <Link href="/#products">Products</Link>
         <Link href="/products/commerce">Commerce</Link>
         <Link href="/pricing">Pricing</Link>
