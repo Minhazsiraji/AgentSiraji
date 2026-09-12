@@ -5,6 +5,8 @@ import { FormEvent, useState } from "react";
 const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"] as const;
 const paymentStatuses = ["NOT_APPLICABLE", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"] as const;
 
+type BkashConfig = { configured?: boolean; method?: string; number?: string; instruction?: string; message?: string; error?: string };
+
 export function LeadStatusReviewForm() {
   const [leadId, setLeadId] = useState("");
   const [token, setToken] = useState("");
@@ -17,8 +19,33 @@ export function LeadStatusReviewForm() {
   const [paymentDate, setPaymentDate] = useState("");
   const [paymentVerificationNote, setPaymentVerificationNote] = useState("");
   const [ownerNote, setOwnerNote] = useState("");
+  const [bkashConfig, setBkashConfig] = useState<BkashConfig | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  async function loadBkashConfig() {
+    if (token.trim().length < 32) {
+      setMessage("Enter the owner token before loading the bKash receiving number.");
+      return;
+    }
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/bkash-pilot", {
+        headers: { "x-agentsiraji-admin-token": token.trim() },
+        cache: "no-store",
+      });
+      const data = await response.json() as BkashConfig;
+      if (!response.ok) throw new Error(data.error || "Unable to load bKash configuration.");
+      setBkashConfig(data);
+      setMessage(data.configured ? "bKash pilot receiving number loaded for owner use." : (data.message || "bKash pilot number is not configured."));
+    } catch (error) {
+      setBkashConfig(null);
+      setMessage(error instanceof Error ? error.message : "Unable to load bKash configuration.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,6 +91,13 @@ export function LeadStatusReviewForm() {
         <p>Use the durable lead ID from the Store Audit or enquiry notification. bKash is manual: customer submission never activates service; only the owner can verify receipt.</p>
         <label><strong>Lead ID</strong><br /><input required inputMode="numeric" pattern="[0-9]+" value={leadId} onChange={(event) => setLeadId(event.target.value)} placeholder="e.g. 12" /></label>
         <label><strong>Owner admin token</strong><br /><input required type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" placeholder="Owner token" /></label>
+        <button className="button button-primary" type="button" disabled={loading || token.trim().length < 32} onClick={loadBkashConfig}>{loading ? "Loading…" : "Load bKash receiving number →"}</button>
+        {bkashConfig?.configured && bkashConfig.number ? (
+          <div className="form-message sent">
+            <strong>{bkashConfig.method || "bKash Send Money"}:</strong> {bkashConfig.number}<br />
+            <span>{bkashConfig.instruction}</span>
+          </div>
+        ) : null}
         <label><strong>Lead status</strong><br /><select value={status} onChange={(event) => setStatus(event.target.value as (typeof leadStatuses)[number])}>{leadStatuses.map((value) => <option key={value}>{value}</option>)}</select></label>
         <label><strong>Payment status</strong><br /><select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as (typeof paymentStatuses)[number])}>{paymentStatuses.map((value) => <option key={value}>{value}</option>)}</select></label>
         <div className="form-row">
