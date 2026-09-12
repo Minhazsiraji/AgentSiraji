@@ -14,6 +14,14 @@ const viewContentPages = new Map([
   ["/store-audit", "AgentSiraji Store Audit"],
 ]);
 
+function conversionEventId(event: Event, prefix: string) {
+  const detail = event instanceof CustomEvent ? event.detail as { eventId?: unknown } | null : null;
+  const value = detail?.eventId;
+  return typeof value === "string" && /^[A-Za-z0-9_.:-]{8,100}$/.test(value)
+    ? value
+    : createMetaEventId(prefix);
+}
+
 export function MetaTracking() {
   const pathname = usePathname();
   const [pixelId, setPixelId] = useState<string | undefined>(configuredPixelId);
@@ -47,12 +55,12 @@ export function MetaTracking() {
 
   useEffect(() => {
     if (consent !== "granted" || !pixelId) return;
-    const handleSavedLead = () => {
-      const eventId = createMetaEventId("lead");
+    const handleSavedLead = (event: Event) => {
+      const eventId = conversionEventId(event, "lead");
       void trackMetaEvent("Lead", { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" }, eventId);
     };
-    const handleSavedContact = () => {
-      const eventId = createMetaEventId("contact");
+    const handleSavedContact = (event: Event) => {
+      const eventId = conversionEventId(event, "contact");
       void trackMetaEvent("Contact", { content_name: "AgentSiraji enquiry" }, eventId);
     };
     window.addEventListener("agentsiraji:lead-saved", handleSavedLead);
@@ -74,11 +82,9 @@ export function MetaTracking() {
   return (
     <>
       {consent === "granted" && pixelId ? (
-        <>
-          <Script id="agentsiraji-meta-pixel-bootstrap" strategy="afterInteractive" onReady={markPixelReady}>
-            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
-          </Script>
-        </>
+        <Script id="agentsiraji-meta-pixel-bootstrap" strategy="afterInteractive" onReady={markPixelReady}>
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
+        </Script>
       ) : null}
       {pixelId && consent !== null && !preferencesOpen ? <button type="button" className="marketing-preferences" onClick={() => setPreferencesOpen(true)}>Privacy choices</button> : null}
       {(consent === null || preferencesOpen) && pixelId ? (
