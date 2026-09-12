@@ -115,10 +115,14 @@ test('Stage 9 browser diagnostics are observational and do not trigger conversio
 });
 
 test('real lead routes mirror only after authoritative AgentSiraji persistence and audit the result', () => {
-  for (const file of ['app/api/store-audit/route.ts', 'app/api/contact/route.ts']) {
+  const cases = [
+    ['app/api/store-audit/route.ts', 'mirrorStoreAuditLead({'],
+    ['app/api/contact/route.ts', 'mirrorContactLead({'],
+  ];
+  for (const [file, mirrorCall] of cases) {
     const source = fs.readFileSync(file, 'utf8');
     const savedAt = source.lastIndexOf('await createSalesLead');
-    const mirroredAt = source.lastIndexOf('deliverLeadToLeadPilot');
+    const mirroredAt = source.lastIndexOf(mirrorCall);
     assert.ok(savedAt >= 0 && mirroredAt > savedAt, `${file} must persist before mirroring`);
     assert.match(source, /LEADPILOT_DELIVERED/);
     assert.match(source, /LEADPILOT_FAILED/);
