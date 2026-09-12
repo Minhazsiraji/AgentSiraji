@@ -1,6 +1,8 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { probeLeadPilotConnection } from "@/lib/leadpilot";
 import { readJson, RequestError, requestOriginAllowed } from "@/lib/request-safety";
+import { latestLeadPilotDeliveryEvent } from "@/lib/sales-leads";
 import {
   envOrStored,
   readStoredIntegrations,
@@ -62,7 +64,7 @@ async function checkMeta(config: IntegrationConfig) {
     const fakeEmail = createHash("sha256").update("agentsiraji-health-check@example.invalid").digest("hex");
     const fakePhone = createHash("sha256").update("8801700000000").digest("hex");
     const response = await fetch(`https://graph.facebook.com/v26.0/${encodeURIComponent(pixelId)}/events`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ test_event_code: testEventCode, data: [{ event_name: "PageView", event_time: Math.floor(Date.now() / 1000), event_id: `agentsiraji_health_${randomUUID()}`, action_source: "website", event_source_url: "https://agentsiraji.com", user_data: { em: [fakeEmail], ph: [fakePhone] } }] }), redirect: "error", cache: "no-store", signal: AbortSignal.timeout(6000) });
-    if (response.ok) return { state: "healthy", detail: "Meta accepted a synthetic PageView in Test Events." };
+    if (response.ok) return { state: "healthy", detail: "Meta accepted a synthetic PageView in Test Events. Production events remain separate from Test Events." };
     const payload = await response.json().catch(() => null) as { error?: { code?: unknown; error_subcode?: unknown } } | null;
     const code = typeof payload?.error?.code === "number" ? ` (code ${payload.error.code}${typeof payload.error.error_subcode === "number" ? `/${payload.error.error_subcode}` : ""})` : "";
     return { state: "error", detail: `Meta returned HTTP ${response.status}${code}. Check that the Pixel ID and CAPI token belong to the same AgentSiraji data source.` };
@@ -81,20 +83,21 @@ async function checkGoogle(config: IntegrationConfig) {
     });
     await response.body?.cancel().catch(() => undefined);
     return response.ok
-      ? { state: "unverified", detail: "Google tag loader is reachable for the configured ID. Browser event delivery will be confirmed with Tag Assistant/DebugView in Integration Health." }
+      ? { state: "unverified", detail: "Google tag loader is reachable for the configured ID. Use the browser delivery check below to confirm this tab loaded the tag after consent." }
       : { state: "error", detail: `Google tag loader returned HTTP ${response.status}.` };
   } catch { return { state: "error", detail: "Google tag loader could not be reached from the server." }; }
 }
 
 async function checkLeadPilot(config: IntegrationConfig) {
-  const endpoint = envOrStored(config, "leadPilotUrl", "LEADPILOT_WEBSITE_LEADS_URL");
-  const key = envOrStored(config, "leadPilotIngestKey", "LEADPILOT_INGEST_KEY");
-  if (process.env.LEADPILOT_AGENTSIRAJI_ONLY_CONFIRMED !== "true" && config.leadPilotConfirmed !== true) return { state: "missing", detail: "Confirm that this endpoint belongs only to the AgentSiraji LeadPilot workspace." };
-  if (!/^https:\/\//i.test(endpoint) || !key) return { state: "missing", detail: "Add the HTTPS LeadPilot lead endpoint and ingest key." };
-  try {
-    const response = await fetch(endpoint, { method: "HEAD", headers: { authorization: `Bearer ${key}` }, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(6000) });
-    return response.ok || response.status === 405 ? { state: "unverified", detail: `Endpoint reachable (HTTP ${response.status}). The ingest key and lead delivery have not been verified. Submit one test Store Audit and confirm it appears in LeadPilot.` } : { state: "error", detail: `LeadPilot returned HTTP ${response.status}.` };
-  } catch { return { state: "error", detail: "LeadPilot could not be reached from the server." }; }
+  const probe = await probeLeadPilotConnection(config);
+  if (probe.state !== "healthy") return probe;
+  const latest = await latestLeadPilotDeliveryEvent().catch(() => null);
+  if (!latest) return { state: "healthy", detail: `${probe.detail} No real AgentSiraji lead mirror has been recorded yet.` };
+  const when = new Date(latest.createdAt).toISOString();
+  if (latest.eventType === "LEADPILOT_DELIVERED") {
+    return { state: "healthy", detail: `${probe.detail} Last real lead mirror succeeded at ${when}.` };
+  }
+  return { state: "unverified", detail: `${probe.detail} The most recent real lead mirror failed at ${when}; review current runtime health before relying on automatic mirroring.` };
 }
 
 export async function GET(request: Request) {
@@ -132,17 +135,11 @@ export async function PUT(request: Request) {
     const existing = await readStoredIntegrations();
     const leadDestinationChanged = Boolean(config.leadPilotUrl && config.leadPilotUrl !== existing.leadPilotUrl);
     const leadKeyChanged = Boolean(config.leadPilotIngestKey && config.leadPilotIngestKey !== existing.leadPilotIngestKey);
-    if (leadDestinationChanged && !config.leadPilotIngestKey) {
-      throw new RequestError("Changing the LeadPilot endpoint requires entering its ingest key again.");
-    }
-    if ((leadDestinationChanged || leadKeyChanged) && config.leadPilotConfirmed !== true) {
-      throw new RequestError("Confirm that the LeadPilot endpoint and ingest key belong to AgentSiraji before replacing them.");
-    }
+    if (leadDestinationChanged && !config.leadPilotIngestKey) throw new RequestError("Changing the LeadPilot endpoint requires entering its ingest key again.");
+    if ((leadDestinationChanged || leadKeyChanged) && config.leadPilotConfirmed !== true) throw new RequestError("Confirm that the LeadPilot endpoint and ingest key belong to AgentSiraji before replacing them.");
 
     const merged = { ...existing, ...Object.fromEntries(Object.entries(config).filter(([key, value]) => key !== "leadPilotConfirmed" && typeof value === "string" && value.length > 0)) } as IntegrationConfig;
-    merged.leadPilotConfirmed = leadDestinationChanged || leadKeyChanged
-      ? true
-      : existing.leadPilotConfirmed === true || config.leadPilotConfirmed === true;
+    merged.leadPilotConfirmed = leadDestinationChanged || leadKeyChanged ? true : existing.leadPilotConfirmed === true || config.leadPilotConfirmed === true;
     await saveStoredIntegrations(merged);
     return json({ ok: true, message: "Encrypted integration settings saved. Run the health check to verify each connection." });
   } catch (error) {
