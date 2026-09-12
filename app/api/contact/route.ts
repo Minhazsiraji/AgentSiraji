@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { attributionFromRequest } from "@/lib/attribution";
 import { createSalesLead } from "@/lib/sales-leads";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
       return json({ message: "Please check the form and complete every field." }, 400);
     }
 
+    const attribution = attributionFromRequest(request, "/contact");
     let lead;
     try {
       lead = await createSalesLead({
@@ -108,8 +110,7 @@ export async function POST(request: Request) {
         email,
         interest,
         message,
-        referrer: request.headers.get("referer")?.slice(0, 500) || null,
-        landingPath: "/contact",
+        ...attribution,
       });
     } catch (error) {
       console.error("Contact lead persistence failed", error);
@@ -132,7 +133,7 @@ export async function POST(request: Request) {
           to: [to],
           reply_to: email,
           subject: `New AgentSiraji inquiry: ${interest}`,
-          text: `Lead ID: ${lead.id}\nName: ${name}\nEmail: ${email}\nInterest: ${interest}\n\n${message}`,
+          text: `Lead ID: ${lead.id}\nName: ${name}\nEmail: ${email}\nInterest: ${interest}\nSource: ${[attribution.utmSource, attribution.utmMedium, attribution.utmCampaign].filter(Boolean).join(" / ") || "Direct / un-attributed"}\n\n${message}`,
         }),
         signal: AbortSignal.timeout(8_000),
       });
