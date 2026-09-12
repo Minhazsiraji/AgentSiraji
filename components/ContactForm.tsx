@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { createMetaEventId, getMetaBrowserIdentifiers, hasMarketingConsent } from "@/lib/meta-client";
 
 type ContactResponse = { ok?: boolean; leadId?: string; message?: string };
 
@@ -12,7 +13,15 @@ export default function ContactForm() {
     event.preventDefault();
     setState("sending");
     const form = event.currentTarget;
-    const payload = Object.fromEntries(new FormData(form));
+    const marketingConsent = hasMarketingConsent();
+    const metaEventId = marketingConsent ? createMetaEventId("contact") : undefined;
+    const metaIdentifiers = marketingConsent ? getMetaBrowserIdentifiers() : { fbp: undefined, fbc: undefined };
+    const payload = {
+      ...Object.fromEntries(new FormData(form)),
+      marketingConsent,
+      metaEventId,
+      ...metaIdentifiers,
+    };
 
     try {
       const response = await fetch("/api/contact", {
@@ -23,7 +32,7 @@ export default function ContactForm() {
       });
       const data = await response.json() as ContactResponse;
       if (!response.ok) throw new Error(data.message || "Unable to send your message.");
-      if (data.leadId) window.dispatchEvent(new Event("agentsiraji:contact-saved"));
+      if (data.leadId) window.dispatchEvent(new CustomEvent("agentsiraji:contact-saved", { detail: { eventId: metaEventId } }));
       form.reset();
       setState("sent");
       setMessage(data.message || "Thanks—your message is saved. We’ll reply as soon as possible.");
