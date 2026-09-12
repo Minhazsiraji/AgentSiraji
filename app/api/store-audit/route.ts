@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { attributionFromRequest } from "@/lib/attribution";
 import { createSalesLead } from "@/lib/sales-leads";
 import { scanStore, type StoreAuditResult } from "@/lib/store-audit-scanner";
 
@@ -41,11 +42,6 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
-}
-
-function optionalText(data: Record<string, unknown>, key: string, max: number) {
-  const value = typeof data[key] === "string" ? data[key].trim() : "";
-  return value ? value.slice(0, max) : null;
 }
 
 function auditSummary(result: StoreAuditResult) {
@@ -170,15 +166,7 @@ export async function POST(request: Request) {
       scanError = error instanceof Error ? error.message : "The automated scan could not access this store.";
     }
 
-    const utmSource = optionalText(data, "utmSource", 120);
-    const utmMedium = optionalText(data, "utmMedium", 120);
-    const utmCampaign = optionalText(data, "utmCampaign", 160);
-    const utmContent = optionalText(data, "utmContent", 160);
-    const utmTerm = optionalText(data, "utmTerm", 160);
-    const referrer = optionalText(data, "referrer", 500) || request.headers.get("referer")?.slice(0, 500) || null;
-    const landingPath = optionalText(data, "landingPath", 500) || "/store-audit";
-    const metaEventId = optionalText(data, "metaEventId", 100);
-    const marketingConsent = data.marketingConsent === true;
+    const attribution = attributionFromRequest(request, "/store-audit");
 
     let lead;
     try {
@@ -190,15 +178,7 @@ export async function POST(request: Request) {
         email,
         phone: whatsapp,
         productCount,
-        utmSource,
-        utmMedium,
-        utmCampaign,
-        utmContent,
-        utmTerm,
-        referrer,
-        landingPath,
-        metaEventId,
-        marketingConsent,
+        ...attribution,
         auditResult: result,
         auditScanError: scanError,
       });
@@ -219,7 +199,7 @@ export async function POST(request: Request) {
         productCount,
         result,
         scanError,
-        attribution: [utmSource, utmMedium, utmCampaign].filter(Boolean).join(" / ") || "Direct / un-attributed",
+        attribution: [attribution.utmSource, attribution.utmMedium, attribution.utmCampaign].filter(Boolean).join(" / ") || "Direct / un-attributed",
       });
     } catch {
       notificationDelivered = false;
