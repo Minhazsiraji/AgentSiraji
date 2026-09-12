@@ -3,7 +3,7 @@
 import Script from "next/script";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { createMetaEventId, marketingConsentKey, trackMetaEvent, markPixelReady, revokePixelConsent } from "@/lib/meta-client";
+import { createMetaEventId, marketingConsentKey, measurementConsentChangedEvent, trackMetaEvent, markPixelReady, revokePixelConsent } from "@/lib/meta-client";
 
 const configuredPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 const configuredPixelId = configuredPixel && /^\d+$/.test(configuredPixel) ? configuredPixel : undefined;
@@ -75,6 +75,7 @@ export function MetaTracking() {
     try { window.localStorage.setItem(marketingConsentKey, value); } catch { value = "denied"; }
     if (value === "denied") { revokePixelConsent(); trackedPath.current = null; }
     else window.fbq?.("consent", "grant");
+    window.dispatchEvent(new CustomEvent(measurementConsentChangedEvent, { detail: { value } }));
     setConsent(value);
     setPreferencesOpen(false);
   }
@@ -90,7 +91,7 @@ export function MetaTracking() {
       {(consent === null || preferencesOpen) && pixelId ? (
         <aside className="marketing-consent" aria-label="Marketing measurement choice">
           <strong>Help us measure AgentSiraji</strong>
-          <p>Allow Meta to measure page visits and enquiries. With permission, we share event details for ad measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
+          <p>Allow Meta and Google to measure page visits and accepted enquiries for analytics and advertising measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
           <div><button type="button" onClick={() => choose("granted")}>Allow measurement</button><button type="button" className="secondary" onClick={() => choose("denied")}>Decline</button></div>
         </aside>
       ) : null}
