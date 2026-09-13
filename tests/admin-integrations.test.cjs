@@ -6,13 +6,18 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('integration admin API is token protected, no-store and same-origin for writes', () => {
+test('integration admin API is platform-session protected, no-store and same-origin for writes', () => {
   const route = read('app/api/admin/integrations/route.ts');
-  assert.match(route, /timingSafeEqual/);
-  assert.match(route, /x-agentsiraji-admin-token/);
+  assert.match(route, /platformAdminSession/);
   assert.match(route, /Unauthorized integration access/);
   assert.match(route, /Cache-Control.*no-store/s);
   assert.match(route, /requestOriginAllowed\(request\)/);
+});
+
+test('Integration Center UI relies on signed-in platform admin session', () => {
+  const ui = read('components/IntegrationSettings.tsx');
+  assert.match(ui, /signed-in platform admin session/i);
+  assert.match(ui, /\/api\/admin\/integrations/);
 });
 
 test('Google tag configuration accepts G, AW and GT identifiers', () => {
