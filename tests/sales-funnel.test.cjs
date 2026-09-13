@@ -9,9 +9,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 test('lead migration defines durable sales funnel states', () => {
   const sql = read('database/0005_sales_leads.sql');
   assert.match(sql, /CREATE TABLE IF NOT EXISTS sales_leads/i);
-  for (const status of ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'WON', 'LOST']) {
-    assert.match(sql, new RegExp(status));
-  }
+  for (const status of ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'WON', 'LOST']) assert.match(sql, new RegExp(status));
   assert.match(sql, /utm_source/i);
   assert.match(sql, /payment_reference/i);
 });
@@ -38,10 +36,10 @@ test('public acquisition CTAs prefer Store Audit over checkout', () => {
   assert.doesNotMatch(read('app/pricing/page.tsx'), /\/checkout\/commerce/);
 });
 
-test('lead admin API is token protected and supports funnel/payment states', () => {
+test('lead admin API is platform-session protected and supports funnel/payment states', () => {
   const route = read('app/api/admin/leads/route.ts');
-  assert.match(route, /timingSafeEqual/);
-  assert.match(route, /x-agentsiraji-admin-token/);
+  assert.match(route, /platformAdminSession/);
+  assert.doesNotMatch(route, /x-agentsiraji-admin-token/);
   assert.match(route, /listSalesLeads/);
   assert.match(route, /updateSalesLead/);
   for (const status of ['PENDING_VERIFICATION', 'VERIFIED', 'REJECTED']) assert.match(route, new RegExp(status));
@@ -64,10 +62,7 @@ test('public Meta relay continues to reject fabricated conversion events', () =>
 
 test('Stage 4 migration adds structured bKash reconciliation evidence', () => {
   const sql = read('database/0006_bkash_pilot_payments.sql');
-  for (const field of [
-    'payment_expected_amount', 'payment_verified_amount', 'payment_currency',
-    'payment_sender_hint', 'payment_date', 'payment_verified_at', 'payment_verification_note'
-  ]) assert.match(sql, new RegExp(field));
+  for (const field of ['payment_expected_amount', 'payment_verified_amount', 'payment_currency', 'payment_sender_hint', 'payment_date', 'payment_verified_at', 'payment_verification_note']) assert.match(sql, new RegExp(field));
   assert.match(sql, /CHECK \(payment_currency = 'BDT'\)/);
 });
 
@@ -80,12 +75,12 @@ test('bKash pilot verification is owner-controlled and exact-amount', () => {
   assert.match(leads, /Payment date is required for verification/);
 });
 
-test('bKash receiving number remains server-only and owner-token protected', () => {
+test('bKash receiving number remains server-only and platform-session protected', () => {
   const route = read('app/api/admin/bkash-pilot/route.ts');
   const env = read('.env.example');
-  assert.match(route, /COMMERCIAL_ADMIN_REVIEW_TOKEN/);
-  assert.match(route, /timingSafeEqual/);
+  assert.match(route, /platformAdminSession/);
   assert.match(route, /BKASH_PILOT_SEND_MONEY_NUMBER/);
+  assert.doesNotMatch(route, /x-agentsiraji-admin-token/);
   assert.match(env, /BKASH_PILOT_SEND_MONEY_NUMBER=01XXXXXXXXX/);
   assert.doesNotMatch(env, /NEXT_PUBLIC_BKASH/);
 });
@@ -97,5 +92,5 @@ test('owner UI records bKash transaction evidence without customer self-activati
   assert.match(form, /paymentVerifiedAmount/);
   assert.match(form, /paymentReference/);
   assert.match(form, /paymentDate/);
-  assert.match(form, /only the owner can verify receipt/i);
+  assert.match(form, /only an authenticated owner\/admin can verify receipt/i);
 });
