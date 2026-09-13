@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { platformAdminSession } from "@/lib/admin-access";
 
 function json(body: object, status = 200) {
   return NextResponse.json(body, {
@@ -8,17 +8,9 @@ function json(body: object, status = 200) {
   });
 }
 
-function authorized(request: Request) {
-  const expected = process.env.COMMERCIAL_ADMIN_REVIEW_TOKEN;
-  const supplied = request.headers.get("x-agentsiraji-admin-token");
-  if (!expected || expected.length < 32 || !supplied) return false;
-  const a = Buffer.from(expected);
-  const b = Buffer.from(supplied);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 export async function GET(request: Request) {
-  if (!authorized(request)) return json({ error: "Unauthorized bKash configuration access." }, 401);
+  const admin = await platformAdminSession(request);
+  if (!admin) return json({ error: "Unauthorized bKash configuration access." }, 401);
   const number = process.env.BKASH_PILOT_SEND_MONEY_NUMBER?.trim() || "";
   if (!/^01\d{9}$/.test(number)) {
     return json({
