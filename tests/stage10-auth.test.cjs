@@ -49,7 +49,7 @@ test('customer account lookup is session-scoped through organization membership,
   assert.match(route, /organization_members/);
   assert.match(route, /om\.account_id\s*=\s*\$\{session\.accountId\}/);
   assert.doesNotMatch(page, /transactionId|provider=/);
-  assert.match(page, /Payment references are no longer used as account credentials/i);
+  assert.match(page, /Payment references\s+are no longer used as account credentials/i);
 });
 
 test('admin analytics, leads, payments and pricing use platform admin sessions', () => {
