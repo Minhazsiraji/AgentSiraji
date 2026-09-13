@@ -74,17 +74,18 @@ export async function createMagicLink(emailInput: string, redirectInput?: string
   const ipHash = requestedIp && process.env.AUTH_IP_HASH_SALT
     ? hashToken(`${process.env.AUTH_IP_HASH_SALT}:${requestedIp}`)
     : null;
+  const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60 * 1000);
 
   await sql`
     INSERT INTO auth_magic_links (account_id, token_hash, redirect_path, expires_at, requested_ip_hash)
-    VALUES (${String(account.id)}, ${tokenHash}, ${redirectPath}, now() + (${MAGIC_LINK_TTL_MINUTES} || ' minutes')::interval, ${ipHash})
+    VALUES (${String(account.id)}, ${tokenHash}, ${redirectPath}, ${expiresAt.toISOString()}, ${ipHash})
   `;
   await sql`
     INSERT INTO auth_security_events (account_id, event_type, detail)
     VALUES (${String(account.id)}, 'MAGIC_LINK_REQUESTED', 'Passwordless sign-in link requested')
   `;
 
-  return { rawToken, email: String(account.email), redirectPath };
+  return { rawToken, email: String(account.email), redirectPath, expiresAt };
 }
 
 export async function consumeMagicLink(rawToken: string) {
