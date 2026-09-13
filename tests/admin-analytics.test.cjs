@@ -6,11 +6,10 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('admin analytics API is owner-token protected and no-store', () => {
+test('admin analytics API is platform-session protected and no-store', () => {
   const route = read('app/api/admin/analytics/route.ts');
-  assert.match(route, /timingSafeEqual/);
-  assert.match(route, /COMMERCIAL_ADMIN_REVIEW_TOKEN/);
-  assert.match(route, /x-agentsiraji-admin-token/);
+  assert.match(route, /platformAdminSession/);
+  assert.doesNotMatch(route, /x-agentsiraji-admin-token/);
   assert.match(route, /Unauthorized analytics access/);
   assert.match(route, /no-store/);
 });
@@ -36,9 +35,11 @@ test('admin analytics page is excluded from indexing', () => {
   assert.match(page, /Customer contact data is intentionally excluded/);
 });
 
-test('dashboard exposes funnel, attribution, payment and trend metrics', () => {
+test('dashboard exposes funnel, attribution, payment and trend metrics without a reusable token field', () => {
   const dashboard = read('components/AdminAnalyticsDashboard.tsx');
   assert.match(dashboard, /\/api\/admin\/analytics/);
+  assert.match(dashboard, /Authenticated owner access/);
+  assert.doesNotMatch(dashboard, /x-agentsiraji-admin-token/);
   assert.match(dashboard, /Total leads/);
   assert.match(dashboard, /Qualified\+/);
   assert.match(dashboard, /Verified revenue/);
