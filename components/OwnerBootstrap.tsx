@@ -19,7 +19,20 @@ export function OwnerBootstrap() {
     setSession(await response.json());
   }
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((response) => response.json() as Promise<SessionPayload>)
+      .then((payload) => {
+        if (active) setSession(payload);
+      })
+      .catch(() => {
+        if (active) setSession({ authenticated: false, session: null });
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const roles = session?.session?.platformRoles || [];
   const isAdmin = roles.includes("PLATFORM_OWNER") || roles.includes("PLATFORM_ADMIN");
