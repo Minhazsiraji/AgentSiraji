@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { platformAdminSession } from "@/lib/admin-access";
 import {
   bkashPilotPaymentMethod,
   listSalesLeads,
@@ -15,15 +15,6 @@ function json(body: object, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store, max-age=0", Pragma: "no-cache" } });
 }
 
-function authorized(request: Request) {
-  const expected = process.env.COMMERCIAL_ADMIN_REVIEW_TOKEN;
-  const supplied = request.headers.get("x-agentsiraji-admin-token");
-  if (!expected || expected.length < 32 || !supplied) return false;
-  const a = Buffer.from(expected);
-  const b = Buffer.from(supplied);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 function optionalNumber(value: unknown) {
   if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
@@ -35,7 +26,8 @@ function optionalString(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) return json({ error: "Unauthorized lead access." }, 401);
+  const admin = await platformAdminSession(request);
+  if (!admin) return json({ error: "Unauthorized lead access." }, 401);
   try {
     const leads = await listSalesLeads(100);
     return json({ ok: true, leads });
@@ -46,7 +38,8 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!authorized(request)) return json({ error: "Unauthorized lead update." }, 401);
+  const admin = await platformAdminSession(request);
+  if (!admin) return json({ error: "Unauthorized lead update." }, 401);
   try {
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) return json({ error: "Request origin is not allowed." }, 403);
