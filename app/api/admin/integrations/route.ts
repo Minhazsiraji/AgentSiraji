@@ -1,5 +1,6 @@
-import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { platformAdminSession } from "@/lib/admin-access";
 import { probeLeadPilotConnection } from "@/lib/leadpilot";
 import { readJson, RequestError, requestOriginAllowed } from "@/lib/request-safety";
 import { latestLeadPilotDeliveryEvent } from "@/lib/sales-leads";
@@ -15,17 +16,6 @@ export const dynamic = "force-dynamic";
 
 function json(body: object, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store, max-age=0", Pragma: "no-cache" } });
-}
-
-function authorized(request: Request) {
-  const expected = process.env.INTEGRATIONS_ADMIN_TOKEN?.trim()
-    || process.env.COMMERCIAL_ADMIN_REVIEW_TOKEN?.trim()
-    || process.env.BKASH_ADMIN_REVIEW_TOKEN?.trim();
-  const supplied = request.headers.get("x-agentsiraji-admin-token") || "";
-  if (!expected || expected.length < 32 || !supplied) return false;
-  const a = Buffer.from(expected);
-  const b = Buffer.from(supplied);
-  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function clean(value: unknown, max = 500) {
@@ -101,7 +91,8 @@ async function checkLeadPilot(config: IntegrationConfig) {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) return json({ error: "Unauthorized integration access." }, 401);
+  const admin = await platformAdminSession(request);
+  if (!admin) return json({ error: "Unauthorized integration access." }, 401);
   try {
     const config = await readStoredIntegrations();
     const [meta, google, leadPilot] = await Promise.all([checkMeta(config), checkGoogle(config), checkLeadPilot(config)]);
@@ -114,7 +105,8 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  if (!authorized(request)) return json({ error: "Unauthorized integration update." }, 401);
+  const admin = await platformAdminSession(request);
+  if (!admin) return json({ error: "Unauthorized integration update." }, 401);
   if (!requestOriginAllowed(request)) return json({ error: "Request origin is not allowed." }, 403);
   try {
     const body = await readJson(request, 16_384);
