@@ -102,7 +102,7 @@ export function LeadStatusReviewForm() {
       <div className="product-copy">
         <span className="product-label">Authenticated owner payment review</span>
         <h3>Update lead &amp; verify bKash</h3>
-        <p>This console relies on your signed-in platform role. A customer submission never activates service; a verified WON payment provisions the selected Commerce plan and customer account.</p>
+        <p>This console relies on your signed-in platform role. Customer submission never activates service; only an authenticated owner/admin can verify receipt. A verified WON payment then provisions the selected Commerce plan and customer account.</p>
         <label><strong>Lead ID</strong><br /><input required inputMode="numeric" pattern="[0-9]+" value={leadId} onChange={(event) => setLeadId(event.target.value)} placeholder="e.g. 12" /></label>
         <button className="button button-primary" type="button" disabled={loading} onClick={loadBkashConfig}>{loading ? "Loading…" : "Load bKash receiving number →"}</button>
         {bkashConfig?.configured && bkashConfig.number ? <div className="form-message sent"><strong>{bkashConfig.method || "bKash Send Money"}:</strong> {bkashConfig.number}<br /><span>{bkashConfig.instruction}</span></div> : null}
