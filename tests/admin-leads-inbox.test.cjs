@@ -7,23 +7,26 @@ function read(file) {
   return fs.readFileSync(path.join(process.cwd(), file), "utf8");
 }
 
-test("admin page renders the authenticated leads inbox before payment review", () => {
+test("admin page renders the authenticated leads inbox before the single pilot payment review", () => {
   const source = read("app/admin/page.tsx");
   assert.match(source, /AdminLeadsInbox/);
   assert.match(source, /Sales inbox/);
   assert.match(source, /LeadStatusReviewForm/);
-  assert.match(source, /ManualPaymentReviewForm/);
+  assert.doesNotMatch(source, /ManualPaymentReviewForm/);
 });
 
-test("leads inbox loads protected lead data and supports search/status workflow", () => {
+test("leads inbox loads protected lead data and supports compact search and pipeline workflow", () => {
   const source = read("components/AdminLeadsInbox.tsx");
   assert.match(source, /fetch\("\/api\/admin\/leads"/);
   assert.match(source, /Search/);
-  assert.match(source, /Mark contacted/);
-  assert.match(source, /Mark qualified/);
-  assert.match(source, /Move to proposal/);
-  assert.match(source, /Mark lost/);
-  assert.match(source, /Review \/ payment/);
+  assert.match(source, /Status/);
+  assert.match(source, /Source/);
+  assert.match(source, />Contacted</);
+  assert.match(source, />Qualified</);
+  assert.match(source, />Proposal</);
+  assert.match(source, />Lost</);
+  assert.match(source, />Review</);
+  assert.match(source, /PAGE_SIZE = 10/);
 });
 
 test("quick status updates preserve payment state instead of bypassing verification", () => {
