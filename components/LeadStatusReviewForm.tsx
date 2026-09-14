@@ -9,7 +9,6 @@ type BkashConfig = { configured?: boolean; method?: string; number?: string; ins
 
 export function LeadStatusReviewForm() {
   const [leadId, setLeadId] = useState("");
-  const [token, setToken] = useState("");
   const [status, setStatus] = useState<(typeof leadStatuses)[number]>("NEW");
   const [paymentStatus, setPaymentStatus] = useState<(typeof paymentStatuses)[number]>("NOT_APPLICABLE");
   const [expectedAmount, setExpectedAmount] = useState("");
@@ -24,21 +23,14 @@ export function LeadStatusReviewForm() {
   const [message, setMessage] = useState("");
 
   async function loadBkashConfig() {
-    if (token.trim().length < 32) {
-      setMessage("Enter the owner token before loading the bKash receiving number.");
-      return;
-    }
     setLoading(true);
     setMessage("");
     try {
-      const response = await fetch("/api/admin/bkash-pilot", {
-        headers: { "x-agentsiraji-admin-token": token.trim() },
-        cache: "no-store",
-      });
+      const response = await fetch("/api/admin/bkash-pilot", { cache: "no-store" });
       const data = await response.json() as BkashConfig;
       if (!response.ok) throw new Error(data.error || "Unable to load bKash configuration.");
       setBkashConfig(data);
-      setMessage(data.configured ? "bKash pilot receiving number loaded for owner use." : (data.message || "bKash pilot number is not configured."));
+      setMessage(data.configured ? "bKash pilot receiving number loaded for this authenticated owner session." : (data.message || "bKash pilot number is not configured."));
     } catch (error) {
       setBkashConfig(null);
       setMessage(error instanceof Error ? error.message : "Unable to load bKash configuration.");
@@ -54,14 +46,9 @@ export function LeadStatusReviewForm() {
     try {
       const response = await fetch("/api/admin/leads", {
         method: "PATCH",
-        headers: {
-          "content-type": "application/json",
-          "x-agentsiraji-admin-token": token.trim(),
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: leadId.trim(),
-          status,
-          paymentStatus,
+          id: leadId.trim(), status, paymentStatus,
           paymentMethod: paymentStatus === "NOT_APPLICABLE" ? null : "BKASH_SEND_MONEY",
           paymentExpectedAmount: expectedAmount || null,
           paymentVerifiedAmount: verifiedAmount || null,
@@ -86,18 +73,12 @@ export function LeadStatusReviewForm() {
     <form className="product-card diary-card" onSubmit={submit}>
       <div className="card-top"><span className="status">bKash pilot</span><span className="card-num">02</span></div>
       <div className="product-copy">
-        <span className="product-label">Owner-verified local payment</span>
+        <span className="product-label">Authenticated owner payment review</span>
         <h3>Update lead &amp; verify bKash</h3>
-        <p>Use the durable lead ID from the Store Audit or enquiry notification. bKash is manual: customer submission never activates service; only the owner can verify receipt.</p>
+        <p>This console now relies on your signed-in platform role. Customer submission never activates service; only an authenticated owner/admin can verify receipt.</p>
         <label><strong>Lead ID</strong><br /><input required inputMode="numeric" pattern="[0-9]+" value={leadId} onChange={(event) => setLeadId(event.target.value)} placeholder="e.g. 12" /></label>
-        <label><strong>Owner admin token</strong><br /><input required type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" placeholder="Owner token" /></label>
-        <button className="button button-primary" type="button" disabled={loading || token.trim().length < 32} onClick={loadBkashConfig}>{loading ? "Loading…" : "Load bKash receiving number →"}</button>
-        {bkashConfig?.configured && bkashConfig.number ? (
-          <div className="form-message sent">
-            <strong>{bkashConfig.method || "bKash Send Money"}:</strong> {bkashConfig.number}<br />
-            <span>{bkashConfig.instruction}</span>
-          </div>
-        ) : null}
+        <button className="button button-primary" type="button" disabled={loading} onClick={loadBkashConfig}>{loading ? "Loading…" : "Load bKash receiving number →"}</button>
+        {bkashConfig?.configured && bkashConfig.number ? <div className="form-message sent"><strong>{bkashConfig.method || "bKash Send Money"}:</strong> {bkashConfig.number}<br /><span>{bkashConfig.instruction}</span></div> : null}
         <label><strong>Lead status</strong><br /><select value={status} onChange={(event) => setStatus(event.target.value as (typeof leadStatuses)[number])}>{leadStatuses.map((value) => <option key={value}>{value}</option>)}</select></label>
         <label><strong>Payment status</strong><br /><select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as (typeof paymentStatuses)[number])}>{paymentStatuses.map((value) => <option key={value}>{value}</option>)}</select></label>
         <div className="form-row">
@@ -112,7 +93,7 @@ export function LeadStatusReviewForm() {
         <label><strong>Verification note</strong><br /><textarea maxLength={1000} rows={3} value={paymentVerificationNote} onChange={(event) => setPaymentVerificationNote(event.target.value)} placeholder="How receipt was checked; required when rejecting" /></label>
         <label><strong>Owner sales note</strong><br /><textarea maxLength={2000} rows={4} value={ownerNote} onChange={(event) => setOwnerNote(event.target.value)} placeholder="Follow-up, package, onboarding and next action" /></label>
         <p><strong>Rule:</strong> WON is accepted only when payment status is VERIFIED, and VERIFIED requires the exact expected amount, transaction ID and payment date.</p>
-        <button className="button button-primary" disabled={loading || token.trim().length < 32}>{loading ? "Saving…" : "Save & verify →"}</button>
+        <button className="button button-primary" disabled={loading}>{loading ? "Saving…" : "Save & verify →"}</button>
         {message ? <p role="status">{message}</p> : null}
       </div>
     </form>
