@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { platformAdminSession } from "@/lib/admin-access";
+import { pilotPlanCodes, provisionVerifiedBkashLead } from "@/lib/pilot-provisioning";
 import {
   bkashPilotPaymentMethod,
   listSalesLeads,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/sales-leads";
 
 const paymentStatuses = new Set<SalesLeadPaymentStatus>(["NOT_APPLICABLE", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"]);
+const pilotPlans = new Set<string>(pilotPlanCodes);
 
 function json(body: object, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store, max-age=0", Pragma: "no-cache" } });
@@ -56,19 +58,23 @@ export async function PATCH(request: Request) {
     const paymentStatus = String(body.paymentStatus ?? "NOT_APPLICABLE") as SalesLeadPaymentStatus;
     const paymentExpectedAmount = optionalNumber(body.paymentExpectedAmount);
     const paymentVerifiedAmount = optionalNumber(body.paymentVerifiedAmount);
+    const planCode = optionalString(body.planCode).toLowerCase();
 
     if (!/^\d{1,20}$/.test(id) || !salesLeadStatuses.includes(status) || !paymentStatuses.has(paymentStatus)) {
       return json({ error: "Invalid lead update." }, 400);
     }
     if (
       ownerNote.length > 2000 || paymentMethod.length > 80 || paymentReference.length > 160 ||
-      paymentSenderHint.length > 40 || paymentVerificationNote.length > 1000 ||
+      paymentSenderHint.length > 40 || paymentVerificationNote.length > 1000 || planCode.length > 20 ||
       Number.isNaN(paymentExpectedAmount) || Number.isNaN(paymentVerifiedAmount)
     ) {
       return json({ error: "Invalid bKash payment details." }, 400);
     }
     if (paymentStatus !== "NOT_APPLICABLE" && paymentMethod !== bkashPilotPaymentMethod) {
       return json({ error: "Pilot payments must use bKash Send Money." }, 400);
+    }
+    if (status === "WON" && paymentStatus === "VERIFIED" && !pilotPlans.has(planCode)) {
+      return json({ error: "Select Starter, Growth or Pro before activating a verified customer." }, 400);
     }
 
     const result = await updateSalesLead({
@@ -84,7 +90,12 @@ export async function PATCH(request: Request) {
       paymentDate: paymentDate || null,
       paymentVerificationNote: paymentVerificationNote || null,
     });
-    return json({ ok: true, ...result });
+
+    const provisioning = status === "WON" && paymentStatus === "VERIFIED"
+      ? await provisionVerifiedBkashLead({ leadId: id, planCode, actorAccountId: admin.accountId })
+      : null;
+
+    return json({ ok: true, ...result, provisioning });
   } catch (error) {
     console.error("Lead update failed", error);
     return json({ error: error instanceof Error ? error.message : "Lead update could not be completed." }, 409);
