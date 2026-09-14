@@ -43,7 +43,7 @@ export default function AdminPage() {
           <div><span className="kicker">Pilot payment &amp; activation</span><h2>Verify before access.<br /><em>Provision only after payment.</em></h2></div>
           <p>Select “Review” from a lead row to preload this single bKash pilot console. This is the only payment-review path needed for the current direct-bKash pilot.</p>
         </div>
-        <div className="product-grid"><LeadStatusReviewForm /></div>
+        <div className="product-grid"><div style={{ gridColumn: "1 / -1" }}><LeadStatusReviewForm /></div></div>
       </section>
       <SiteFooter />
     </main>
