@@ -3,7 +3,7 @@ import { SignInForm } from "@/components/SignInForm";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 export const metadata: Metadata = {
-  title: "Sign in | AgentSiraji",
+  title: "Sign in",
   description: "Secure passwordless sign-in for AgentSiraji customers and owners.",
   robots: { index: false, follow: false },
 };
