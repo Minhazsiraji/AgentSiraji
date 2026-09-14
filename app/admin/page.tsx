@@ -3,7 +3,6 @@ import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { AdminLeadsInbox } from "@/components/AdminLeadsInbox";
 import { LeadStatusReviewForm } from "@/components/LeadStatusReviewForm";
-import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
 import { OwnerBootstrap } from "@/components/OwnerBootstrap";
 
 export const metadata: Metadata = {
@@ -34,17 +33,17 @@ export default function AdminPage() {
       <section className="products shell section">
         <div className="section-heading">
           <div><span className="kicker">Sales inbox</span><h2>See every lead.<br /><em>Work the next action.</em></h2></div>
-          <p>Search the pipeline, move leads through the sales stages, then open the protected payment review only when a customer is ready to proceed.</p>
+          <p>Use the compact list to search, filter and move leads through the sales stages. Ten leads are shown per page so the inbox stays usable as volume grows.</p>
         </div>
-        <div className="product-grid"><AdminLeadsInbox /></div>
+        <AdminLeadsInbox />
       </section>
 
       <section className="products shell section">
         <div className="section-heading">
           <div><span className="kicker">Pilot payment &amp; activation</span><h2>Verify before access.<br /><em>Provision only after payment.</em></h2></div>
-          <p>Select “Review / payment” from the inbox to preload the lead below. Manual payment verification remains owner-controlled, and review actions are tied to the authenticated account.</p>
+          <p>Select “Review” from a lead row to preload this single bKash pilot console. This is the only payment-review path needed for the current direct-bKash pilot.</p>
         </div>
-        <div className="product-grid"><LeadStatusReviewForm /><ManualPaymentReviewForm /></div>
+        <div className="product-grid"><LeadStatusReviewForm /></div>
       </section>
       <SiteFooter />
     </main>
