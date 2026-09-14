@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { AdminLeadsInbox } from "@/components/AdminLeadsInbox";
 import { LeadStatusReviewForm } from "@/components/LeadStatusReviewForm";
 import { ManualPaymentReviewForm } from "@/components/ManualPaymentReviewForm";
 import { OwnerBootstrap } from "@/components/OwnerBootstrap";
@@ -20,7 +21,7 @@ export default function AdminPage() {
           <span className="status">Authenticated owner operations</span>
           <span className="kicker">AgentSiraji Commercial Operations</span>
           <h1>Follow leads.<br /><em>Keep activation controlled.</em></h1>
-          <p>Owner access is moving from reusable header tokens to passwordless email sessions with explicit platform roles. Customer data remains protected behind server authorization.</p>
+          <p>Every Store Audit, contact enquiry and direct Commerce order intent can now be worked from one owner inbox. Customer data remains protected behind the authenticated platform role.</p>
           <div className="hero-actions"><Link className="button button-primary" href="/admin/analytics">Open analytics →</Link><Link className="text-link" href="/admin/integrations">Manage integrations <span>↗</span></Link></div>
         </div>
         <div className="product-monogram">AO<span>Owner operations</span></div>
@@ -32,8 +33,16 @@ export default function AdminPage() {
 
       <section className="products shell section">
         <div className="section-heading">
-          <div><span className="kicker">Pilot sales workflow</span><h2>New to won.<br /><em>Every step stays explicit.</em></h2></div>
-          <p>Move leads through NEW, CONTACTED, QUALIFIED, PROPOSAL, WON or LOST. Manual payment verification remains owner-controlled, and review actions are tied to the authenticated account.</p>
+          <div><span className="kicker">Sales inbox</span><h2>See every lead.<br /><em>Work the next action.</em></h2></div>
+          <p>Search the pipeline, move leads through the sales stages, then open the protected payment review only when a customer is ready to proceed.</p>
+        </div>
+        <div className="product-grid"><AdminLeadsInbox /></div>
+      </section>
+
+      <section className="products shell section">
+        <div className="section-heading">
+          <div><span className="kicker">Pilot payment &amp; activation</span><h2>Verify before access.<br /><em>Provision only after payment.</em></h2></div>
+          <p>Select “Review / payment” from the inbox to preload the lead below. Manual payment verification remains owner-controlled, and review actions are tied to the authenticated account.</p>
         </div>
         <div className="product-grid"><LeadStatusReviewForm /><ManualPaymentReviewForm /></div>
       </section>

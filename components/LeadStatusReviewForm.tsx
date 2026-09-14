@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const leadStatuses = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"] as const;
 const paymentStatuses = ["NOT_APPLICABLE", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"] as const;
@@ -12,6 +12,20 @@ const pilotPlans = [
 
 type BkashConfig = { configured?: boolean; method?: string; number?: string; instruction?: string; message?: string; error?: string };
 type Provisioning = { planCode?: string; alreadyProvisioned?: boolean } | null;
+type ReviewLeadDetail = {
+  id: string;
+  status?: string;
+  interest?: string | null;
+  ownerNote?: string | null;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
+  paymentStatus?: string;
+  paymentExpectedAmount?: number | null;
+  paymentVerifiedAmount?: number | null;
+  paymentSenderHint?: string | null;
+  paymentDate?: string | null;
+  paymentVerificationNote?: string | null;
+};
 
 export function LeadStatusReviewForm() {
   const [leadId, setLeadId] = useState("");
@@ -34,6 +48,33 @@ export function LeadStatusReviewForm() {
     const plan = pilotPlans.find((item) => item.code === value);
     if (plan) setExpectedAmount(plan.total);
   }
+
+  useEffect(() => {
+    function selectLead(event: Event) {
+      const detail = (event as CustomEvent<ReviewLeadDetail>).detail;
+      if (!detail?.id) return;
+      setLeadId(detail.id);
+      if (detail.status && leadStatuses.includes(detail.status as (typeof leadStatuses)[number])) setStatus(detail.status as (typeof leadStatuses)[number]);
+      if (detail.paymentStatus && paymentStatuses.includes(detail.paymentStatus as (typeof paymentStatuses)[number])) setPaymentStatus(detail.paymentStatus as (typeof paymentStatuses)[number]);
+      const planMatch = detail.interest?.match(/^Commerce sales — (Starter|Growth|Pro)/)?.[1]?.toLowerCase();
+      const matchedPlan = pilotPlans.find((item) => item.code === planMatch);
+      if (matchedPlan) {
+        setPlanCode(matchedPlan.code);
+        setExpectedAmount(detail.paymentExpectedAmount ? String(detail.paymentExpectedAmount) : matchedPlan.total);
+      } else if (detail.paymentExpectedAmount) {
+        setExpectedAmount(String(detail.paymentExpectedAmount));
+      }
+      setVerifiedAmount(detail.paymentVerifiedAmount ? String(detail.paymentVerifiedAmount) : "");
+      setPaymentReference(detail.paymentReference || "");
+      setPaymentSenderHint(detail.paymentSenderHint || "");
+      setPaymentDate(detail.paymentDate || "");
+      setPaymentVerificationNote(detail.paymentVerificationNote || "");
+      setOwnerNote(detail.ownerNote || "");
+      setMessage(`Lead #${detail.id} loaded from the inbox. Review the details before saving.`);
+    }
+    window.addEventListener("agentsiraji:lead-review", selectLead);
+    return () => window.removeEventListener("agentsiraji:lead-review", selectLead);
+  }, []);
 
   async function loadBkashConfig() {
     setLoading(true);
@@ -101,12 +142,12 @@ export function LeadStatusReviewForm() {
   }
 
   return (
-    <form className="product-card diary-card" onSubmit={submit}>
+    <form id="lead-review-console" className="product-card diary-card" onSubmit={submit}>
       <div className="card-top"><span className="status">bKash pilot</span><span className="card-num">02</span></div>
       <div className="product-copy">
         <span className="product-label">Authenticated owner payment review</span>
         <h3>Update lead &amp; verify bKash</h3>
-        <p>This console relies on your signed-in platform role. Customer submission never activates service; only an authenticated owner/admin can verify receipt. A verified WON payment then provisions the selected Commerce plan and customer account.</p>
+        <p>Select a lead from the inbox above or enter its ID manually. Customer submission never activates service; only an authenticated owner/admin can verify receipt. A verified WON payment then provisions the selected Commerce plan and customer account.</p>
         <label><strong>Lead ID</strong><br /><input required inputMode="numeric" pattern="[0-9]+" value={leadId} onChange={(event) => setLeadId(event.target.value)} placeholder="e.g. 12" /></label>
         <button className="button button-primary" type="button" disabled={loading} onClick={loadBkashConfig}>{loading ? "Loading…" : "Load bKash receiving number →"}</button>
         {bkashConfig?.configured && bkashConfig.number ? <div className="form-message sent"><strong>{bkashConfig.method || "bKash Send Money"}:</strong> {bkashConfig.number}<br /><span>{bkashConfig.instruction}</span></div> : null}
