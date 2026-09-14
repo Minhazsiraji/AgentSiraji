@@ -16,6 +16,17 @@ test("verified bKash WON leads require explicit plan selection and provisioning"
   assert.match(route, /actorAccountId: admin\.accountId/);
 });
 
+test("verified payment remains explicit and safely retryable if customer provisioning fails", () => {
+  const route = read("app/api/admin/leads/route.ts");
+  const ui = read("components/LeadStatusReviewForm.tsx");
+  assert.match(route, /provisioningRequired: true/);
+  assert.match(route, /Payment is saved as verified, but customer provisioning did not complete/);
+  assert.match(route, /retry this same lead before onboarding/);
+  assert.match(route, /}, 202\)/);
+  assert.match(ui, /data\.provisioningRequired/);
+  assert.match(ui, /do not onboard until provisioning succeeds/);
+});
+
 test("pilot provisioning creates the complete Commerce ownership and entitlement chain", () => {
   const source = read("lib/pilot-provisioning.ts");
   assert.match(source, /getCheckoutCommercialContext/);
