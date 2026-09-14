@@ -40,7 +40,19 @@ export function AdminLeadsInbox() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/leads", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json() as { leads?: Lead[]; error?: string };
+        if (!response.ok) throw new Error(data.error || "Unable to load leads.");
+        return data;
+      })
+      .then((data) => { if (active) setLeads(data.leads || []); })
+      .catch((error: unknown) => { if (active) setMessage(error instanceof Error ? error.message : "Unable to load leads."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
