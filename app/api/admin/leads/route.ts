@@ -91,11 +91,23 @@ export async function PATCH(request: Request) {
       paymentVerificationNote: paymentVerificationNote || null,
     });
 
-    const provisioning = status === "WON" && paymentStatus === "VERIFIED"
-      ? await provisionVerifiedBkashLead({ leadId: id, planCode, actorAccountId: admin.accountId })
-      : null;
+    if (status === "WON" && paymentStatus === "VERIFIED") {
+      try {
+        const provisioning = await provisionVerifiedBkashLead({ leadId: id, planCode, actorAccountId: admin.accountId });
+        return json({ ok: true, ...result, provisioning, provisioningRequired: false });
+      } catch (error) {
+        console.error("Verified lead customer provisioning needs retry", error);
+        return json({
+          ok: true,
+          ...result,
+          provisioning: null,
+          provisioningRequired: true,
+          provisioningMessage: "Payment is saved as verified, but customer provisioning did not complete. Correct any plan or amount issue and retry this same lead before onboarding.",
+        }, 202);
+      }
+    }
 
-    return json({ ok: true, ...result, provisioning });
+    return json({ ok: true, ...result, provisioning: null, provisioningRequired: false });
   } catch (error) {
     console.error("Lead update failed", error);
     return json({ error: error instanceof Error ? error.message : "Lead update could not be completed." }, 409);
