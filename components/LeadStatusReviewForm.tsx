@@ -78,10 +78,14 @@ export function LeadStatusReviewForm() {
         status?: string;
         paymentStatus?: string;
         provisioning?: Provisioning;
+        provisioningRequired?: boolean;
+        provisioningMessage?: string;
       };
       if (!response.ok) throw new Error(data.error || "Unable to update lead.");
       const base = `Lead #${data.id || leadId} saved: ${data.status || status}, payment ${data.paymentStatus || paymentStatus}.`;
-      if (data.provisioning) {
+      if (data.provisioningRequired) {
+        setMessage(`${base} ${data.provisioningMessage || "Customer provisioning needs a retry before onboarding."}`);
+      } else if (data.provisioning) {
         const provisionMessage = data.provisioning.alreadyProvisioned
           ? ` Customer already has an active ${data.provisioning.planCode || planCode} Commerce provisioning.`
           : ` ${data.provisioning.planCode || planCode} Commerce customer provisioned. They can now request a magic sign-in link.`;
@@ -120,7 +124,7 @@ export function LeadStatusReviewForm() {
         <label><strong>Payment date</strong><br /><input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} /></label>
         <label><strong>Verification note</strong><br /><textarea maxLength={1000} rows={3} value={paymentVerificationNote} onChange={(event) => setPaymentVerificationNote(event.target.value)} placeholder="How receipt was checked; required when rejecting" /></label>
         <label><strong>Owner sales note</strong><br /><textarea maxLength={2000} rows={4} value={ownerNote} onChange={(event) => setOwnerNote(event.target.value)} placeholder="Follow-up, package, onboarding and next action" /></label>
-        <p><strong>Rule:</strong> WON requires VERIFIED payment, the exact selected-plan amount, transaction ID and payment date. Successful verification provisions the customer only once.</p>
+        <p><strong>Rule:</strong> WON requires VERIFIED payment, the exact selected-plan amount, transaction ID and payment date. Successful verification provisions the customer only once; a retry warning means do not onboard until provisioning succeeds.</p>
         <button className="button button-primary" disabled={loading}>{loading ? "Saving…" : "Save, verify & provision →"}</button>
         {message ? <p role="status">{message}</p> : null}
       </div>
