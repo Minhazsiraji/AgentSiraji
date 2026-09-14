@@ -17,19 +17,19 @@ export default function PricingPage() {
           <span className="status">Launch pilot</span>
           <span className="kicker">AgentSiraji pricing</span>
           <h1>Clear plans.<br /><em>Know what you pay for.</em></h1>
-          <p>Compare the standard managed scope, then start with the free Store Audit. During the current pilot, qualification and onboarding are handled directly rather than through live gateway checkout.</p>
+          <p>Compare the standard managed scope. If you already know the package you want, start that plan directly. If you are unsure, use the free Store Audit before onboarding.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/store-audit">Get Free Store Audit →</Link>
-            <Link className="text-link" href="/contact">Talk to AgentSiraji <span>↗</span></Link>
+            <Link className="button button-primary" href="#plans">Choose a plan →</Link>
+            <Link className="text-link" href="/store-audit">Not sure? Get a free store audit <span>↗</span></Link>
           </div>
         </div>
         <div className="product-monogram">PR<span>Pricing</span></div>
       </section>
 
-      <section className="products shell section commerce-plans">
+      <section className="products shell section commerce-plans" id="plans">
         <div className="section-heading">
           <div><span className="kicker">Bangladesh + international</span><h2>Managed Commerce.<br /><em>Choose your starting point.</em></h2></div>
-          <p>Every plan combines a one-time setup component with an ongoing managed-service fee. The package scope is public; the current launch path begins with qualification.</p>
+          <p>Every plan combines a one-time setup component with an ongoing managed-service fee. Start directly when you know your package; payment still happens only after AgentSiraji confirms the project.</p>
         </div>
         <div className="product-grid">
           {commercePlans.map((plan, index) => (
@@ -46,7 +46,10 @@ export default function PricingPage() {
                 <div className="plan-includes">
                   {plan.includes.map((item) => <span key={item}>✓ {item}</span>)}
                 </div>
-                <Link className="button button-primary" href="/store-audit">Check fit with a free audit →</Link>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <Link className="button button-primary" href={`/start/commerce?plan=${plan.id}`}>Start {plan.name} →</Link>
+                  <Link className="text-link" href="/store-audit">Not sure? Get a free store audit <span>↗</span></Link>
+                </div>
               </div>
             </article>
           ))}
@@ -54,16 +57,16 @@ export default function PricingPage() {
       </section>
 
       <section className="feature-band shell">
-        <article><b>BD</b><h3>SSLCOMMERZ</h3><p>Sandbox only. Production merchant activation is intentionally deferred.</p></article>
-        <article><b>PILOT</b><h3>Direct onboarding</h3><p>Early local customers are qualified and onboarded directly by AgentSiraji before any payment step.</p></article>
-        <article><b>INTL</b><h3>Paddle</h3><p>Sandbox only. Production international checkout remains intentionally deferred.</p></article>
+        <article><b>BD</b><h3>Direct bKash pilot</h3><p>AgentSiraji confirms the project first, then provides the verified bKash payment instruction. Owner verification controls activation.</p></article>
+        <article><b>PILOT</b><h3>Direct onboarding</h3><p>Early customers can select a plan and enter the sales pipeline immediately without completing a Store Audit first.</p></article>
+        <article><b>INTL</b><h3>International enquiry</h3><p>International customers can select a plan directly; live Paddle checkout remains intentionally deferred until commercial launch gates are complete.</p></article>
       </section>
 
       <section className="contact shell">
         <div className="contact-inner">
-          <span className="kicker">Start with your current selling setup</span>
+          <span className="kicker">Need help deciding?</span>
           <h2>Find the gaps.<br /><em>Then choose the plan.</em></h2>
-          <p>Run the Store Audit first so the recommendation is based on your actual store, page, checkout and tracking setup.</p>
+          <p>The Store Audit remains available when you want a recommendation based on your actual store, page, checkout and tracking setup.</p>
           <Link className="button button-primary button-large" href="/store-audit">Get Free Store Audit →</Link>
         </div>
         <div className="contact-shape"><span>AS</span></div>

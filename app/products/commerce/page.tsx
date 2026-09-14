@@ -19,8 +19,8 @@ export default function CommercePage() {
           <h1>Your brand.<br /><em>Proven commerce underneath.</em></h1>
           <p>AgentSiraji Commerce gives businesses a production-ready storefront foundation, managed delivery, and a clear path from launch to growth—without starting the technology stack from zero.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/store-audit">Get Free Store Audit →</Link>
-            <Link className="text-link" href="/pricing">See Commerce pricing <span>↗</span></Link>
+            <Link className="button button-primary" href="#plans">Choose a plan →</Link>
+            <Link className="text-link" href="/store-audit">Not sure? Get a free store audit <span>↗</span></Link>
           </div>
         </div>
         <div className="product-monogram">CO<span>Commerce</span></div>
@@ -38,10 +38,10 @@ export default function CommercePage() {
         <p>Your business owns its domain, brand, content, products, and customer data. AgentSiraji manages the core commerce platform, deployment, shared improvements, and the technical foundation under the managed plans.</p>
       </section>
 
-      <section className="products shell section commerce-plans">
+      <section className="products shell section commerce-plans" id="plans">
         <div className="section-heading">
           <div><span className="kicker">Plans</span><h2>Start where you are.<br /><em>Know exactly what is included.</em></h2></div>
-          <p>Compare Starter, Growth, and Pro, then use the free Store Audit so we can verify the right fit before any commercial onboarding.</p>
+          <p>Already know what you want? Start that plan directly. If you are still deciding, use the free Store Audit and we will recommend the right fit.</p>
         </div>
         <div className="product-grid">
           {commercePlans.map((plan, index) => (
@@ -60,7 +60,10 @@ export default function CommercePage() {
                     <span key={item}>✓ {item}</span>
                   ))}
                 </div>
-                <Link className="button button-primary" href="/store-audit">Audit my store first →</Link>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <Link className="button button-primary" href={`/start/commerce?plan=${plan.id}`}>Start {plan.name} →</Link>
+                  <Link className="text-link" href="/store-audit">Not sure? Get a free store audit <span>↗</span></Link>
+                </div>
               </div>
             </article>
           ))}
@@ -69,7 +72,7 @@ export default function CommercePage() {
 
       <section className="contact shell">
         <div className="contact-inner">
-          <span className="kicker">Start with evidence</span>
+          <span className="kicker">Need help choosing?</span>
           <h2>Not sure which plan?<br /><em>Audit the current store first.</em></h2>
           <p>The Store Audit gives both sides a practical starting point before we recommend Starter, Growth or Pro.</p>
           <Link className="button button-primary button-large" href="/store-audit">Get Free Store Audit →</Link>
