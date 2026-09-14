@@ -37,12 +37,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AgentSiraji — Software that moves business forward",
     description: "Managed commerce and practical software built to help businesses sell, convert and grow.",
-    url: siteUrl,
     siteName: "AgentSiraji",
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "AgentSiraji — Software that moves business forward",
     description: "Managed commerce and practical software built to help businesses sell, convert and grow.",
   },
