@@ -63,11 +63,25 @@ export function MetaTracking() {
       const eventId = conversionEventId(event, "contact");
       void trackMetaEvent("Contact", { content_name: "AgentSiraji enquiry" }, eventId);
     };
+    const handleCommerceIntentSaved = (event: Event) => {
+      const detail = event instanceof CustomEvent ? event.detail as { eventId?: unknown; plan?: unknown; market?: unknown } | null : null;
+      const eventId = conversionEventId(event, "commerce_plan_intent");
+      const plan = typeof detail?.plan === "string" ? detail.plan : "unknown";
+      const market = typeof detail?.market === "string" ? detail.market : "unknown";
+      void trackMetaEvent("Lead", {
+        content_name: `AgentSiraji Commerce ${plan}`,
+        content_category: "commerce_plan_intent",
+        plan,
+        market,
+      }, eventId);
+    };
     window.addEventListener("agentsiraji:lead-saved", handleSavedLead);
     window.addEventListener("agentsiraji:contact-saved", handleSavedContact);
+    window.addEventListener("agentsiraji:commerce-intent-saved", handleCommerceIntentSaved);
     return () => {
       window.removeEventListener("agentsiraji:lead-saved", handleSavedLead);
       window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
+      window.removeEventListener("agentsiraji:commerce-intent-saved", handleCommerceIntentSaved);
     };
   }, [consent, pixelId]);
 
