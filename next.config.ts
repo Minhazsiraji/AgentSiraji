@@ -76,11 +76,6 @@ const nextConfig: NextConfig = {
       "upgrade-insecure-requests",
     ].join("; ");
 
-    const metaSetupSecurityPolicy = contentSecurityPolicy.replace(
-      "frame-ancestors 'none'",
-      "frame-ancestors https://business.facebook.com https://eventsmanager.facebook.com https://*.facebook.com",
-    );
-
     return [
       {
         source: "/(.*)",
@@ -100,15 +95,6 @@ const nextConfig: NextConfig = {
             value: "max-age=63072000; includeSubDomains; preload",
           },
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
-        ],
-      },
-      {
-        source: "/meta-setup",
-        headers: [
-          { key: "X-Frame-Options", value: "" },
-          { key: "Cross-Origin-Opener-Policy", value: "unsafe-none" },
-          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
-          { key: "Content-Security-Policy", value: metaSetupSecurityPolicy },
         ],
       },
     ];
