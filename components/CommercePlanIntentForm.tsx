@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import type { CommercePlan } from "@/lib/catalog";
-import { createMetaEventId, getMetaBrowserIdentifiers, hasMarketingConsent } from "@/lib/meta-client";
+import { createMetaEventId, getMetaBrowserIdentifiers } from "@/lib/meta-client";
 
 type ResponseBody = { ok?: boolean; leadId?: string; message?: string };
 
@@ -23,14 +23,12 @@ export function CommercePlanIntentForm({ plans, initialPlan }: Props) {
     setState("sending");
     setMessage("");
     const form = event.currentTarget;
-    const marketingConsent = hasMarketingConsent();
-    const metaEventId = marketingConsent ? createMetaEventId("commerce_plan_intent") : undefined;
-    const metaIdentifiers = marketingConsent ? getMetaBrowserIdentifiers() : { fbp: undefined, fbc: undefined };
+    const metaEventId = createMetaEventId("commerce_plan_intent");
+    const metaIdentifiers = getMetaBrowserIdentifiers();
     const payload = {
       ...Object.fromEntries(new FormData(form)),
       plan,
       market,
-      marketingConsent,
       metaEventId,
       ...metaIdentifiers,
     };
