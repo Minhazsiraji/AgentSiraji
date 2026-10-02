@@ -15,7 +15,7 @@ import "./meta-consent.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
-const metaDomainVerification = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION?.trim();
+const metaDomainVerification = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION?.trim() || "ab6l8vjzvdvmhpa2c4k4i68fkabwz";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -49,9 +49,7 @@ export const metadata: Metadata = {
     ? { index: true, follow: true }
     : { index: false, follow: false, nocache: true },
   manifest: "/manifest.webmanifest",
-  other: metaDomainVerification
-    ? { "facebook-domain-verification": metaDomainVerification }
-    : undefined,
+  other: { "facebook-domain-verification": metaDomainVerification },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
