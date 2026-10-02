@@ -30,7 +30,6 @@ const nextConfig: NextConfig = {
       "frame-ancestors 'none'",
       "object-src 'none'",
       scriptPolicy,
-
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       [
@@ -48,7 +47,6 @@ const nextConfig: NextConfig = {
         "https://pagead2.googlesyndication.com",
         "https://www.googleadservices.com",
       ].join(" "),
-
       [
         "connect-src",
         "'self'",
@@ -67,7 +65,6 @@ const nextConfig: NextConfig = {
         "https://googleads.g.doubleclick.net",
         "https://ad.doubleclick.net",
       ].join(" "),
-
       [
         "frame-src",
         "'self'",
@@ -75,53 +72,43 @@ const nextConfig: NextConfig = {
         "https://*.paddle.io",
         "https://www.googletagmanager.com",
       ].join(" "),
-
       "manifest-src 'self'",
       "upgrade-insecure-requests",
     ].join("; ");
+
+    const metaSetupSecurityPolicy = contentSecurityPolicy.replace(
+      "frame-ancestors 'none'",
+      "frame-ancestors https://business.facebook.com https://eventsmanager.facebook.com https://*.facebook.com",
+    );
 
     return [
       {
         source: "/(.*)",
         headers: [
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-DNS-Prefetch-Control",
-            value: "off",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-DNS-Prefetch-Control", value: "off" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
           },
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin",
-          },
-          {
-            key: "Cross-Origin-Resource-Policy",
-            value: "same-origin",
-          },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
           {
             key: "Strict-Transport-Security",
-            value:
-              "max-age=63072000; includeSubDomains; preload",
+            value: "max-age=63072000; includeSubDomains; preload",
           },
-          {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
-          },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+        ],
+      },
+      {
+        source: "/meta-setup",
+        headers: [
+          { key: "X-Frame-Options", value: "" },
+          { key: "Cross-Origin-Opener-Policy", value: "unsafe-none" },
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+          { key: "Content-Security-Policy", value: metaSetupSecurityPolicy },
         ],
       },
     ];
