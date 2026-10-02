@@ -1,9 +1,9 @@
 "use client";
 
 import Script from "next/script";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { createMetaEventId, marketingConsentKey, measurementConsentChangedEvent, trackMetaEvent, markPixelReady, revokePixelConsent } from "@/lib/meta-client";
+import { createMetaEventId, trackMetaEvent, markPixelReady } from "@/lib/meta-client";
 
 const configuredPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 const configuredPixelId = configuredPixel && /^\d+$/.test(configuredPixel) ? configuredPixel : undefined;
@@ -24,68 +24,30 @@ function conversionEventId(event: Event, prefix: string) {
 
 export function MetaTracking() {
   const pathname = usePathname();
-  const setupDiagnostic = pathname === "/meta-setup";
   const [pixelId, setPixelId] = useState<string | undefined>(configuredPixelId);
-  const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
-  const [regionResolved, setRegionResolved] = useState(false);
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const trackedPath = useRef<string | null>(null);
 
   useEffect(() => {
-    if (setupDiagnostic || pixelId) return;
+    if (pixelId) return;
     void fetch("/api/integrations/public", { cache: "no-store" })
       .then(response => response.json() as Promise<{ pixelId?: unknown }>)
-      .then(data => { if (typeof data.pixelId === "string" && /^\d+$/.test(data.pixelId)) setPixelId(data.pixelId); })
-      .catch(() => undefined);
-  }, [pixelId, setupDiagnostic]);
-
-  useEffect(() => {
-    if (setupDiagnostic) return;
-    try {
-      const saved = window.localStorage.getItem(marketingConsentKey);
-      if (saved === "granted" || saved === "denied") {
-        startTransition(() => {
-          setConsent(saved);
-          setRegionResolved(true);
-        });
-        return;
-      }
-    } catch {
-      // Continue to the server-side region decision even if first-party storage is blocked.
-    }
-
-    void fetch("/api/privacy/measurement-region", { cache: "no-store" })
-      .then(response => response.ok ? response.json() as Promise<{ mode?: unknown }> : Promise.reject(new Error("region unavailable")))
       .then(data => {
-        if (data.mode !== "opt-out") {
-          startTransition(() => setRegionResolved(true));
-          return;
-        }
-        try {
-          window.localStorage.setItem(marketingConsentKey, "granted");
-        } catch {
-          // Non-opt-in regions may still use measurement for this page view when storage is unavailable.
-        }
-        window.dispatchEvent(new CustomEvent(measurementConsentChangedEvent, { detail: { value: "granted" } }));
-        startTransition(() => {
-          setConsent("granted");
-          setRegionResolved(true);
-        });
+        if (typeof data.pixelId === "string" && /^\d+$/.test(data.pixelId)) setPixelId(data.pixelId);
       })
-      .catch(() => startTransition(() => setRegionResolved(true)));
-  }, [setupDiagnostic]);
+      .catch(() => undefined);
+  }, [pixelId]);
 
   useEffect(() => {
-    if (setupDiagnostic || consent !== "granted" || !pixelId || !pathname || trackedPath.current === pathname) return;
+    if (!pixelId || !pathname || trackedPath.current === pathname) return;
     trackedPath.current = pathname;
     const pageEventId = createMetaEventId("pageview");
     void trackMetaEvent("PageView", {}, pageEventId);
     const contentName = viewContentPages.get(pathname);
     if (contentName) void trackMetaEvent("ViewContent", { content_name: contentName, content_type: "product" });
-  }, [consent, pathname, pixelId, setupDiagnostic]);
+  }, [pathname, pixelId]);
 
   useEffect(() => {
-    if (setupDiagnostic || consent !== "granted" || !pixelId) return;
+    if (!pixelId) return;
     const handleSavedLead = (event: Event) => {
       const eventId = conversionEventId(event, "lead");
       void trackMetaEvent("Lead", { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" }, eventId);
@@ -114,34 +76,13 @@ export function MetaTracking() {
       window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
       window.removeEventListener("agentsiraji:commerce-intent-saved", handleCommerceIntentSaved);
     };
-  }, [consent, pixelId, setupDiagnostic]);
+  }, [pixelId]);
 
-  function choose(value: "granted" | "denied") {
-    try { window.localStorage.setItem(marketingConsentKey, value); } catch { value = "denied"; }
-    if (value === "denied") { revokePixelConsent(); trackedPath.current = null; }
-    else window.fbq?.("consent", "grant");
-    window.dispatchEvent(new CustomEvent(measurementConsentChangedEvent, { detail: { value } }));
-    setConsent(value);
-    setPreferencesOpen(false);
-  }
-
-  if (setupDiagnostic) return null;
+  if (!pixelId) return null;
 
   return (
-    <>
-      {consent === "granted" && pixelId ? (
-        <Script id="agentsiraji-meta-pixel-bootstrap" strategy="afterInteractive" onReady={markPixelReady}>
-          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
-        </Script>
-      ) : null}
-      {pixelId && consent !== null && !preferencesOpen ? <button type="button" className="marketing-preferences" onClick={() => setPreferencesOpen(true)}>Privacy choices</button> : null}
-      {regionResolved && (consent === null || preferencesOpen) && pixelId ? (
-        <aside className="marketing-consent" aria-label="Marketing measurement choice">
-          <strong>Help us measure AgentSiraji</strong>
-          <p>Allow Meta and Google to measure page visits and accepted enquiries for analytics and advertising measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
-          <div><button type="button" onClick={() => choose("granted")}>Allow measurement</button><button type="button" className="secondary" onClick={() => choose("denied")}>Decline</button></div>
-        </aside>
-      ) : null}
-    </>
+    <Script id="agentsiraji-meta-pixel-bootstrap" strategy="afterInteractive" onReady={markPixelReady}>
+      {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');`}
+    </Script>
   );
 }
