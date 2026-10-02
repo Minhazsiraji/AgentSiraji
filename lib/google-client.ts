@@ -1,5 +1,3 @@
-import { hasMarketingConsent } from "./meta-client";
-
 const pendingGoogleEvents: Array<[string, Record<string, string | number | boolean>]> = [];
 let googleReady = false;
 let activeTagId = "";
@@ -24,7 +22,7 @@ function ensureGtag() {
 
 export function initializeGoogleTag(tagId: string) {
   const cleanId = tagId.trim();
-  if (!validGoogleTagId(cleanId) || !hasMarketingConsent()) return false;
+  if (!validGoogleTagId(cleanId)) return false;
   ensureGtag();
   activeTagId = cleanId;
   googleReady = true;
@@ -40,22 +38,7 @@ export function initializeGoogleTag(tagId: string) {
   return true;
 }
 
-export function revokeGoogleConsent() {
-  pendingGoogleEvents.length = 0;
-  googleReady = false;
-  activeTagId = "";
-  if (typeof window === "undefined") return;
-  ensureGtag();
-  window.gtag?.("consent", "update", {
-    analytics_storage: "denied",
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-  });
-}
-
 export function trackGoogleEvent(name: string, params: Record<string, string | number | boolean> = {}) {
-  if (!hasMarketingConsent()) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9_]{0,39}$/.test(name)) return false;
   if (googleReady && activeTagId) window.gtag?.("event", name, params);
   else if (pendingGoogleEvents.length < 50) pendingGoogleEvents.push([name, params]);
