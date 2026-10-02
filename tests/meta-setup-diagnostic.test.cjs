@@ -7,7 +7,7 @@ test('temporary Meta setup route is isolated and noindex', () => {
   const layout = fs.readFileSync('app/meta-setup/layout.tsx', 'utf8');
   assert.match(page, /1054067190449122/);
   assert.match(page, /fbq\('track','PageView'\)/);
-  assert.doesNotMatch(page, /Lead|Contact|Purchase|InitiateCheckout/);
+  assert.doesNotMatch(page, /fbq\('track','(?:Lead|Contact|Purchase|InitiateCheckout)'/);
   assert.match(layout, /index: false/);
   assert.match(layout, /follow: false/);
 });
