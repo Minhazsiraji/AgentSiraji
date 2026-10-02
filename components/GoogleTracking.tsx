@@ -1,63 +1,36 @@
 "use client";
 
 import Script from "next/script";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { marketingConsentKey, measurementConsentChangedEvent } from "@/lib/meta-client";
-import { initializeGoogleTag, revokeGoogleConsent, trackGoogleLead, trackGooglePageView, validGoogleTagId } from "@/lib/google-client";
+import { initializeGoogleTag, trackGoogleLead, trackGooglePageView, validGoogleTagId } from "@/lib/google-client";
 
 const configuredGoogleTag = process.env.NEXT_PUBLIC_GOOGLE_MEASUREMENT_ID?.trim();
 const configuredGoogleTagId = configuredGoogleTag && validGoogleTagId(configuredGoogleTag) ? configuredGoogleTag : undefined;
 
 export function GoogleTracking() {
   const pathname = usePathname();
-  const setupDiagnostic = pathname === "/meta-setup";
   const [tagId, setTagId] = useState<string | undefined>(configuredGoogleTagId);
-  const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
   const trackedPath = useRef<string | null>(null);
 
   useEffect(() => {
-    if (setupDiagnostic || tagId) return;
+    if (tagId) return;
     void fetch("/api/integrations/public", { cache: "no-store" })
       .then(response => response.json() as Promise<{ googleTagId?: unknown }>)
       .then(data => {
         if (typeof data.googleTagId === "string" && validGoogleTagId(data.googleTagId)) setTagId(data.googleTagId);
       })
       .catch(() => undefined);
-  }, [setupDiagnostic, tagId]);
+  }, [tagId]);
 
   useEffect(() => {
-    if (setupDiagnostic) return;
-    try {
-      const saved = window.localStorage.getItem(marketingConsentKey);
-      if (saved === "granted" || saved === "denied") startTransition(() => setConsent(saved));
-    } catch { /* Optional measurement remains disabled when storage is unavailable. */ }
-
-    const handleConsent = (event: Event) => {
-      const detail = event instanceof CustomEvent ? event.detail as { value?: unknown } | null : null;
-      const value = detail?.value;
-      if (value === "granted" || value === "denied") setConsent(value);
-    };
-    window.addEventListener(measurementConsentChangedEvent, handleConsent);
-    return () => window.removeEventListener(measurementConsentChangedEvent, handleConsent);
-  }, [setupDiagnostic]);
-
-  useEffect(() => {
-    if (setupDiagnostic) return;
-    if (consent === "denied") {
-      revokeGoogleConsent();
-      trackedPath.current = null;
-    }
-  }, [consent, setupDiagnostic]);
-
-  useEffect(() => {
-    if (setupDiagnostic || consent !== "granted" || !tagId || !pathname || trackedPath.current === pathname) return;
+    if (!tagId || !pathname || trackedPath.current === pathname) return;
     trackedPath.current = pathname;
     trackGooglePageView(pathname);
-  }, [consent, pathname, setupDiagnostic, tagId]);
+  }, [pathname, tagId]);
 
   useEffect(() => {
-    if (setupDiagnostic || consent !== "granted" || !tagId) return;
+    if (!tagId) return;
     const handleSavedLead = () => { trackGoogleLead("store_audit"); };
     const handleSavedContact = () => { trackGoogleLead("contact"); };
     window.addEventListener("agentsiraji:lead-saved", handleSavedLead);
@@ -66,9 +39,10 @@ export function GoogleTracking() {
       window.removeEventListener("agentsiraji:lead-saved", handleSavedLead);
       window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
     };
-  }, [consent, setupDiagnostic, tagId]);
+  }, [tagId]);
 
-  if (setupDiagnostic || consent !== "granted" || !tagId) return null;
+  if (!tagId) return null;
+
   return (
     <Script
       id="agentsiraji-google-tag"
