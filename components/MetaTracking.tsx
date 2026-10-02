@@ -24,6 +24,7 @@ function conversionEventId(event: Event, prefix: string) {
 
 export function MetaTracking() {
   const pathname = usePathname();
+  const setupDiagnostic = pathname === "/meta-setup";
   const [pixelId, setPixelId] = useState<string | undefined>(configuredPixelId);
   const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
   const [regionResolved, setRegionResolved] = useState(false);
@@ -31,14 +32,15 @@ export function MetaTracking() {
   const trackedPath = useRef<string | null>(null);
 
   useEffect(() => {
-    if (pixelId) return;
+    if (setupDiagnostic || pixelId) return;
     void fetch("/api/integrations/public", { cache: "no-store" })
       .then(response => response.json() as Promise<{ pixelId?: unknown }>)
       .then(data => { if (typeof data.pixelId === "string" && /^\d+$/.test(data.pixelId)) setPixelId(data.pixelId); })
       .catch(() => undefined);
-  }, [pixelId]);
+  }, [pixelId, setupDiagnostic]);
 
   useEffect(() => {
+    if (setupDiagnostic) return;
     try {
       const saved = window.localStorage.getItem(marketingConsentKey);
       if (saved === "granted" || saved === "denied") {
@@ -73,19 +75,19 @@ export function MetaTracking() {
         });
       })
       .catch(() => startTransition(() => setRegionResolved(true)));
-  }, []);
+  }, [setupDiagnostic]);
 
   useEffect(() => {
-    if (consent !== "granted" || !pixelId || !pathname || trackedPath.current === pathname) return;
+    if (setupDiagnostic || consent !== "granted" || !pixelId || !pathname || trackedPath.current === pathname) return;
     trackedPath.current = pathname;
     const pageEventId = createMetaEventId("pageview");
     void trackMetaEvent("PageView", {}, pageEventId);
     const contentName = viewContentPages.get(pathname);
     if (contentName) void trackMetaEvent("ViewContent", { content_name: contentName, content_type: "product" });
-  }, [consent, pathname, pixelId]);
+  }, [consent, pathname, pixelId, setupDiagnostic]);
 
   useEffect(() => {
-    if (consent !== "granted" || !pixelId) return;
+    if (setupDiagnostic || consent !== "granted" || !pixelId) return;
     const handleSavedLead = (event: Event) => {
       const eventId = conversionEventId(event, "lead");
       void trackMetaEvent("Lead", { content_name: "AgentSiraji Free Store Audit", lead_type: "store_audit" }, eventId);
@@ -114,7 +116,7 @@ export function MetaTracking() {
       window.removeEventListener("agentsiraji:contact-saved", handleSavedContact);
       window.removeEventListener("agentsiraji:commerce-intent-saved", handleCommerceIntentSaved);
     };
-  }, [consent, pixelId]);
+  }, [consent, pixelId, setupDiagnostic]);
 
   function choose(value: "granted" | "denied") {
     try { window.localStorage.setItem(marketingConsentKey, value); } catch { value = "denied"; }
@@ -124,6 +126,8 @@ export function MetaTracking() {
     setConsent(value);
     setPreferencesOpen(false);
   }
+
+  if (setupDiagnostic) return null;
 
   return (
     <>
