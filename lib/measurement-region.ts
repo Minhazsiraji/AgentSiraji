@@ -8,6 +8,5 @@ const optInCountryCodes = new Set([
 
 export function measurementConsentModeForCountry(countryCode?: string | null): MeasurementConsentMode {
   const code = countryCode?.trim().toUpperCase();
-  if (!code || code === "XX") return "opt-in";
-  return optInCountryCodes.has(code) ? "opt-in" : "opt-out";
+  return code && optInCountryCodes.has(code) ? "opt-in" : "opt-out";
 }
