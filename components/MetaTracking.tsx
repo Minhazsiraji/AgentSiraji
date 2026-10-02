@@ -26,6 +26,7 @@ export function MetaTracking() {
   const pathname = usePathname();
   const [pixelId, setPixelId] = useState<string | undefined>(configuredPixelId);
   const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
+  const [regionResolved, setRegionResolved] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const trackedPath = useRef<string | null>(null);
 
@@ -40,8 +41,38 @@ export function MetaTracking() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(marketingConsentKey);
-      if (saved === "granted" || saved === "denied") startTransition(() => setConsent(saved));
-    } catch { /* Optional tracking stays disabled when storage is unavailable. */ }
+      if (saved === "granted" || saved === "denied") {
+        startTransition(() => {
+          setConsent(saved);
+          setRegionResolved(true);
+        });
+        return;
+      }
+    } catch {
+      startTransition(() => setRegionResolved(true));
+      return;
+    }
+
+    void fetch("/api/privacy/measurement-region", { cache: "no-store" })
+      .then(response => response.ok ? response.json() as Promise<{ mode?: unknown }> : Promise.reject(new Error("region unavailable")))
+      .then(data => {
+        if (data.mode !== "opt-out") {
+          startTransition(() => setRegionResolved(true));
+          return;
+        }
+        try {
+          window.localStorage.setItem(marketingConsentKey, "granted");
+        } catch {
+          startTransition(() => setRegionResolved(true));
+          return;
+        }
+        window.dispatchEvent(new CustomEvent(measurementConsentChangedEvent, { detail: { value: "granted" } }));
+        startTransition(() => {
+          setConsent("granted");
+          setRegionResolved(true);
+        });
+      })
+      .catch(() => startTransition(() => setRegionResolved(true)));
   }, []);
 
   useEffect(() => {
@@ -102,7 +133,7 @@ export function MetaTracking() {
         </Script>
       ) : null}
       {pixelId && consent !== null && !preferencesOpen ? <button type="button" className="marketing-preferences" onClick={() => setPreferencesOpen(true)}>Privacy choices</button> : null}
-      {(consent === null || preferencesOpen) && pixelId ? (
+      {regionResolved && (consent === null || preferencesOpen) && pixelId ? (
         <aside className="marketing-consent" aria-label="Marketing measurement choice">
           <strong>Help us measure AgentSiraji</strong>
           <p>Allow Meta and Google to measure page visits and accepted enquiries for analytics and advertising measurement. <a href="/privacy">Privacy policy</a>. You can change this choice later.</p>
