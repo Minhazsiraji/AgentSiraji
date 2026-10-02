@@ -15,7 +15,7 @@ import "./meta-consent.css";
 
 const siteUrl = getSiteUrl();
 const isProduction = process.env.VERCEL_ENV === "production";
-const metaDomainVerification = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION?.trim() || "ab6l8vyjzvdvmhpa2c4k4i68fkabwz";
+const metaDomainVerification = "ab6l8vyjzvdvmhpa2c4k4i68fkabwz";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
