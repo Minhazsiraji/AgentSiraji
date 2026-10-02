@@ -51,8 +51,7 @@ export function MetaTracking() {
         return;
       }
     } catch {
-      startTransition(() => setRegionResolved(true));
-      return;
+      // Continue to the server-side region decision even if first-party storage is blocked.
     }
 
     void fetch("/api/privacy/measurement-region", { cache: "no-store" })
@@ -65,8 +64,7 @@ export function MetaTracking() {
         try {
           window.localStorage.setItem(marketingConsentKey, "granted");
         } catch {
-          startTransition(() => setRegionResolved(true));
-          return;
+          // Non-opt-in regions may still use measurement for this page view when storage is unavailable.
         }
         window.dispatchEvent(new CustomEvent(measurementConsentChangedEvent, { detail: { value: "granted" } }));
         startTransition(() => {
