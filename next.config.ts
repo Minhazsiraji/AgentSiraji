@@ -76,24 +76,42 @@ const nextConfig: NextConfig = {
       "upgrade-insecure-requests",
     ].join("; ");
 
+    const metaEventSetupSecurityPolicy = contentSecurityPolicy.replace(
+      "frame-ancestors 'none'",
+      "frame-ancestors https://business.facebook.com https://eventsmanager.facebook.com https://*.facebook.com",
+    );
+
+    const sharedSecurityHeaders = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-DNS-Prefetch-Control", value: "off" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+      },
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+      },
+    ];
+
     return [
       {
-        source: "/(.*)",
+        source: "/",
         headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
+          ...sharedSecurityHeaders,
+          { key: "Cross-Origin-Opener-Policy", value: "unsafe-none" },
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+          { key: "Content-Security-Policy", value: metaEventSetupSecurityPolicy },
+        ],
+      },
+      {
+        source: "/:path+",
+        headers: [
+          ...sharedSecurityHeaders,
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-DNS-Prefetch-Control", value: "off" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
-          },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
-          },
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
