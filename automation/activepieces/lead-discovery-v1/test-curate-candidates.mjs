@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {code} from "./curate-candidates.mjs";
+const now="2026-10-19T12:00:00Z";
+const item={title:"RFP for website redesign",description:"Invites bids from digital agencies to redesign our e-commerce website.",link:"https://example.org/tenders/website",pubDate:"2026-10-18T10:00:00Z"};
+test("Unauthorized source is blocked",async()=>{const r=await code({items:[item],now});assert.equal(r.candidates.length,0);assert.equal(r.outbound_enabled,false)});
+test("RFP produces unverified review-only candidate",async()=>{const r=await code({items:[item],now,source_authorized:true});assert.equal(r.candidates.length,1);assert.equal(r.candidates[0].source_verified,"no");assert.equal(r.candidates[0].draft_message,"");assert.equal(r.candidates[0].outbound_enabled,false)});
+test("Generic technology news not a buyer signal",async()=>{const r=await code({items:[{...item,title:"Web technology trends",description:"Our ecommerce trends report studies SEO and web design opportunities."}],now,source_authorized:true});assert.equal(r.candidates.length,0)});
+test("Stale items excluded",async()=>{const r=await code({items:[{...item,pubDate:"2026-01-01"}],now,source_authorized:true});assert.equal(r.candidates.length,0)});
+test("Job vacancies are not prospective clients",async()=>{const r=await code({items:[{...item,description:"RFP agency website consultant job vacancy internship role"}],now,source_authorized:true});assert.equal(r.candidates.length,0)});
+test("Same link deduplicates",async()=>{const r=await code({items:[item,{...item,link:item.link+"/"}],now,source_authorized:true});assert.equal(r.candidates.length,1)});
+test("Candidate cap enforced",async()=>{const r=await code({items:[item,{...item,link:"https://example.org/tenders/another"},{...item,link:"https://example.org/tenders/more"}],max_candidates:2,now,source_authorized:true});assert.equal(r.candidates.length,2)});
