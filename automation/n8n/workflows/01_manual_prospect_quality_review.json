@@ -1,0 +1,48 @@
+{
+  "name": "AgentSiraji / 01 / Prospect Quality Review (manual dry-run)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Manual test only",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace these clearly fictional examples only after verifying real public sources.\n// No scraping or outbound contact occurs in this workflow.\nconst prospects = [\n { business_name:'EXAMPLE Local Shop', website:'https://example.org', verified_need:'public request for new website', source_url:'', service_fit:true, source_verified:false, buyer_contact_verified:false, do_not_contact:false },\n { business_name:'EXAMPLE Unverified Brand', website:'', verified_need:'', source_url:'', service_fit:false, source_verified:false, buyer_contact_verified:false, do_not_contact:false },\n];\nreturn prospects.map(p=>{\n  const score = (p.service_fit?35:0)+(p.verified_need?30:0)+(p.source_verified?20:0)+(p.buyer_contact_verified?15:0);\n  const ready = score >= 70 && p.source_verified && !p.do_not_contact;\n  return {json:{...p,quality_score:score,decision:ready?'REVIEW_REQUIRED':'RESEARCH_MORE',outbound_enabled:false,reason:!p.source_verified?'Source not verified':ready?'Human approval required':'Qualification insufficient'}};\n});"
+      },
+      "id": "score",
+      "name": "Evidence based prospect scoring",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Manual test only": {
+      "main": [
+        [
+          {
+            "node": "Evidence based prospect scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "tags": []
+}
