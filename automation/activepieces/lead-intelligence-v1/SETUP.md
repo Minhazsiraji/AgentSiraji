@@ -1,34 +1,42 @@
-# AgentSiraji — Lead Intelligence V1 (Activepieces Cloud Free)
+# AgentSiraji Lead Intelligence V1 — Activepieces Cloud Free
 
-**Status:** Code completed, local automated tests required before release, NOT connected to a live Activepieces account. No paid API or connected CRM required. This pilot is intentionally review-only: it does not browse public websites, find leads automatically, send email/DM, or auto-publish.
+**Status:** Prepared workflow code and source-level tests. This document is the hands-on setup guide. **No live flow has been connected or verified yet.**
 
-## 1. Create and secure the cloud account (owner action)
-1. Open https://cloud.activepieces.com/ and create/sign in to the **Free** account. Do not select a paid plan.
-2. In Activepieces, create a workspace/project named `AgentSiraji Business OS` where that option is available.
-3. Enable account MFA if offered. Never share a password, API token or OAuth access token in chat or GitHub.
-4. Create a **Tables** table named `AgentSiraji Prospects`. Use the header names in `Prospects-columns.csv`. For fastest onboarding you may add fields in the UI. Use Text fields except checkboxes/boolean fields, numeric `quality_score`/`revenue_amount`, and date `follow_up_due`/`reviewed_at` as supported.
-5. Add a **single fictional test record** first (see below).
+## Table: AgentSiraji Prospects (15 fields total)
 
-## 2. Build flow (no AI model or API charges)
-1. In **Flows → New Flow**, name it `AS-01 Qualify prospect → Human review`.
-2. Trigger **Tables → New Record Created**, select `AgentSiraji Prospects`.
-3. Add **Code** action named `Lead Quality Gate`. Paste all of `score-lead.mjs` into its Code editor (supports `export const code = async (inputs) => { ... }`).
-4. In its **Inputs** tab define the following 12 input names, mapped by the field picker from the Table trigger, not typed placeholder strings:
-   `business_name`, `country`, `website`, `source_url`,
-   `verified_need`, `service_needed`, `source_verified`,
-   `service_fit_verified`, `buyer_contact_verified`,
-   `opportunity_current`, `do_not_contact`, `duplicate`.
-5. Add **Tables → Update Record** for the **same trigger record ID**, not a new record. Map Code output values to fields:
-   `lead_key`, `quality_score`, `lead_status`, `reason_codes`,
-   `draft_subject`, `draft_message`, `contact_policy`,
-   `scoring_version`.
-   The trigger must stay **New Record Created**, NOT Record Updated, to prevent an update loop.
-6. Optional: notify yourself about `READY_FOR_HUMAN_REVIEW`, but do not add Gmail Send Email, Messenger, WhatsApp, HTTP outreach, or automatic posting.
-7. Test the code step on the example below, check score/status in the Table, then publish/enable the flow if the run succeeds and no paid upgrade is requested.
+The user has already created the first 6 fields: `business_name`, `country`, `website`, `source_url`, `verified_need`, `service_needed` (all Text).
 
-**Important:** The flow is deterministic, not a free autonomous web researcher. Qualified real prospect details must be entered via permitted/public research. Later, a separate approved intake workflow can automate allowed sources and deduplicate before inserting rows.
+Add the remaining **9** fields, in this order:
 
-## 3. Example test record — FICTIONAL, DO NOT CONTACT
+| Field | Type | Expected value / direction |
+| --- | --- | --- |
+| `source_verified` | Text | input: yes/no, verified human review of public URL |
+| `service_fit_verified` | Text | input: yes/no, AgentSiraji can offer service |
+| `buyer_contact_verified` | Text | input: yes/no |
+| `opportunity_current` | Text | input: yes/no |
+| `do_not_contact` | Text | input: yes/no |
+| `duplicate` | Text | input: yes/no (manual until dedup flow) |
+| `quality_score` | Number | output from Code |
+| `lead_status` | Text | output from Code |
+| `draft_message` | Text | output from Code, never sent automatically |
+
+This 15-field pilot is intentionally compact to avoid potential cloud plan field-count restrictions. The `Prospects-columns.csv` is a header reference **not** an import script. Native CSV import may expect preexisting columns. Do **not** import blank/header-only CSV until its behavior is confirmed.
+
+## Build and test AS-01
+
+1. Go to your Activepieces **Personal Project → Automations**.
+2. Create a new Flow, named `AS-01 Lead Quality Gate — Human Review`.
+3. Trigger: **Tables → New Record Created**, selected table: `AgentSiraji Prospects`.
+4. Add a **Code** step named `Lead Quality Gate`. Copy **all** of `score-lead.mjs` into the code editor.
+5. Add 12 named inputs. Select the corresponding field values from the Table trigger, not literal field names:
+`business_name`, `country`, `website`, `source_url`, `verified_need`, `service_needed`, `source_verified`, `service_fit_verified`, `buyer_contact_verified`, `opportunity_current`, `do_not_contact`, `duplicate`.
+6. Add **Tables → Update Record**; select the original Table and **trigger Record ID**. Update exactly these 3 columns from Code outputs: `quality_score`, `lead_status`, `draft_message`. Never insert a second row here.
+7. Use **Test** to check that no external messaging, contact, HTTP, payment or social action exists. The only action is updating this internal Table.
+8. After completing end-to-end test (and credit check), enable the flow on the Free plan.
+
+The trigger must be **New Record Created** rather than **Record Updated** to prevent a self-triggering loop.
+
+## Fictional test record (never use as a real prospect)
 
 - business_name: `TEST Example Merchant`
 - country: `Ireland`
@@ -36,36 +44,33 @@
 - source_url: `https://example.org/news`
 - verified_need: `We are looking for a new booking website for our storefront.`
 - service_needed: `website development`
-- source_verified: `yes` (fake for testing only)
+- source_verified: `yes` (this is explicitly fictional data)
 - service_fit_verified: `yes`
 - buyer_contact_verified: `yes`
 - opportunity_current: `yes`
 - do_not_contact: `no`
 - duplicate: `no`
 
-Expected output: **100 points**, `READY_FOR_HUMAN_REVIEW`, subject and draft created; **no message sent**.
-After test, delete the fictional row; never treat the example URL as real evidence.
+Expected: `quality_score=100`, `lead_status=READY_FOR_HUMAN_REVIEW`, `draft_message` populated. **No email or DM is sent.** Remove the test record after passing.
 
-## 4. Verification / quality gates
-- All 10 offline tests pass with `node --test test-score.mjs`.
-- A real but unverified lead remains `RESEARCH_MORE`.
-- A lead flagged `do_not_contact` becomes `DO_NOT_CONTACT`, and no draft is generated.
-- Same business/website flags as duplicate after human or future database deduplication. The code's `lead_key` is only an aid; **it does not query prior records automatically**.
-- Only the table's owner can manually review and approve outbound actions in a separate later workflow.
-- No outbound actions exist in V1; messaging requires a future explicit consent/compliance-approved release.
-- Credit usage under the Free allowance; review actual quota under Billing.
-- Add outcome fields `reply_status`, `meeting_booked`, `client_won`, `revenue_amount` after real engagement to measure conversion, not raw outreach volume.
+## Gate cases
 
-## 5. Results-driven feedback loop (design, not activated)
-Daily decisions are written back to the same table. Weekly report on **verified leads → human-approved messages → positive replies → meetings → won deals**, plus time saved and credits used. Suggested targeting adjustments are presented for review; no autonomous modification of production workflows.
+- `source_verified=no` → `RESEARCH_MORE`, no draft.
+- `do_not_contact=yes` → `DO_NOT_CONTACT`, no draft.
+- `duplicate=yes` → `DUPLICATE_REVIEW`, no draft.
+- Any missing business name or unverifiable need → `RESEARCH_MORE`.
+- 100 points only when all five positive factors have source evidence; the score is rules-based, not a probability.
 
-## 6. Constraints
-- No office-job automation, and no local Windows installation.
-- Never copy 2TBR production data, credentials, or customer information into this pilot.
-- No scraping protected websites or sending unsolicited automated DMs.
-- Do not claim the system can learn from activity until feedback/outcomes are actually recorded and evaluated.
-- Activepieces cloud plan/credits may change: check https://www.activepieces.com/pricing.
-- These instructions and step code are a prepared implementation; they are **not proof of live deployment**.
+## Results-driven extension (future, not enabled)
 
-## Existing business systems
-A separately existing `Minhazsiraji/AgentSiraji-LeadPilot` app already implements lead qualification and follow-up for configurable customer organizations. Do not merge unrelated CRM data. A future authenticated, rate-limited API bridge can connect it after testing.
+Create a second `AgentSiraji Outcomes` Table **after V1 passes** to record approved contact, replies, meetings, proposals, client wins, collected revenue, and improvement decisions. A separate authorized sourcing pipeline will add real prospects from public permissible sources only. A feedback review can use conversion outcomes to recommend updating the scoring formula and target markets; never auto-edit live workflows or autonomously send cold messages.
+
+## Security and budgets
+
+- Never enter a password or access token in a Table, GitHub or ChatGPT.
+- No company/office job automation, no 2TBR customer data, no local software installation.
+- Do not connect paid providers without explicit user authorization.
+- Treat approvals, anti-spam laws, deduplication and allowed data sources as hard gates.
+- Activepieces Cloud plan and credits may change; check the user's current Billing view.
+
+Source code: `score-lead.mjs`; 10 tests: `test-score.mjs`.
