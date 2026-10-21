@@ -54,3 +54,11 @@ As recorded in the research review of the original RFT (latest clarification fil
 5. Only a named human reviewer may move a tender from HOLD to APPROVED_FOR_PROSPECTS with citations/evidence IDs. Approval does **not** authorize outreach or tender submission.
 
 **Excluded:** User's separate office merchandising job and all 2TBR / Doctor's Diary customer data are not AgentSiraji enterprise delivery references unless expressly authorized and independently relevant.
+
+## Founder-led startup qualification update (21 October 2026)
+
+The owner has clarified that AgentSiraji is **newly started**, not an established multi-year agency. **Do not publish the owner's financial records or personal identifiers in this public repo.** Neither startup positioning nor the public site establishes annual turnover, audited statements, comparable paid-client references or insurance. Do **not** mark these fields verified.
+
+**AS-03 screening rule:** when tender documentation requires multiple years of company turnover, specific completed enterprise contracts, large insurance policies or advanced operational capabilities, `NOT_READY_FOR_SOLE_BID` is the default until exact current evidence demonstrates compliance. This is a strategic non-pursuit decision, **not** an allegation that the startup is legally prohibited from all tenders. Alternative consortium/subcontractor roles are separate opportunities and need verified partner capacity and tender permission.
+
+**Near-term evidence-building goal:** complete one genuinely paid, explicitly scoped client project with authorization to share a redacted case study; add service delivery receipts, acceptance confirmation and a verified testimonial only with permission. Internal prototypes and founder-built products may demonstrate technical skills but must be labeled as **internal demonstrations**, never misrepresented as external paid client references. Record what is missing without inventing legal status, revenue, results or technology credentials.
