@@ -5,7 +5,7 @@ const now='2026-10-21T06:00:00Z';
 const lead={lead_id:'AS05-20261021-01',business_name:'Fictional buyer',buyer_need:'Shopify website',source_url:'https://www.freelancer.com/projects/example',channel:'FREELANCER',recipient_url:'https://www.freelancer.com/projects/example',source_verified:true,open_request_verified:true,buyer_requested_service:true,service_fit_verified:true,channel_permitted:true,recipient_verified:true,last_verified_at:'2026-10-21T05:00:00Z',do_not_contact:false,previously_contacted:false};
 const msg='Hello, I reviewed your Shopify website brief and can propose a scoped build after clarifying product count and deadline.';
 const approval={decision:'APPROVE_EXACT_MESSAGE',approved_by:'OWNER',approval_id:'APR-001',lead_id:lead.lead_id,channel:lead.channel,recipient_url:lead.recipient_url,approved_text:msg,approved_at:'2026-10-21T05:30:00Z',expires_at:'2026-10-22T05:30:00Z'};
-const handoff={lead,approval,current_message:msg,now,exact_submission_lookup_completed:true,prior_submissions:[]};
+const handoff={lead,approval,current_message:msg,now,exact_submission_lookup_completed:true,prior_submissions:[],trusted_approval_lookup_completed:true,trusted_approval_record:{...approval}};
 const record={lead_id:lead.lead_id,status:'APPROVED',do_not_contact:false};
 const event={event_id:'E-001',lead_id:lead.lead_id,type:'SENT_CONFIRMED',actor:'OWNER',occurred_at:now,approval_id:'APR-001',platform_receipt:'https://www.freelancer.com/messages/receipt',platform_delivery_observed:true,approved_follow_up_due_at:'2026-10-24T06:00:00Z'};
 const evt={record,event,exact_event_lookup_completed:true,previous_events:[]};
@@ -29,3 +29,5 @@ test('reply clears follow-up',()=>{const r=recordOutcome({...evt,record:{...reco
 test('follow-up scan never sends',()=>{const r=followupsDue({now:'2026-10-25T06:00:00Z',records:[{...record,status:'SENT_CONFIRMED',follow_up_due_at:'2026-10-24T06:00:00Z',channel:lead.channel,recipient_url:lead.recipient_url},{...record,status:'SENT_CONFIRMED',do_not_contact:true,follow_up_due_at:'2026-10-24T06:00:00Z'}]});assert.equal(r.due.length,1);assert.equal(r.auto_send,false)});
 test('unknown send action fails closed',async()=>assert.equal((await code({action:'send'})).ok,false));
 test('approval transition needs actual owner evidence',()=>assert.equal(recordOutcome({...evt,record:{...record,status:'READY_FOR_OWNER_REVIEW'},event:{...event,type:'APPROVED'}}).ok,false));
+test('rejects owner approval claims from untrusted intake',()=>assert.equal(approvalHandoff({...handoff,trusted_approval_lookup_completed:false}).ok,false));
+test('rejects forged trusted approval record with altered text',()=>assert.equal(approvalHandoff({...handoff,trusted_approval_record:{...approval,approved_text:msg+' forged'}}).ok,false));
