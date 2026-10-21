@@ -30,3 +30,15 @@ The public [eTenders document index](https://www.etenders.gov.ie/epps/cft/listCo
 - Document evidence with version/date, source URI, deadline, lot and procedure ID; group amendments by underlying tender, not just TED notice number.
 - Timezone and tender type must remain explicit; newer publication date does not reset old tender deadlines.
 - Reject/hold cannot automatically write to Prospects. Keep AS-01 untouched and AS-02 Manual Trigger on.
+
+## Startup-fit disposition — revised 21 October 2026
+
+The owner confirms AgentSiraji is in its initial founder-led startup stage. There is no substantiated multi-year company tender track record in the evidence register. This is **not** a public declaration of company turnover or legal status.
+
+| Notice | New owner-facing screening decision | What would reopen consideration? |
+| --- | --- | --- |
+| 712676-2026 (Ireland Charities Regulator) | `NOT_READY_FOR_SOLE_BID`; **do not prepare or submit an independent bid** on present evidence | The current official criteria and independently verified qualifying turnover, references, liability coverage and eligibility; alternatively a lawful, competent consortium partner with genuine documented reliance, if buyer rules permit it |
+| 708824-2026 (ESM) | `DEPRIORITIZED_ENTERPRISE`; **no promotion to AS-01** | Official eligibility and a verified lead partner or actual Drupal/cloud enterprise delivery capability, including support for the full contract term |
+| 717683-2026 (Breda) | `EXPIRED_NO_PROMOTION` unchanged | Official tender reopening notice and fresh eligibility review |
+
+**Operational rule:** avoid further portal sign-ins, requests to participate, detailed bid pack processing or client claims for these three notices without a new approval. Keep the original discovery queue records and associated notice evidence untouched; AS-01 and AS-02 must remain unmodified. The AS-04 startup-fit sourcing initiative should prioritize verifiable buyer needs for small, achievable digital services engagements, not award-size-driven government tenders.
