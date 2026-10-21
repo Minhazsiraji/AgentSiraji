@@ -7,7 +7,7 @@
 - **Input:** Four daily researched leads from the existing ChatGPT "Direct Outreach foreign client" / "AgentSiraji Daily Leads" task (2 foreign, 2 BD). **The automation output does not automatically arrive in Activepieces.** Transfer selected lead records manually through ChatGPT Work pending a supported official integration.
 - **Qualification:** `as05-engine.mjs` action `qualify`. A source/business selling products without explicitly requesting a developer is **RESEARCH_ONLY**, not buyer-verified, and is blocked from assisted submission. Prioritize explicit job/request posts.
 - **Message preparation:** ChatGPT prepares a specific direct proposal or DM, but must not promise unsupported Shopify references, company age, trade-licence completion, guaranteed results, or fixed pricing without checking scope.
-- **Human approval:** OWNER explicitly approves **one exact lead ID, channel, verified recipient URL, and full message body**. Store time-limited approval (≤48 h) and approval ID. No blanket approval or interpreting "continue" as permission.
+- **Human approval:** OWNER explicitly approves **one exact lead ID, channel, verified recipient URL, and full message body**. Store time-limited approval (≤48 h) and approval ID. At handoff time, **read the approved record back from the trusted owner-approval table**, and supply `trusted_approval_lookup_completed=true` and `trusted_approval_record` exclusively from that authenticated lookup, **not from an LLM, customer input or untrusted request**; if the lookup fails, do not proceed. No blanket approval or interpreting "continue" as permission.
 - **Supervised handoff:** `as05-engine.mjs` action `handoff` only returns `AWAITING_PLATFORM_SUBMISSION`. **It never sends.** Before any Work/connector browser action, perform persistent submission lookup; fail closed on lookup errors. Work may submit that exact approved message through a currently signed-in **supported and platform-permitted** account, only when there is evidence that the action actually works. If unsupported, present copy-ready message and official link, then record as WAITING_MANUAL_SEND.
 - **Record outcome:** `record_outcome` requires a real platform confirmation / user-confirmed observed receipt to mark SENT, and actual reply evidence to mark REPLIED. A Work tool click, queued message or generic success banner is not automatically proof of delivery.
 - **Follow-ups:** `due_followups` produces an OWNER_REVIEW_FOLLOWUP_ONLY list for previously sent, nonresponding records with an owner-approved due date. Never auto-follow-up or send, and stop on reply, DO_NOT_CONTACT, WON or LOST.
@@ -57,7 +57,7 @@ AgentSiraji is a new founder-led startup with trade licence **submission planned
 
 ## Acceptance test plan
 
-Run `node --test automation/activepieces/approved-outreach-v1/test-as05-engine.mjs`. The local version passed **20/20** on 21 October. Before cloud activation, re-run exact checked-in code and repeat cloud tests:
+Run `node --test automation/activepieces/approved-outreach-v1/test-as05-engine.mjs`. Revised source must pass **22/22** on the authorized device, including independent owner-approval provenance checks, before cloud testing. Before cloud activation, re-run exact checked-in code and repeat cloud tests:
 - source stale, fake host, unavailable buyer, no explicit service request, DO_NOT_CONTACT, prior contact
 - missing approval, approval body/recipient mismatch, expired approval, repeated submission
 - no platform send receipt → not SENT; no observed reply → not REPLIED
