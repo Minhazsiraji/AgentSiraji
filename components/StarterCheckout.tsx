@@ -66,8 +66,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
     if (!order) return;
     setBusy(true); setCheckMessage("");
     try {
-      const params=new URLSearchParams({orderId:order.orderId,accessToken:order.accessToken});
-      const response=await fetch("/api/ecommerce-starter/orders?"+params.toString(),{cache:"no-store"});
+      const response=await fetch("/api/ecommerce-starter/orders",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(order),cache:"no-store"});
       const data=await response.json() as {status?:string;verifiedEventId?:string;error?:string};
       if(!response.ok)throw new Error(data.error||"Could not retrieve status.");
       if(data.status==="PAID" && data.verifiedEventId) {
