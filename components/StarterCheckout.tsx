@@ -1,6 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { createMetaEventId, getMetaBrowserIdentifiers, hasMarketingConsent, trackMetaEvent } from "@/lib/meta-client";
+import { createMetaEventId, getMetaBrowserIdentifiers, hasMarketingConsent, trackMetaEvent, trackVerifiedStarterBrowserPurchase } from "@/lib/meta-client";
 import s from "@/app/ecommerce-starter/starter.module.css";
 
 type FormValues = {
@@ -21,6 +21,8 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
   const [proofUrl,setProofUrl] = useState("");
   const [paidConfirmed,setPaidConfirmed] = useState(false);
   const [busy,setBusy] = useState(false);
+  const [verifiedPaid,setVerifiedPaid] = useState(false);
+  const [checkMessage,setCheckMessage] = useState("");
   const [error,setError] = useState("");
   const update = (key:keyof FormValues) => (value:string) => setForm(prev=>({...prev,[key]:value}));
   async function createOrder(event:FormEvent<HTMLFormElement>) {
@@ -60,6 +62,30 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
     } catch(ex){setError(ex instanceof Error?ex.message:"Please try again.");}
     finally{setBusy(false);}
   }
+  async function checkPaymentStatus() {
+    if (!order) return;
+    setBusy(true); setCheckMessage("");
+    try {
+      const params=new URLSearchParams({orderId:order.orderId,accessToken:order.accessToken});
+      const response=await fetch("/api/ecommerce-starter/orders?"+params.toString(),{cache:"no-store"});
+      const data=await response.json() as {status?:string;verifiedEventId?:string;error?:string};
+      if(!response.ok)throw new Error(data.error||"Could not retrieve status.");
+      if(data.status==="PAID" && data.verifiedEventId) {
+        setVerifiedPaid(true);
+        const key="agentsiraji_starter_purchase_"+order.orderId;
+        try {
+          if(window.sessionStorage.getItem(key)!=="sent" && trackVerifiedStarterBrowserPurchase(data.verifiedEventId))
+            window.sessionStorage.setItem(key,"sent");
+        } catch {
+          // Storage may be blocked. Tracking is optional, never affects payment status.
+        }
+        setCheckMessage("Payment verified. Welcome to AgentSiraji!");
+      } else {
+        setCheckMessage("Current payment status: "+(data.status||"Pending Verification")+".");
+      }
+    } catch(ex) {setCheckMessage(ex instanceof Error?ex.message:"Please try again.");}
+    finally{setBusy(false);}
+  }
   return <div className={s.checkoutCard}>
     {status==="details" && <>
       <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>আপনার Business-এর তথ্য</h3><p>Payment instructions দেখার আগে আপনার প্রয়োজনীয় তথ্য দিন।</p></div><strong>৳3,000</strong></div>
@@ -93,7 +119,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
         <div className={s.formFull}><button className={s.primary} type="submit" disabled={busy||!paidConfirmed}>{busy?"Submitting...":"SUBMIT PAYMENT INFORMATION →"}</button></div>
       </div>
     </form>}
-    {status==="received" && <div className={s.received} role="status"><span>✓</span><h3>Payment Information Received</h3><p>আমরা আপনার payment information পেয়েছি। এটি এখন <strong>Pending Verification</strong>। Bank/bKash receipt যাচাইয়ের পর আপনার onboarding শুরু হবে।</p><p>Verification না হওয়া পর্যন্ত এই order-কে Paid বা Purchase হিসেবে গণনা করা হচ্ছে না।</p><a href={waUrl} target="_blank" rel="noopener noreferrer">Ask us on WhatsApp ↗</a></div>}
+    {status==="received" && <div className={s.received} role="status"><span>✓</span><h3>{verifiedPaid?"Welcome to AgentSiraji":"Payment Information Received"}</h3><p>{verifiedPaid?"আপনার Payment verification সম্পন্ন হয়েছে। Onboarding-এর জন্য WhatsApp-এ যোগাযোগ করুন।":<>আমরা আপনার payment information পেয়েছি। এটি এখন <strong>Pending Verification</strong>। Bank/bKash receipt যাচাইয়ের পর আপনার onboarding শুরু হবে।</>}</p>{!verifiedPaid&&<p>Verification না হওয়া পর্যন্ত এই order-কে Paid বা Purchase হিসেবে গণনা করা হচ্ছে না।</p>}<button type="button" onClick={()=>void checkPaymentStatus()} disabled={busy} className={s.primary}>{busy?"Checking...":"CHECK PAYMENT STATUS"}</button>{checkMessage&&<p>{checkMessage}</p>}<p><a href={waUrl} target="_blank" rel="noopener noreferrer">Ask us on WhatsApp ↗</a></p></div>}
     {error && <p className={s.error} role="alert">{error}</p>}
   </div>;
 }
