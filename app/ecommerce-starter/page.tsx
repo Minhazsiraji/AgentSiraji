@@ -24,7 +24,7 @@ const steps = ["Customer visits","Views product","Adds to cart","Checkout","Orde
 export default function EcommerceStarter() {
   return <main className={s.root}>
     <div className={s.landingBrand + " shell"}>
-      <Image src="/agentsiraji-official.png" alt="AgentSiraji" width={150} height={150} priority />
+      <Image src="/agentsiraji-official-horizontal.webp" alt="AgentSiraji" width={300} height={95} priority />
     </div>
     <div className={s.backdrop}>
       <section className={s.hero + " shell"}>
