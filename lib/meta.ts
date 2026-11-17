@@ -123,7 +123,16 @@ async function dispatchMetaEvent(input: MetaEventInput, verifiedStarterPayment: 
     };
   }
 
-  return { sent: true as const };
+  const accepted = await response.json().catch(() => null) as { events_received?: number } | null;
+  const eventsReceived = typeof accepted?.events_received === "number" ? accepted.events_received : 0;
+  if (eventsReceived < 1) {
+    console.error("AgentSiraji Meta event returned no received events", {
+      eventName: input.eventName, status: response.status, eventsReceived,
+    });
+    return { sent: false as const, reason: "Meta did not confirm receiving the event.", eventsReceived };
+  }
+
+  return { sent: true as const, eventsReceived };
 }
 
 // Only the authenticated starter-review route calls this after the database confirms PAID.
