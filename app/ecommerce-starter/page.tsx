@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { StarterCheckout } from "@/components/StarterCheckout";
 import { starterLiveEnabled } from "@/lib/starter-offer";
@@ -24,7 +23,7 @@ const steps = ["Customer visits","Views product","Adds to cart","Checkout","Orde
 export default function EcommerceStarter() {
   return <main className={s.root}>
     <div className={s.landingBrand + " shell"}>
-      <Image src="/agentsiraji-official-horizontal.webp" alt="AgentSiraji" width={300} height={95} priority />
+      <img src="/agentsiraji-official-horizontal.webp" alt="AgentSiraji" width="300" height="95" decoding="async" />
     </div>
     <div className={s.backdrop}>
       <section className={s.hero + " shell"}>
