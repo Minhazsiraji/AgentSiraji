@@ -89,19 +89,20 @@ export async function PATCH(request: Request) {
 }
 
 
-export async function GET(request: Request) {
+export async function PUT(request: Request) {
   if (!starterLiveEnabled()) return blocked();
   if (rateLimited(request, "starter-status", 50)) return json({ error: "Please try again later." }, 429);
-  const url = new URL(request.url);
-  const orderId = url.searchParams.get("orderId") || "";
-  const accessToken = url.searchParams.get("accessToken") || "";
-  if (!isStarterUuid(orderId) || !/^[A-Za-z0-9_-]{40,100}$/.test(accessToken))
-    return json({ error: "Invalid reference." }, 400);
   try {
+    const body = await readJson(request, 2000);
+    const orderId = typeof body.orderId === "string" ? body.orderId : "";
+    const accessToken = typeof body.accessToken === "string" ? body.accessToken : "";
+    if (!isStarterUuid(orderId) || !/^[A-Za-z0-9_-]{40,100}$/.test(accessToken))
+      return json({ error: "Invalid reference." }, 400);
     const status = await getStarterOrderStatus(orderId, accessToken);
     if (!status) return json({ error: "Order not found." }, 404);
     return json({ ok: true, ...status });
   } catch (error) {
+    if (error instanceof RequestError) return json({ error: error.message }, error.status);
     console.error("Starter status lookup failed", error);
     return json({ error: "Payment status is temporarily unavailable." }, 503);
   }
