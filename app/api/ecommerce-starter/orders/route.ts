@@ -30,6 +30,8 @@ export async function POST(request: Request) {
         !safeStarterUrl(facebookPage) || facebookPage.length > 500)
       return json({ error: "Name, Bangladesh mobile, business type or optional details are invalid." }, 400);
     const consent = body.marketingConsent === true;
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const userAgent = request.headers.get("user-agent") || undefined;
     const checkoutEventId = consent && isMetaEventId(body.checkoutEventId)
       ? String(body.checkoutEventId) : undefined;
     const order = await createStarterOrder({
@@ -37,6 +39,7 @@ export async function POST(request: Request) {
       marketingConsent: consent, checkoutEventId,
       fbp: consent ? cleanText(body.fbp, 200) : "",
       fbc: consent ? cleanText(body.fbc, 200) : "",
+      clientIp, userAgent,
       utmSource: cleanText(body.utmSource, 100), utmMedium: cleanText(body.utmMedium, 100),
       utmCampaign: cleanText(body.utmCampaign, 120),
     });
@@ -47,8 +50,7 @@ export async function POST(request: Request) {
         eventSourceUrl: getSiteUrl() + "/ecommerce-starter",
         phone: mobile, email: email || undefined,
         fbp: cleanText(body.fbp, 200), fbc: cleanText(body.fbc, 200),
-        clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
-        userAgent: request.headers.get("user-agent") || undefined,
+        clientIp, userAgent,
         customData: { currency: "BDT", value: STARTER_PRICE_BDT, content_name: "AgentSiraji E-commerce Starter" },
       }).catch(() => undefined);
     }
