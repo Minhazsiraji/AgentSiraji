@@ -47,8 +47,8 @@ function cleanEventId(value: string) {
   return value.trim().slice(0, 100);
 }
 
-export async function sendMetaEvent(input: MetaEventInput) {
-  if (input.eventName === "Purchase") return { sent: false as const, reason: "Purchase reporting is disabled during the pilot." };
+async function dispatchMetaEvent(input: MetaEventInput, verifiedStarterPayment: boolean) {
+  if (input.eventName === "Purchase" && !verifiedStarterPayment) return { sent: false as const, reason: "Purchase reporting requires independently verified payment." };
   if (!isMetaEventId(input.eventId)) return { sent: false as const, reason: "A stable Meta event ID is required." };
 
   let stored: Awaited<ReturnType<typeof readStoredIntegrations>> = {};
@@ -109,4 +109,13 @@ export async function sendMetaEvent(input: MetaEventInput) {
   }
 
   return { sent: true as const };
+}
+
+// Only the authenticated starter-review route calls this after the database confirms PAID.
+// Public event routes cannot invoke a Purchase event.
+export async function sendVerifiedStarterPurchaseEvent(input: Omit<MetaEventInput, "eventName">) {
+  return dispatchMetaEvent({ ...input, eventName: "Purchase" }, true);
+}
+export async function sendMetaEvent(input: MetaEventInput) {
+  return dispatchMetaEvent(input, false);
 }
