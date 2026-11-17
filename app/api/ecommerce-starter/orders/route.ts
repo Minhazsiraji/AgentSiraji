@@ -42,9 +42,9 @@ export async function POST(request: Request) {
     });
     // The server event shares its ID with the browser event only after a saved checkout.
     if (consent && checkoutEventId) {
-      void sendMetaEvent({
+      await sendMetaEvent({
         eventName: "InitiateCheckout", eventId: checkoutEventId,
-        eventSourceUrl: ${getSiteUrl()}/ecommerce-starter,
+        eventSourceUrl: getSiteUrl() + "/ecommerce-starter",
         phone: mobile, email: email || undefined,
         fbp: cleanText(body.fbp, 200), fbc: cleanText(body.fbc, 200),
         clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
