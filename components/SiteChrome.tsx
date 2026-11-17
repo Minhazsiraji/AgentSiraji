@@ -1,9 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function SiteHeader() {
   return (
     <nav className="nav shell" aria-label="Main navigation">
-      <Link className="brand" href="/"><span className="brand-mark">AS</span><span>AgentSiraji</span></Link>
+      <Link className="brand brand-logo-link" href="/" aria-label="AgentSiraji home"><Image className="brand-logo" src="/agentsiraji-official.png" alt="AgentSiraji" width={180} height={57} priority /></Link>
       <div className="nav-links">
         <Link href="/#products">Products</Link>
         <Link href="/#solutions">Solutions</Link>
@@ -40,7 +41,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="footer shell">
-      <Link className="brand" href="/"><span className="brand-mark">AS</span><span>AgentSiraji</span></Link>
+      <Link className="brand brand-logo-link" href="/" aria-label="AgentSiraji home"><Image className="brand-logo" src="/agentsiraji-official.png" alt="AgentSiraji" width={180} height={57} /></Link>
       <p>Practical software for businesses that want to move.</p>
       <div>
         <Link href="/store-audit">Free Store Audit</Link>
