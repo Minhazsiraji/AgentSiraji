@@ -24,13 +24,13 @@ test("public starter endpoint does not accept payments while gated", async () =>
   delete process.env.STARTER_LIVE_PAYMENTS_ENABLED;
   try {
     const api = load()("app/api/ecommerce-starter/orders/route.ts");
-    const req = new Request("https://agentsiraji.com/api/ecommerce-starter/orders", {
-      method: "PATCH", headers: { "content-type":"application/json" },
+    const makeRequest = (method) => new Request("https://agentsiraji.com/api/ecommerce-starter/orders", {
+      method, headers: { "content-type":"application/json" },
       body: JSON.stringify({transactionReference:"FAKE12345"}),
     });
-    assert.equal((await api.PATCH(req)).status, 503);
-    assert.equal((await api.POST(new Request(req,{method:"POST"}))).status, 503);
-    assert.equal((await api.PUT(new Request(req,{method:"PUT"}))).status, 503);
+    assert.equal((await api.PATCH(makeRequest("PATCH"))).status, 503);
+    assert.equal((await api.POST(makeRequest("POST"))).status, 503);
+    assert.equal((await api.PUT(makeRequest("PUT"))).status, 503);
   } finally {
     if (original === undefined) delete process.env.STARTER_LIVE_PAYMENTS_ENABLED;
     else process.env.STARTER_LIVE_PAYMENTS_ENABLED = original;
@@ -89,11 +89,11 @@ test("starter Purchase browser event matches server event id and requires market
 test("migration protects payment state and duplicate payment references", () => {
   const migration=fs.readFileSync(path.join(root,"database/0008_ecommerce_starter.sql"),"utf8");
   assert.match(migration,/PENDING_VERIFICATION/);
-  assert.match(migration,/CHECK \\(amount_bdt = 3000\\)/);
-  assert.match(migration,/CREATE UNIQUE INDEX IF NOT EXISTS starter_payment_reference_unique/);
+  assert.ok(migration.includes("CHECK (amount_bdt = 3000)"));
+  assert.ok(migration.includes("CREATE UNIQUE INDEX IF NOT EXISTS starter_payment_reference_unique"));
   const code=fs.readFileSync(path.join(root,"lib/starter-offer.ts"),"utf8");
-  assert.match(code,/status = 'PENDING_VERIFICATION'/);
-  assert.match(code,/status = 'PAID'/);
-  assert.match(code,/purchase_event_processed_at IS NULL/);
-  assert.match(code,/sha256\\(input\\.accessToken\\)/);
+  assert.ok(code.includes("status = 'PENDING_VERIFICATION'"));
+  assert.ok(code.includes("status = 'PAID'"));
+  assert.ok(code.includes("purchase_event_processed_at IS NULL"));
+  assert.ok(code.includes("sha256(input.accessToken)"));
 });
