@@ -28,8 +28,13 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
   const update = (key:keyof FormValues) => (value:string) => setForm(prev=>({...prev,[key]:value}));
   async function createOrder(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enabled) return;
-    setBusy(true); setError("");
+    setError("");
+    if (!enabled) {
+      setOrder({orderId:"PREVIEW-NOT-SAVED",accessToken:""});
+      setStatus("payment");
+      return;
+    }
+    setBusy(true);
     const consent=hasMarketingConsent();
     const eventId=createMetaEventId("starter_checkout");
     const ids=getMetaBrowserIdentifiers();
@@ -89,7 +94,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
   return <div className={s.checkoutCard}>
     {status==="details" && <>
       <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>আপনার Business-এর তথ্য</h3><p>Payment instructions দেখার আগে আপনার প্রয়োজনীয় তথ্য দিন।</p></div><strong>৳5,000</strong></div>
-      {!enabled && <div className={s.notice} role="status"><strong>Checkout preparation mode</strong><p>Payment submission এখনো চালু হয়নি। জানতে বা বুকিং করতে WhatsApp-এ যোগাযোগ করুন।</p><a href={waUrl} target="_blank" rel="noopener noreferrer">WhatsApp inquiry ↗</a></div>}
+      {!enabled && <div className={s.notice} role="status"><strong>Preview checkout mode</strong><p>আপনি form fill করে Payment Details screen পর্যন্ত test করতে পারবেন। Real payment submission এখনো production launch-এর আগে বন্ধ রাখা হয়েছে।</p><a href={waUrl} target="_blank" rel="noopener noreferrer">WhatsApp inquiry ↗</a></div>}
       <form className={s.formGrid} onSubmit={createOrder}>
         {fieldLabel("Full Name *",form.fullName,update("fullName"),true,"text","আপনার পুরো নাম")}
         {fieldLabel("Mobile Number *",form.mobile,update("mobile"),true,"tel","01XXXXXXXXX")}
@@ -97,11 +102,12 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
         {fieldLabel("Business / Page Name",form.businessName,update("businessName"),false,"text","আপনার business-এর নাম")}
         <label className={s.formField}><span>আপনি কী ধরনের business শুরু করবেন? *</span><textarea required maxLength={160} value={form.businessType} onChange={e=>update("businessType")(e.target.value)} placeholder="যেমন: Women's Clothing / Cosmetics / Grocery" rows={2}/></label>
         {fieldLabel("Facebook Page URL (optional)",form.facebookPage,update("facebookPage"),false,"url","https://facebook.com/...")}
-        <div className={s.formFull}><p>Setup ৳3,000 + 1st month Hosting & Support ৳2,000 = ৳5,000 due now. Domain actual cost is separate and payable before registration. Extra Customization ৳2,000 when outside scope. <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={!enabled||busy}>{busy?"Saving...":"CONTINUE TO PAYMENT — ৳5,000 →"}</button></div>
+        <div className={s.formFull}><p>Setup ৳3,000 + 1st month Hosting & Support ৳2,000 = ৳5,000 due now. Domain actual cost is separate and payable before registration. Extra Customization ৳2,000 when outside scope. <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={busy}>{busy?"Saving...":"CONTINUE TO PAYMENT — ৳5,000 →"}</button></div>
       </form>
     </>}
     {status==="payment" && <form onSubmit={submitPayment}>
       <div className={s.checkoutHead}><div><span>STEP 02 / 02</span><h3>Payment details submit করুন</h3><p>Order reference: {order?.orderId}</p></div><strong>৳5,000</strong></div>
+      {!enabled && <div className={s.notice} role="status"><strong>Preview only — do not transfer yet</strong><p>Payment instructions screenটি test করার জন্য খোলা হয়েছে। Real payment proof submission production activation-এর আগে disabled থাকবে।</p></div>}
       <div className={s.methodRow}><label><input type="radio" checked={paymentMethod==="BKASH"} onChange={()=>setPaymentMethod("BKASH")}/> bKash</label><label><input type="radio" checked={paymentMethod==="CITY_BANK"} onChange={()=>setPaymentMethod("CITY_BANK")}/> City Bank</label></div>
       <div className={s.paymentInstruction}>
         {paymentMethod==="BKASH"?<>
@@ -116,7 +122,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
         {fieldLabel("Optional HTTPS proof link",proofUrl,setProofUrl,false,"url","https://...")}
         <div className={s.formFull}><small>Screenshot থাকলে WhatsApp-এ পাঠাতে পারেন। Screenshot এখানে upload হচ্ছে না; proof link optional।</small></div>
         <label className={s.confirm}><input type="checkbox" checked={paidConfirmed} onChange={e=>setPaidConfirmed(e.target.checked)}/><span>আমি ৳5,000 transfer করেছি এবং reference যাচাই করে লিখেছি।</span></label>
-        <div className={s.formFull}><button className={s.primary} type="submit" disabled={busy||!paidConfirmed}>{busy?"Submitting...":"SUBMIT PAYMENT INFORMATION →"}</button></div>
+        <div className={s.formFull}><button className={s.primary} type="submit" disabled={busy||!paidConfirmed||!enabled}>{busy?"Submitting...":enabled?"SUBMIT PAYMENT INFORMATION →":"PAYMENT SUBMISSION LOCKED IN PREVIEW"}</button></div>
       </div>
     </form>}
     {status==="received" && <div className={s.received} role="status"><span>✓</span><h3>{verifiedPaid?"Welcome to AgentSiraji":"Payment Information Received"}</h3><p>{verifiedPaid?"আপনার Payment verification সম্পন্ন হয়েছে। Onboarding-এর জন্য WhatsApp-এ যোগাযোগ করুন।":<>আমরা আপনার payment information পেয়েছি। এটি এখন <strong>Pending Verification</strong>। Bank/bKash receipt যাচাইয়ের পর আপনার onboarding শুরু হবে।</>}</p>{!verifiedPaid&&<p>Verification না হওয়া পর্যন্ত এই order-কে Paid বা Purchase হিসেবে গণনা করা হচ্ছে না।</p>}<button type="button" onClick={()=>void checkPaymentStatus()} disabled={busy} className={s.primary}>{busy?"Checking...":"CHECK PAYMENT STATUS"}</button>{checkMessage&&<p>{checkMessage}</p>}<p><a href={waUrl} target="_blank" rel="noopener noreferrer">Ask us on WhatsApp ↗</a></p></div>}
