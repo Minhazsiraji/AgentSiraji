@@ -94,7 +94,7 @@ export async function trackMetaEvent(
 export function trackVerifiedStarterBrowserPurchase(verifiedEventId: string) {
   if (!hasMarketingConsent() || !/^as_starter_purchase_[a-f0-9-]{36}$/i.test(verifiedEventId)) return false;
   const args = ["track", "Purchase", {
-    value: 3000, currency: "BDT", content_name: "AgentSiraji E-commerce Starter",
+    value: 5000, currency: "BDT", content_name: "AgentSiraji E-commerce Starter",
   }, { eventID: verifiedEventId }];
   if (pixelReady) window.fbq?.(...args);
   else if (pendingPixelEvents.length < 50) pendingPixelEvents.push(args);
