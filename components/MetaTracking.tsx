@@ -12,6 +12,7 @@ const viewContentPages = new Map([
   ["/pricing", "AgentSiraji Commerce pricing"],
   ["/products/commerce", "AgentSiraji Commerce"],
   ["/store-audit", "AgentSiraji Store Audit"],
+  ["/ecommerce-starter", "AgentSiraji E-commerce Starter ৳3,000"],
 ]);
 
 function conversionEventId(event: Event, prefix: string) {
