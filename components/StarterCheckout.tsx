@@ -111,7 +111,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
       <div className={s.methodRow}><label><input type="radio" checked={paymentMethod==="BKASH"} onChange={()=>setPaymentMethod("BKASH")}/> bKash</label><label><input type="radio" checked={paymentMethod==="CITY_BANK"} onChange={()=>setPaymentMethod("CITY_BANK")}/> City Bank</label></div>
       <div className={s.paymentInstruction}>
         {paymentMethod==="BKASH"?<>
-          <h4>bKash · 01404385101</h4><p>Account type (Personal/Merchant/PRA) নিশ্চিত হয়নি। টাকা পাঠানোর আগে <a href={waUrl} target="_blank" rel="noopener noreferrer">WhatsApp-এ সঠিক payment method নিশ্চিত করুন</a>।</p>
+          <h4>bKash Send Money · 01404385101</h4><p>bKash app থেকে <strong>Send Money</strong> নির্বাচন করে <strong>01404385101</strong> নম্বরে <strong>৳5,000</strong> পাঠান। Transfer complete হলে নিচে bKash <strong>Transaction ID (TrxID)</strong> লিখুন।</p>
         </>:<>
           <h4>The City Bank PLC</h4><p>Account: <strong>2183503557001</strong><br/>Name: Md. Minhaz Siraji<br/>Branch: Ashulia Branch</p>
         </>}
