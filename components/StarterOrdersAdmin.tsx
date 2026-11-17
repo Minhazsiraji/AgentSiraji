@@ -22,6 +22,10 @@ export function StarterOrdersAdmin(){
     try{
       const r=await fetch("/api/admin/starter-orders",{cache:"no-store"});
       const data=await r.json() as {orders?:StarterOrder[];error?:string};
+      if(r.status===401){
+        window.location.assign("/sign-in?next=%2Fadmin%2Fstarter-orders");
+        return;
+      }
       if(!r.ok)throw new Error(data.error||"Not authorized");
       setOrders(data.orders||[]);setError("");
     }catch(e){setError(e instanceof Error?e.message:"Could not load orders.");}
