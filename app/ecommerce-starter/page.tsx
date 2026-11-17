@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { StarterCheckout } from "@/components/StarterCheckout";
 import { starterLiveEnabled } from "@/lib/starter-offer";
 import s from "./starter.module.css";
@@ -23,7 +23,9 @@ const features = [
 const steps = ["Customer visits","Views product","Adds to cart","Checkout","Order confirmed","Courier"];
 export default function EcommerceStarter() {
   return <main className={s.root}>
-    <SiteHeader />
+    <div className={s.landingBrand + " shell"}>
+      <Image src="/agentsiraji-official.png" alt="AgentSiraji" width={150} height={150} priority />
+    </div>
     <div className={s.backdrop}>
       <section className={s.hero + " shell"}>
         <div>
@@ -67,6 +69,5 @@ export default function EcommerceStarter() {
     </section>
     <section className={s.checkoutBand} id="starter-order"><div className={s.section + " shell"}><span className={s.kicker}>READY TO START?</span><h2>আপনার Business-এর<br /><em>শুরুটা হোক আজ।</em></h2><StarterCheckout enabled={starterLiveEnabled()} /></div></section>
     <div className={s.floating}><a href="https://wa.me/8801404385101?text=Hi%20AgentSiraji%2C%20I%20want%20the%203000%20E-commerce%20Starter%20Package" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">WhatsApp ↗</a></div>
-    <SiteFooter />
   </main>;
 }
