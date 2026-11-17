@@ -147,3 +147,21 @@ export async function finishStarterPurchase(input: {
     WHERE id = ${input.orderId} AND status = 'PAID' AND purchase_event_claimed_at IS NOT NULL
   `;
 }
+
+export async function getStarterOrderStatus(orderId: string, accessToken: string) {
+  const sql = db();
+  const rows = await sql`
+    SELECT status, purchase_event_result, verified_at
+    FROM starter_orders
+    WHERE id = ${orderId} AND access_token_hash = ${sha256(accessToken)}
+    LIMIT 1
+  `;
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    status: String(row.status),
+    purchaseEventResult: String(row.purchase_event_result),
+    verifiedAt: row.verified_at ? String(row.verified_at) : null,
+    verifiedEventId: row.status === "PAID" ? `as_starter_purchase_${orderId}` : null,
+  };
+}
