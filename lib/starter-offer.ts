@@ -28,6 +28,7 @@ export type StarterLeadInput = {
   fullName: string; mobile: string; email?: string; businessName?: string;
   businessType: string; facebookPage?: string; marketingConsent: boolean;
   checkoutEventId?: string; fbp?: string; fbc?: string;
+  clientIp?: string; userAgent?: string;
   utmSource?: string; utmMedium?: string; utmCampaign?: string;
 };
 export async function createStarterOrder(input: StarterLeadInput) {
@@ -36,7 +37,7 @@ export async function createStarterOrder(input: StarterLeadInput) {
   const rows = await sql`
     INSERT INTO starter_orders (
       access_token_hash, full_name, mobile, email, business_name, business_type,
-      facebook_page, marketing_consent, checkout_event_id, fbp, fbc,
+      facebook_page, marketing_consent, checkout_event_id, fbp, fbc, client_ip, user_agent,
       utm_source, utm_medium, utm_campaign
     ) VALUES (
       ${sha256(token)}, ${input.fullName}, ${input.mobile}, ${input.email || null},
@@ -44,6 +45,8 @@ export async function createStarterOrder(input: StarterLeadInput) {
       ${input.marketingConsent}, ${input.checkoutEventId || null},
       ${input.marketingConsent ? input.fbp || null : null},
       ${input.marketingConsent ? input.fbc || null : null},
+      ${input.marketingConsent ? input.clientIp || null : null},
+      ${input.marketingConsent ? input.userAgent || null : null},
       ${input.utmSource || null}, ${input.utmMedium || null}, ${input.utmCampaign || null}
     )
     RETURNING id
@@ -124,7 +127,7 @@ export async function claimStarterPurchase(orderId: string) {
       purchase_event_result = 'PENDING', updated_at = now()
     WHERE id = ${orderId} AND status = 'PAID' AND purchase_event_processed_at IS NULL
       AND (purchase_event_claimed_at IS NULL OR purchase_event_claimed_at < now() - interval '10 minutes')
-    RETURNING id, mobile, email, marketing_consent, fbp, fbc, verified_at, amount_bdt
+    RETURNING id, mobile, email, marketing_consent, fbp, fbc, client_ip, user_agent, verified_at, amount_bdt
   `;
   const row = rows[0];
   if (!row) return null;
@@ -133,6 +136,8 @@ export async function claimStarterPurchase(orderId: string) {
     email: row.email ? String(row.email) : undefined,
     marketingConsent: Boolean(row.marketing_consent),
     fbp: row.fbp ? String(row.fbp) : undefined, fbc: row.fbc ? String(row.fbc) : undefined,
+    clientIp: row.client_ip ? String(row.client_ip) : undefined,
+    userAgent: row.user_agent ? String(row.user_agent) : undefined,
     verifiedAt: String(row.verified_at), amount: Number(row.amount_bdt),
     eventId: `as_starter_purchase_${String(row.id)}`,
   };
