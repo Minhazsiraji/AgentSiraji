@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimited, readJson, RequestError } from "@/lib/request-safety";
-import { createStarterOrder, submitStarterPayment, cleanText, isBangladeshMobile,
+import { createStarterOrder, submitStarterPayment, getStarterOrderStatus, cleanText, isBangladeshMobile,
   isStarterUuid, safeStarterUrl, starterLiveEnabled, STARTER_PRICE_BDT } from "@/lib/starter-offer";
 import { sendMetaEvent, isMetaEventId } from "@/lib/meta";
 import { getSiteUrl } from "@/lib/site-url";
@@ -85,5 +85,24 @@ export async function PATCH(request: Request) {
     // A unique transaction reference cannot be reused for multiple claims.
     console.error("Starter payment submission failed", error);
     return json({ error: "Payment proof could not be accepted. Check the reference or contact us on WhatsApp." }, 409);
+  }
+}
+
+
+export async function GET(request: Request) {
+  if (!starterLiveEnabled()) return blocked();
+  if (rateLimited(request, "starter-status", 50)) return json({ error: "Please try again later." }, 429);
+  const url = new URL(request.url);
+  const orderId = url.searchParams.get("orderId") || "";
+  const accessToken = url.searchParams.get("accessToken") || "";
+  if (!isStarterUuid(orderId) || !/^[A-Za-z0-9_-]{40,100}$/.test(accessToken))
+    return json({ error: "Invalid reference." }, 400);
+  try {
+    const status = await getStarterOrderStatus(orderId, accessToken);
+    if (!status) return json({ error: "Order not found." }, 404);
+    return json({ ok: true, ...status });
+  } catch (error) {
+    console.error("Starter status lookup failed", error);
+    return json({ error: "Payment status is temporarily unavailable." }, 503);
   }
 }
