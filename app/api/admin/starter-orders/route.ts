@@ -23,6 +23,7 @@ async function sendPurchaseAfterVerification(orderId: string) {
       eventTime: Math.floor(new Date(claim.verifiedAt).getTime() / 1000),
       eventSourceUrl: getSiteUrl() + "/ecommerce-starter",
       phone: claim.mobile, email: claim.email, fbp: claim.fbp, fbc: claim.fbc,
+      clientIp: claim.clientIp, userAgent: claim.userAgent,
       customData: { value: STARTER_PRICE_BDT, currency: "BDT", content_name: "AgentSiraji E-commerce Starter", order_id: claim.orderId },
     });
     await finishStarterPurchase({ orderId, result: result.sent ? "SENT" : "FAILED" });
