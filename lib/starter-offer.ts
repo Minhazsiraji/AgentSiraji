@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 
-export const STARTER_PRICE_BDT = 3000 as const;
+export const STARTER_SETUP_FEE_BDT = 3000 as const;
+export const STARTER_HOSTING_MONTHLY_BDT = 2000 as const;
+export const STARTER_PRICE_BDT = 5000 as const;
 export const STARTER_BKASH = "01404385101";
 export const STARTER_BANK = {
   name: "The City Bank PLC",
@@ -109,7 +111,7 @@ export async function reviewStarterOrder(input: {
       verification_note = ${input.note || null}, updated_at = now()
     WHERE id = ${input.orderId} AND status = 'PENDING_VERIFICATION'
       AND transaction_reference IS NOT NULL AND payment_method IS NOT NULL
-      AND submitted_amount_bdt = 3000
+      AND submitted_amount_bdt = ${STARTER_PRICE_BDT}
     RETURNING id, status
   `;
   if (!rows[0]) throw new Error("Already reviewed, insufficient evidence, or incorrect amount.");
