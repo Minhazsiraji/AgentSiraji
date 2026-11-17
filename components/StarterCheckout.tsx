@@ -8,6 +8,7 @@ type FormValues = {
   businessType: string; facebookPage: string;
 };
 type Order = { orderId: string; accessToken: string };
+const STARTER_TOTAL_DUE_BDT = 5000;
 const waUrl = "https://wa.me/8801404385101?text=" + encodeURIComponent("Hi AgentSiraji, আমি ৳3,000 E-commerce Starter Package সম্পর্কে জানতে চাই।");
 function fieldLabel(label: string, value: string, update: (v: string) => void, required = false, type = "text", placeholder = "") {
   return <label className={s.formField}><span>{label}</span><input type={type} required={required} value={value} onChange={e=>update(e.target.value)} placeholder={placeholder} maxLength={type==="tel"?16:160} /></label>;
@@ -43,7 +44,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
       if(!response.ok || !data.orderId || !data.accessToken) throw new Error(data.error||"Could not save your details.");
       setOrder({orderId:data.orderId,accessToken:data.accessToken});
       setStatus("payment");
-      void trackMetaEvent("InitiateCheckout",{currency:"BDT",value:3000,content_name:"AgentSiraji E-commerce Starter"},eventId);
+      void trackMetaEvent("InitiateCheckout",{currency:"BDT",value:STARTER_TOTAL_DUE_BDT,content_name:"AgentSiraji E-commerce Starter"},eventId);
     } catch(ex) { setError(ex instanceof Error?ex.message:"Please try again."); }
     finally {setBusy(false);}
   }
@@ -54,7 +55,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
     try {
       const response=await fetch("/api/ecommerce-starter/orders",{
         method:"PATCH",headers:{"content-type":"application/json"},
-        body:JSON.stringify({...order,paymentMethod,transactionReference:reference,submittedAmount:3000,proofUrl}),
+        body:JSON.stringify({...order,paymentMethod,transactionReference:reference,submittedAmount:STARTER_TOTAL_DUE_BDT,proofUrl}),
       });
       const data=await response.json() as {ok?:boolean;error?:string};
       if(!response.ok || !data.ok)throw new Error(data.error||"Payment proof not saved.");
@@ -87,7 +88,7 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
   }
   return <div className={s.checkoutCard}>
     {status==="details" && <>
-      <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>আপনার Business-এর তথ্য</h3><p>Payment instructions দেখার আগে আপনার প্রয়োজনীয় তথ্য দিন।</p></div><strong>৳3,000</strong></div>
+      <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>আপনার Business-এর তথ্য</h3><p>Payment instructions দেখার আগে আপনার প্রয়োজনীয় তথ্য দিন।</p></div><strong>৳5,000</strong></div>
       {!enabled && <div className={s.notice} role="status"><strong>Checkout preparation mode</strong><p>Payment submission এখনো চালু হয়নি। জানতে বা বুকিং করতে WhatsApp-এ যোগাযোগ করুন।</p><a href={waUrl} target="_blank" rel="noopener noreferrer">WhatsApp inquiry ↗</a></div>}
       <form className={s.formGrid} onSubmit={createOrder}>
         {fieldLabel("Full Name *",form.fullName,update("fullName"),true,"text","আপনার পুরো নাম")}
@@ -96,11 +97,11 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
         {fieldLabel("Business / Page Name",form.businessName,update("businessName"),false,"text","আপনার business-এর নাম")}
         <label className={s.formField}><span>আপনি কী ধরনের business শুরু করবেন? *</span><textarea required maxLength={160} value={form.businessType} onChange={e=>update("businessType")(e.target.value)} placeholder="যেমন: Women's Clothing / Cosmetics / Grocery" rows={2}/></label>
         {fieldLabel("Facebook Page URL (optional)",form.facebookPage,update("facebookPage"),false,"url","https://facebook.com/...")}
-        <div className={s.formFull}><p>Starter ৳3,000; Domain actual cost; Hosting + Support ৳2,000/month; Extra Customization ৳2,000 when outside scope. <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={!enabled||busy}>{busy?"Saving...":"CONTINUE TO PAYMENT — ৳3,000 →"}</button></div>
+        <div className={s.formFull}><p>Setup ৳3,000 + 1st month Hosting & Support ৳2,000 = ৳5,000 due now. Domain actual cost is separate and payable before registration. Extra Customization ৳2,000 when outside scope. <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={!enabled||busy}>{busy?"Saving...":"CONTINUE TO PAYMENT — ৳5,000 →"}</button></div>
       </form>
     </>}
     {status==="payment" && <form onSubmit={submitPayment}>
-      <div className={s.checkoutHead}><div><span>STEP 02 / 02</span><h3>Payment details submit করুন</h3><p>Order reference: {order?.orderId}</p></div><strong>৳3,000</strong></div>
+      <div className={s.checkoutHead}><div><span>STEP 02 / 02</span><h3>Payment details submit করুন</h3><p>Order reference: {order?.orderId}</p></div><strong>৳5,000</strong></div>
       <div className={s.methodRow}><label><input type="radio" checked={paymentMethod==="BKASH"} onChange={()=>setPaymentMethod("BKASH")}/> bKash</label><label><input type="radio" checked={paymentMethod==="CITY_BANK"} onChange={()=>setPaymentMethod("CITY_BANK")}/> City Bank</label></div>
       <div className={s.paymentInstruction}>
         {paymentMethod==="BKASH"?<>
@@ -108,13 +109,13 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
         </>:<>
           <h4>The City Bank PLC</h4><p>Account: <strong>2183503557001</strong><br/>Name: Md. Minhaz Siraji<br/>Branch: Ashulia Branch</p>
         </>}
-        <p><strong>Transfer amount: ৳3,000</strong> — transfer করার পর নিচে Transaction ID / bank reference লিখুন।</p>
+        <p><strong>Transfer amount now: ৳5,000</strong> — এতে ৳3,000 setup + first-month hosting/support ৳2,000 অন্তর্ভুক্ত। Domain-এর actual cost আলাদা, domain final করার পর payable। Transfer করার পর নিচে Transaction ID / bank reference লিখুন।</p>
       </div>
       <div className={s.formGrid}>
         {fieldLabel("Transaction ID / Bank Reference *",reference,setReference,true,"text","Transaction reference")}
         {fieldLabel("Optional HTTPS proof link",proofUrl,setProofUrl,false,"url","https://...")}
         <div className={s.formFull}><small>Screenshot থাকলে WhatsApp-এ পাঠাতে পারেন। Screenshot এখানে upload হচ্ছে না; proof link optional।</small></div>
-        <label className={s.confirm}><input type="checkbox" checked={paidConfirmed} onChange={e=>setPaidConfirmed(e.target.checked)}/><span>আমি ৳3,000 transfer করেছি এবং reference যাচাই করে লিখেছি।</span></label>
+        <label className={s.confirm}><input type="checkbox" checked={paidConfirmed} onChange={e=>setPaidConfirmed(e.target.checked)}/><span>আমি ৳5,000 transfer করেছি এবং reference যাচাই করে লিখেছি।</span></label>
         <div className={s.formFull}><button className={s.primary} type="submit" disabled={busy||!paidConfirmed}>{busy?"Submitting...":"SUBMIT PAYMENT INFORMATION →"}</button></div>
       </div>
     </form>}
