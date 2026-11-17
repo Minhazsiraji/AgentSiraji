@@ -92,7 +92,8 @@ test("migration protects payment state and duplicate payment references", () => 
   const migration=fs.readFileSync(path.join(root,"database/0009_starter_launch_price_5000.sql"),"utf8");
   assert.match(migration,/PENDING_VERIFICATION/);
   assert.ok(migration.includes("SET DEFAULT 5000"));
-  assert.ok(migration.includes("CREATE UNIQUE INDEX IF NOT EXISTS starter_payment_reference_unique"));
+  const baseMigration=fs.readFileSync(path.join(root,"database/0008_ecommerce_starter.sql"),"utf8");
+  assert.ok(baseMigration.includes("CREATE UNIQUE INDEX IF NOT EXISTS starter_payment_reference_unique"));
   const code=fs.readFileSync(path.join(root,"lib/starter-offer.ts"),"utf8");
   assert.ok(code.includes("status = 'PENDING_VERIFICATION'"));
   assert.ok(code.includes("status = 'PAID'"));
