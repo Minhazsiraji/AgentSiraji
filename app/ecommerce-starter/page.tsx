@@ -23,7 +23,10 @@ const steps = ["Customer visits","Views product","Adds to cart","Checkout","Orde
 export default function EcommerceStarter() {
   return <main className={s.root}>
     <div className={s.landingBrand + " shell"}>
-      <img src="/agentsiraji-logo.png" alt="AgentSiraji" width="300" height="95" decoding="async" />
+      <div className={s.brandLockup} role="img" aria-label="AgentSiraji">
+        <span className={s.brandSymbol} aria-hidden="true" />
+        <span className={s.brandWordmark} aria-hidden="true" />
+      </div>
     </div>
     <div className={s.backdrop}>
       <section className={s.hero + " shell"}>
