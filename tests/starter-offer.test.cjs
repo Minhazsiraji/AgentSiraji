@@ -7,7 +7,9 @@ const root = path.resolve(__dirname, "..");
 
 test("starter package price, site and protected live gate are explicit", () => {
   const starter = load()("lib/starter-offer.ts");
-  assert.equal(starter.STARTER_PRICE_BDT, 3000);
+  assert.equal(starter.STARTER_SETUP_FEE_BDT, 3000);
+  assert.equal(starter.STARTER_HOSTING_MONTHLY_BDT, 2000);
+  assert.equal(starter.STARTER_PRICE_BDT, 5000);
   assert.equal(starter.STARTER_BKASH, "01404385101");
   assert.equal(starter.isBangladeshMobile("01700000000"), true);
   assert.equal(starter.isBangladeshMobile("not-a-number"), false);
@@ -61,12 +63,12 @@ test("verified-only CAPI Purchase uses correct value and stable event ID", async
     const result=await meta.sendVerifiedStarterPurchaseEvent({
       eventId:"as_starter_purchase_00000000-0000-4000-8000-000000000001",
       eventSourceUrl:"https://agentsiraji.com/ecommerce-starter",
-      customData:{value:3000,currency:"BDT"}
+      customData:{value:5000,currency:"BDT"}
     });
     assert.equal(result.sent,true);
     assert.equal(body.data[0].event_name,"Purchase");
     assert.equal(body.data[0].event_id,"as_starter_purchase_00000000-0000-4000-8000-000000000001");
-    assert.equal(body.data[0].custom_data.value,3000);
+    assert.equal(body.data[0].custom_data.value,5000);
   } finally {global.fetch=originalFetch;process.env=env;}
 });
 
@@ -87,9 +89,9 @@ test("starter Purchase browser event matches server event id and requires market
 });
 
 test("migration protects payment state and duplicate payment references", () => {
-  const migration=fs.readFileSync(path.join(root,"database/0008_ecommerce_starter.sql"),"utf8");
+  const migration=fs.readFileSync(path.join(root,"database/0009_starter_launch_price_5000.sql"),"utf8");
   assert.match(migration,/PENDING_VERIFICATION/);
-  assert.ok(migration.includes("CHECK (amount_bdt = 3000)"));
+  assert.ok(migration.includes("SET DEFAULT 5000"));
   assert.ok(migration.includes("CREATE UNIQUE INDEX IF NOT EXISTS starter_payment_reference_unique"));
   const code=fs.readFileSync(path.join(root,"lib/starter-offer.ts"),"utf8");
   assert.ok(code.includes("status = 'PENDING_VERIFICATION'"));
