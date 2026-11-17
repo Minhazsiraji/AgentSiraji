@@ -74,7 +74,7 @@ export async function PATCH(request: Request) {
         (paymentMethod !== "BKASH" && paymentMethod !== "CITY_BANK") ||
         !/^[A-Z0-9._:/ -]{5,100}$/.test(transactionReference) ||
         submittedAmount !== STARTER_PRICE_BDT || !safeStarterUrl(proofUrl) || proofUrl.length > 500)
-      return json({ error: "Please enter valid payment method, ৳3,000 amount and transaction reference." }, 400);
+      return json({ error: "Please enter valid payment method, ৳5,000 amount and transaction reference." }, 400);
     const result = await submitStarterPayment({
       orderId, accessToken, paymentMethod, transactionReference,
       submittedAmount, proofUrl,
