@@ -104,8 +104,23 @@ async function dispatchMetaEvent(input: MetaEventInput, verifiedStarterPayment: 
   });
 
   if (!response.ok) {
-    console.error("AgentSiraji Meta event rejected", { eventName: input.eventName, status: response.status });
-    return { sent: false as const, reason: "Meta rejected the event." };
+    const payload = await response.json().catch(() => null) as {
+      error?: { code?: number; error_subcode?: number; type?: string; message?: string }
+    } | null;
+    const metaCode = typeof payload?.error?.code === "number" ? payload.error.code : undefined;
+    const metaSubcode = typeof payload?.error?.error_subcode === "number" ? payload.error.error_subcode : undefined;
+    console.error("AgentSiraji Meta event rejected", {
+      eventName: input.eventName, status: response.status, metaCode, metaSubcode,
+    });
+    return {
+      sent: false as const,
+      reason: "Meta rejected the event.",
+      status: response.status,
+      metaCode,
+      metaSubcode,
+      metaType: payload?.error?.type?.slice(0, 100),
+      metaMessage: payload?.error?.message?.slice(0, 300),
+    };
   }
 
   return { sent: true as const };
