@@ -46,7 +46,7 @@ export function StarterOrdersAdmin(){
       <strong>New/pending: {orders.filter(o=>o.status==="PENDING_PAYMENT").length}</strong>
       <strong>Awaiting verification: {pending.length}</strong>
       <strong>Paid: {paid.length}</strong>
-      <strong>Verified setup revenue: ৳{paid.length*3000}</strong>
+      <strong>Verified starter revenue: ৳{paid.reduce((sum,o)=>sum+o.amountBdt,0)}</strong>
       <button type="button" onClick={()=>void load()}>Refresh</button>
     </div>
     {error && <p role="alert">{error}</p>}
@@ -73,7 +73,7 @@ export function StarterOrdersAdmin(){
         </div>}
         {o.status==="PAID"&&<div style={{display:"flex",flexWrap:"wrap",gap:12}}>
           {o.purchaseEventResult==="FAILED"&&<button type="button" disabled={busy===o.id} onClick={()=>void act(o.id,"RETRY_PURCHASE")}>Retry Meta Purchase signal</button>}
-          <a target="_blank" rel="noopener noreferrer" href={"https://wa.me/88"+o.mobile+"?text="+encodeURIComponent("AgentSiraji-এ স্বাগতম! আপনার ৳3,000 Starter Setup payment যাচাই হয়েছে। এখন business logo, product list, courier preference ও domain requirement পাঠান।")}>Send onboarding WhatsApp ↗</a>
+          <a target="_blank" rel="noopener noreferrer" href={"https://wa.me/88"+o.mobile+"?text="+encodeURIComponent("AgentSiraji-এ স্বাগতম! আপনার ৳5,000 launch payment (৳3,000 setup + ৳2,000 first-month hosting/support) যাচাই হয়েছে। এখন business logo, product list, courier preference ও domain requirement পাঠান।")}>Send onboarding WhatsApp ↗</a>
         </div>}
       </article>)}
       {!orders.length&&!error&&<p>No starter orders yet.</p>}
