@@ -14,7 +14,11 @@ export async function GET(request: Request) {
     eventName: "PageView",
     eventId,
     eventSourceUrl: "https://agentsiraji.com/ecommerce-starter",
+    email: "agentsiraji-capi-audit@example.invalid",
+    phone: "01700000000",
+    clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+    userAgent: request.headers.get("user-agent") || "AgentSiraji-CAPI-Audit",
     customData: { audit: "starter-capi-check" },
   });
-  return NextResponse.json({ ok: true, sent: result.sent, eventId, reason: result.sent ? null : result.reason ?? null }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ok: true, eventId, ...result }, { headers: { "Cache-Control": "no-store" } });
 }
