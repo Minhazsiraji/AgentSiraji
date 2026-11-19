@@ -43,7 +43,7 @@ export default function EcommerceStarter() {
             <span className={s.bnLine}>আপনার Online Business</span>
             <span className={s.enLine}>Modern System দিয়ে</span>
             <span className={s.bnLine}>শুরু করুন</span>
-            <em>Setup Fee মাত্র ৳৩,০০০</em>
+            <em>Website + Setup Fee ৳৩,০০০</em>
           </h1>
           <p className={s.subtitle}>
             কোনো cheap template নয় — একটি Modern, Customizable <strong>Next.js + Vercel</strong> selling system:
@@ -180,7 +180,7 @@ export default function EcommerceStarter() {
       </div>
       <div className={s.pricing}>
         <div className={s.priceCard}>
-          <span>STARTER SETUP FEE / ONE TIME</span>
+          <span>WEBSITE + SETUP FEE / ONE TIME</span>
           <strong>৳3,000</strong>
           <p>Modern & customizable Next.js + Vercel store, Cart, Checkout, COD, Orders, basic inventory, supported courier, Meta Pixel+CAPI setup ও launch assistance।</p>
           <div className={s.dueToday}>
