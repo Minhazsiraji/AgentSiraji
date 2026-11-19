@@ -93,16 +93,13 @@ export function StarterCheckout({ enabled }: { enabled: boolean }) {
   }
   return <div className={s.checkoutCard}>
     {status==="details" && <>
-      <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>আপনার Business-এর তথ্য</h3><p>Payment instructions দেখার আগে আপনার প্রয়োজনীয় তথ্য দিন।</p></div><strong>৳5,000</strong></div>
+      <div className={s.checkoutHead}><div><span>STEP 01 / 02</span><h3>৩টি quick detail দিন</h3><p>Payment instructions দেখার আগে শুধু নাম, মোবাইল ও business type দিন। বাকি onboarding information পরে নেওয়া হবে।</p></div><strong>৳5,000</strong></div>
       {!enabled && <div className={s.notice} role="status"><strong>Preview checkout mode</strong><p>আপনি form fill করে Payment Details screen পর্যন্ত test করতে পারবেন। Real payment submission এখনো production launch-এর আগে বন্ধ রাখা হয়েছে।</p><a href={waUrl} target="_blank" rel="noopener noreferrer">WhatsApp inquiry ↗</a></div>}
       <form className={s.formGrid} onSubmit={createOrder}>
         {fieldLabel("Full Name *",form.fullName,update("fullName"),true,"text","আপনার পুরো নাম")}
         {fieldLabel("Mobile Number *",form.mobile,update("mobile"),true,"tel","01XXXXXXXXX")}
-        {fieldLabel("Email (optional)",form.email,update("email"),false,"email","you@example.com")}
-        {fieldLabel("Business / Page Name",form.businessName,update("businessName"),false,"text","আপনার business-এর নাম")}
-        <label className={s.formField}><span>আপনি কী ধরনের business শুরু করবেন? *</span><textarea required maxLength={160} value={form.businessType} onChange={e=>update("businessType")(e.target.value)} placeholder="যেমন: Women's Clothing / Cosmetics / Grocery" rows={2}/></label>
-        {fieldLabel("Facebook Page URL (optional)",form.facebookPage,update("facebookPage"),false,"url","https://facebook.com/...")}
-        <div className={s.formFull}><p>Setup ৳3,000 + 1st month Hosting & Support ৳2,000 = ৳5,000 due now. Domain actual cost is separate and payable before registration. Extra Customization ৳2,000 when outside scope. <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={busy}>{busy?"Saving...":"CONTINUE TO PAYMENT — ৳5,000 →"}</button></div>
+        <label className={s.formField + " " + s.formFull}><span>আপনি কী ধরনের business শুরু করবেন? *</span><textarea required maxLength={160} value={form.businessType} onChange={e=>update("businessType")(e.target.value)} placeholder="যেমন: Women's Clothing / Cosmetics / Grocery" rows={2}/></label>
+        <div className={s.formFull}><p><strong>আজ payable:</strong> ৳3,000 setup + 1st month Hosting & Support ৳2,000 = ৳5,000. Domain actual cost আলাদা। Standard scope-এর বাইরে Extra Customization ৳2,000। <a href="/terms">Terms</a> ও <a href="/privacy">Privacy</a> পড়ুন।</p><button className={s.primary} type="submit" disabled={busy}>{busy?"Saving...":"SHOW PAYMENT OPTIONS — ৳5,000 →"}</button></div>
       </form>
     </>}
     {status==="payment" && <form onSubmit={submitPayment}>
