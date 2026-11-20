@@ -40,12 +40,58 @@ export function createMetaEventId(prefix = "event") {
 
 function cookie(name: string) {
   if (typeof document === "undefined") return undefined;
-  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
+  const raw = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
+  if (!raw) return undefined;
+  try { return decodeURIComponent(raw); } catch { return raw; }
+}
+
+function setMarketingCookie(name: string, value: string) {
+  if (typeof document === "undefined" || !hasMarketingConsent()) return;
+  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=7776000; Path=/; SameSite=Lax${secure}`;
+}
+
+function fbcFromLandingUrl() {
+  if (typeof window === "undefined" || !hasMarketingConsent()) return undefined;
+  const existing = cookie("_fbc");
+  if (existing) return existing.slice(0, 200);
+  const fbclid = new URLSearchParams(window.location.search).get("fbclid")?.trim();
+  if (!fbclid || fbclid.length > 500) return undefined;
+  const value = `fb.1.${Date.now()}.${fbclid}`;
+  setMarketingCookie("_fbc", value);
+  return value.slice(0, 200);
+}
+
+function visitorExternalId() {
+  if (typeof window === "undefined" || !hasMarketingConsent()) return undefined;
+  const key = "agentsiraji_meta_external_id";
+  try {
+    const existing = window.localStorage.getItem(key)?.trim();
+    if (existing && /^[A-Za-z0-9_-]{12,100}$/.test(existing)) return existing;
+    const random = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID().replace(/-/g, "")
+      : `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const value = `asv_${random}`.slice(0, 100);
+    window.localStorage.setItem(key, value);
+    return value;
+  } catch {
+    return undefined;
+  }
 }
 
 export function getMetaBrowserIdentifiers() {
   if (!hasMarketingConsent()) return { fbp: undefined, fbc: undefined };
-  return { fbp: cookie("_fbp")?.slice(0, 200), fbc: cookie("_fbc")?.slice(0, 200) };
+  return { fbp: cookie("_fbp")?.slice(0, 200), fbc: fbcFromLandingUrl() };
+}
+
+async function waitForMetaBrowserIdentifiers(timeoutMs = 1400) {
+  const started = Date.now();
+  let ids = getMetaBrowserIdentifiers();
+  while (!ids.fbp && Date.now() - started < timeoutMs) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    ids = getMetaBrowserIdentifiers();
+  }
+  return ids;
 }
 
 export async function trackMetaEvent(
@@ -64,6 +110,7 @@ export async function trackMetaEvent(
   if (eventName === "Lead" || eventName === "Contact" || eventName === "InitiateCheckout") return eventId;
 
   try {
+    const ids = await waitForMetaBrowserIdentifiers();
     await fetch("/api/meta/events", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -74,8 +121,9 @@ export async function trackMetaEvent(
         customData,
         email: contact?.email,
         phone: contact?.phone,
-        fbp: cookie("_fbp"),
-        fbc: cookie("_fbc"),
+        externalId: visitorExternalId(),
+        fbp: ids.fbp,
+        fbc: ids.fbc,
         eventSourceUrl: window.location.origin + window.location.pathname,
       }),
       keepalive: true,
