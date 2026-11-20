@@ -19,6 +19,7 @@ type MetaEventInput = {
   eventSourceUrl?: string;
   email?: string;
   phone?: string;
+  externalId?: string;
   fbp?: string;
   fbc?: string;
   userAgent?: string;
@@ -71,6 +72,7 @@ async function dispatchMetaEvent(input: MetaEventInput, verifiedStarterPayment: 
   const userData: Record<string, unknown> = {};
   if (input.email?.trim()) userData.em = [hash(normalizeEmail(input.email))];
   if (input.phone?.trim()) userData.ph = [hash(normalizePhone(input.phone))];
+  if (input.externalId?.trim()) userData.external_id = [hash(input.externalId.trim().slice(0, 100))];
   if (input.fbp?.trim()) userData.fbp = input.fbp.trim().slice(0, 200);
   if (input.fbc?.trim()) userData.fbc = input.fbc.trim().slice(0, 200);
   if (input.userAgent) userData.client_user_agent = input.userAgent.slice(0, 500);
